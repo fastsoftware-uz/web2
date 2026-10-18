@@ -993,8 +993,10 @@ h2 {
     padding-block-end: 0.6rem;
     border-block-end: 1px solid #c9ccd8;
   }
+  /* 54mm, not 42: the lockup sets its five lines at one size beside the
+     emblem now, so the same measure would print the name a third smaller. */
   .portfolio__docMark {
-    inline-size: 42mm;
+    inline-size: 54mm;
     flex: none;
   }
   .portfolio__docHead p {

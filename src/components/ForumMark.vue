@@ -3,8 +3,8 @@
  * The forum's mark, inlined so it can be animated.
  *
  * `scripts/process-logos.mjs` exports both files with their parts as separate
- * `<g id="…">` elements — the State Emblem and then each of the three lines of
- * type — which is the whole reason these are inlined rather than linked as
+ * `<g id="…">` elements — the State Emblem, then the forum's name a line at a
+ * time — which is the whole reason these are inlined rather than linked as
  * images: the parts arrive one after another, and the gold gradient keeps
  * drifting under them afterwards so the mark never looks like a flat sticker.
  *
@@ -14,9 +14,9 @@
  * with.
  *
  * `compact` is the lockup without "First International" — the artwork exactly
- * as the organiser issued it. The full name belongs wherever the mark is read,
- * but the bar gives it about ninety pixels of height, at which a fourth line
- * is unreadable and costs the three below it a fifth of their size.
+ * as the organiser issued it, emblem nested over the type. The full name
+ * belongs wherever the mark is read, but it takes five lines at the artwork's
+ * own size, and the bar gives the mark about ninety pixels of height.
  *
  * `variant` is gold on a lit stage, white where the stage is busy behind it,
  * and mono-dark on paper — the gold is 9.2:1 on the stage navy but only 3.2:1
@@ -79,9 +79,9 @@ onMounted(() => {
    * Every direct child of the paint group is one part.
    *
    * Not `> g`: svgo folds a group holding a single path into the path and
-   * moves the id onto it, which is what happens to the title line. Selecting
-   * elements rather than groups keeps the part that is one path in the
-   * sequence instead of letting it appear ahead of the rest.
+   * moves the id onto it, which can happen to any part that is one shape.
+   * Selecting elements rather than groups keeps such a part in the sequence
+   * instead of letting it appear ahead of the rest.
    */
   const parts = root.value.querySelectorAll('svg > g > *');
   const gradient = root.value.querySelector('linearGradient');

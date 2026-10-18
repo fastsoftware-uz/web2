@@ -204,9 +204,10 @@ percent of the width it actually occupies.
 `brand/fonts/Montserrat-Regular.ttf` is the latin subset served by Google
 Fonts, kept here so `npm run logos` needs no network. `brand/fonts/OFL.txt` is
 the licence it travels under. The font is **not** shipped to the browser:
-`scripts/lib/forum-title.mjs` converts the one line to outlines at build time
-and it becomes part of the lockup's vector artwork, which is what the OFL's
-terms are written to allow.
+`scripts/lib/forum-title.mjs` converts the two lines to outlines at build time
+— one path per glyph, as the supplied artwork is drawn — and they become part
+of the lockup's vector artwork, which is what the OFL's terms are written to
+allow.
 
 Note on site 3: IBM Plex places the Uzbek apostrophes `ʻ` (U+02BB) and `ʼ`
 (U+02BC) on a 0.6em advance, which splits every word containing one. A

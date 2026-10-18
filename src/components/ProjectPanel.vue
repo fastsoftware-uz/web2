@@ -968,8 +968,10 @@ onBeforeUnmount(() => {
     border-block-end: 1px solid #c9ccd8;
     margin-block-end: 1.4rem;
   }
+  /* 54mm, not 42: the lockup sets its five lines at one size beside the
+     emblem now, so the same measure would print the name a third smaller. */
   .panel__letterheadMark {
-    inline-size: 42mm;
+    inline-size: 54mm;
     flex: none;
   }
   .panel__letterhead p {

@@ -446,8 +446,12 @@ h2 {
   justify-content: space-between;
   gap: 1.5rem;
 }
+/* Wider than it was. The lockup's cap height is now a smaller fraction of its
+   width — five lines at one size beside the emblem, rather than three with a
+   small qualifier over them — so the same width would set the name a third
+   smaller than it used to read here. */
 .footer__mark {
-  width: clamp(7rem, 16vw, 9.5rem);
+  width: clamp(9.5rem, 21vw, 12.5rem);
   opacity: 0.6;
 }
 .footer__langs {

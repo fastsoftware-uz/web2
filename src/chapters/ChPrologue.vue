@@ -201,9 +201,10 @@ useChapterTimeline(
 
 .prologue__mark {
   margin-block: 1.5rem 0;
-  /* The lockup is 1.10:1 now that it carries the forum's full name; this keeps
-     it off the right edge on wide screens. */
-  width: min(82%, 23rem);
+  /* The lockup is 1.59:1 now that its five lines are all one size and the
+     emblem stands beside them rather than over them — wider and shorter than
+     it was, so it can take more of the column without growing taller. */
+  width: min(92%, 29rem);
 }
 .prologue__when {
   display: flex;
