@@ -94,9 +94,17 @@ const title = (p: Project) => (p.titleI18n ? tr(p.titleI18n) : (p.displayTitle ?
 const subtitleOf = (p: Project) => (p.subtitleI18n ? tr(p.subtitleI18n) : p.subtitle);
 const thumb = (p: Project) => (p.photos[0] ? `photos/${p.photos[0]}-thumb.webp` : null);
 
-/** What a project is asking for, in words, or the sheet's silence. */
-const moneyOf = (p: Project) =>
-  p.investment && p.currency ? formatMoney(p.investment, p.currency, lang.value) : t('portfolio.noFigure');
+/**
+ * What a project is asking for, in words, or the sheet's silence — in the
+ * reader's language either way. A sheet that says the sum is open to
+ * negotiation is saying something, and keeps its own line.
+ */
+const moneyOf = (p: Project) => {
+  if (p.investment && p.currency) return formatMoney(p.investment, p.currency, lang.value);
+  return /agreement|kelishuv|договор/i.test(p.investmentDisplay ?? '')
+    ? t('portfolio.byAgreement')
+    : t('portfolio.noFigure');
+};
 
 /**
  * The sheet's own one-word description of the project, when it gives one —

@@ -117,6 +117,26 @@ const money = computed(() => {
 });
 
 /**
+ * What stands in for a figure the sheet does not give.
+ *
+ * Seven sheets state no sum, and they do it in their own words — "TBD", "Not
+ * specified", "By agreement" — or by leaving the field out. Printed as
+ * written, an Uzbek page said "Not specified" where the list beside it said
+ * "Koʻrsatilmagan": the same silence, in two languages, neither of them the
+ * reader's. The sheet's exact wording is still one hover away, on the
+ * element's title.
+ *
+ * "By agreement" is kept apart from the rest because it is not silence: it
+ * says the sum is open to negotiation.
+ */
+const noMoney = computed(() => {
+  const raw = props.project?.investmentDisplay ?? '';
+  return /agreement|kelishuv|договор/i.test(raw)
+    ? t('portfolio.byAgreement')
+    : t('portfolio.noFigure');
+});
+
+/**
  * The name of a field in the reader's language.
  *
  * The value is never touched — it is what the organiser stated — but the
@@ -442,8 +462,16 @@ onBeforeUnmount(() => {
             >
               {{ money }}
             </strong>
-            <strong v-else class="figure panel__money--none">
-              {{ project.investmentDisplay ?? t('portfolio.noFigure') }}
+            <strong
+              v-else
+              class="figure panel__money--none"
+              :title="
+                project.investmentDisplay
+                  ? t('portfolio.asStated', { raw: project.investmentDisplay })
+                  : undefined
+              "
+            >
+              {{ noMoney }}
             </strong>
             <small v-if="project.currency === 'UZS'">{{ t('portfolio.uzsNote') }}</small>
           </p>

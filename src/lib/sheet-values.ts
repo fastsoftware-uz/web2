@@ -47,6 +47,7 @@ const DICTIONARY: Record<string, { uz: string; ru: string }> = {
   'GLEMPING RESORT': { uz: 'Glemping kurorti', ru: 'Глэмпинг-курорт' },
   '4-STAR RESORT HOTEL': { uz: '4 yulduzli kurort mehmonxonasi', ru: '4-звёздочный курортный отель' },
   'INN (CARAVANSERAI)': { uz: 'Karvonsaroy', ru: 'Караван-сарай' },
+  HOTEL: { uz: 'Mehmonxona', ru: 'Гостиница' },
 
   /* --- the City of Tashkent's proposal deck ----------------------------
      These stretch the rule above, and the reason they may is that English is

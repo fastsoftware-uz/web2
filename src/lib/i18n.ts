@@ -117,6 +117,7 @@ const en = {
     pdfFooter:
       'First International Tourism Investment Forum 2026, Tashkent. Tourism Committee of the Republic of Uzbekistan — investforum{\'@\'}uzbektourism.uz',
     noFigure: 'Not stated',
+    byAgreement: 'By agreement',
     byRegion: 'By region',
     map: {
       caption: 'Fourteen regions; the number on each is how many projects it brought. Choose one.',
@@ -290,6 +291,7 @@ const uz: Messages = {
     pdfFooter:
       'Birinchi xalqaro turizm investitsiya forumi 2026, Toshkent. Oʻzbekiston Respublikasi Turizm qoʻmitasi — investforum{\'@\'}uzbektourism.uz',
     noFigure: 'Koʻrsatilmagan',
+    byAgreement: 'Kelishuv asosida',
     byRegion: 'Hududlar boʻyicha',
     map: {
       caption: 'Oʻn toʻrt hudud; har biridagi raqam — oʻsha hudud taqdim etgan loyihalar soni. Birini tanlang.',
@@ -452,6 +454,7 @@ const ru: Messages = {
     pdfFooter:
       'Первый международный инвестиционный форум в сфере туризма 2026, Ташкент. Комитет по туризму Республики Узбекистан — investforum{\'@\'}uzbektourism.uz',
     noFigure: 'Не указано',
+    byAgreement: 'По договорённости',
     byRegion: 'По регионам',
     map: {
       caption: 'Четырнадцать регионов; число на каждом — сколько проектов он представил. Выберите один.',
