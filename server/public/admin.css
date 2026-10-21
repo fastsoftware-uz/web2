@@ -199,3 +199,130 @@ td b { color: var(--ink); font-weight: 600; }
   table { display: block; overflow-x: auto; white-space: nowrap; }
   .note td { white-space: normal; }
 }
+
+/* ---------------------------------------------------- the site editor ----
+   site.php. The registrations are a table to read; this is a form to fill,
+   so it is a column of labelled boxes and never a grid: a translator working
+   down three languages reads one line at a time, and a two-column form makes
+   them hunt for which box belongs to which language. */
+
+.ok { color: var(--green); font-size: 0.9rem; }
+.ok.big {
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--green);
+  border-radius: 0.4rem;
+  background: rgb(29 122 70 / 0.06);
+}
+
+.crumbs {
+  margin: 1.25rem 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.crumbs a { text-decoration: none; }
+.crumbs a:hover { text-decoration: underline; }
+
+/* The section index. Cards rather than a list: each one is a destination
+   with a count on it, and a count is worth seeing before you click. */
+.cards {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(16rem, 100%), 1fr));
+  margin: 1rem 0 2rem;
+}
+.card--link {
+  display: block;
+  width: auto;
+  padding: 1rem 1.1rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+.card--link:hover { border-color: var(--cobalt); }
+.card--link b { display: block; color: var(--ink); font-size: 1rem; }
+.card--link span { font-size: 0.85rem; color: var(--ink-dim); }
+
+.editor { margin-bottom: 3rem; }
+
+.fld { margin: 0 0 1rem; }
+.fld > label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.fld input[type='text'],
+.fld textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.35rem;
+  font: inherit;
+  color: var(--ink);
+}
+.fld textarea { resize: vertical; line-height: 1.5; }
+.fld input:focus-visible,
+.fld textarea:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 1px; }
+.fld small { display: block; margin-top: 0.25rem; font-size: 0.78rem; color: var(--ink-dim); }
+
+/* An edited field is marked where it is, not only on the publish page: the
+   person who has to undo one is looking at the form, not at a list of paths. */
+.fld--edited > label { color: var(--gold); }
+.fld--edited input[type='text'],
+.fld--edited textarea { border-color: var(--gold); background: rgb(153 95 0 / 0.04); }
+
+.chip {
+  display: inline-block;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgb(153 95 0 / 0.12);
+  color: var(--gold);
+  font-size: 0.7rem;
+  font-weight: 700;
+  vertical-align: 0.1em;
+}
+.chip--off { background: rgb(179 36 59 / 0.1); color: var(--red); }
+
+.switch { display: flex; align-items: center; gap: 0.5rem; font-weight: 400; }
+.switch input { inline-size: 1.1rem; block-size: 1.1rem; }
+
+fieldset.group,
+fieldset.i18n {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: 0.5rem;
+  background: rgb(255 255 255 / 0.5);
+}
+fieldset.i18n { background: var(--panel); }
+fieldset legend {
+  padding: 0 0.4rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-dim);
+}
+/* Nesting runs four deep in places. Indenting it would push the boxes off a
+   phone, so depth is shown by the rule alone. */
+fieldset fieldset { margin-inline: 0; }
+
+.actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-top: 1.5rem;
+  padding: 0.9rem 0;
+  background: linear-gradient(to top, var(--paper) 70%, transparent);
+}
+.inline { display: inline; }
+.small { font-size: 0.82rem; }
+.row--off { opacity: 0.55; }
+.row--off td b { text-decoration: line-through; }

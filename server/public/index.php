@@ -228,6 +228,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
   <div class="bar__right">
     <span class="muted store"><?= app_h(storage_describe()) ?></span>
     <a class="btn" href="?action=csv&amp;<?= app_h($query) ?>">CSV yuklab olish</a>
+    <a class="btn btn--quiet" href="site.php">Saytni tahrirlash</a>
     <a class="btn btn--quiet" href="?action=logout">Chiqish</a>
   </div>
 </header>

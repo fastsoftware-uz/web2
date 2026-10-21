@@ -21,12 +21,15 @@ server/
   public/            ← the only directory nginx is allowed to reach
     api.php          ← POST a registration; GET it for a health check
     index.php        ← the admin: login, list, search, status, CSV
+    site.php         ← the editor: the site's own texts, and the projects
     admin.css
   src/
     config.example.php ← copy to config.php and edit
     app.php            ← validation and the record's shape
     storage.php        ← SQLite, or a flat file when SQLite is missing
-  data/              ← the registrations. NOT under public/. Must be writable.
+    site.php           ← the overlay the editor saves into
+  data/              ← the registrations and the overlay. NOT under public/.
+                       Must be writable.
 ```
 
 `src/` and `data/` are outside the web root on purpose: if nginx is ever
@@ -113,6 +116,36 @@ host, which is what the nginx block below does.
 ```sh
 chown php-dev:php-dev config.php && chmod 640 config.php
 ```
+
+### 3b. The site editor
+
+Set `site_dir` in `config.php` to the directory nginx serves the site from:
+
+```php
+'site_dir' => '/var/www/forum/public',
+```
+
+The admin publishes by rewriting `data/forum-2026.json` and `data/content.json`
+inside it — those are the two files the page fetches at runtime, so an edit is
+live the moment it is saved. PHP-FPM therefore has to be able to write that one
+directory:
+
+```sh
+chown -R php-dev:php-dev /var/www/forum/public/data
+chmod 750 /var/www/forum/public/data
+```
+
+Nothing else in the web root needs to be writable, and nothing is. If this step
+is skipped the registrations still work and only the editor reports that it
+cannot save, which is the right way round.
+
+**It edits the site on this server and nowhere else.** While the published site
+is still on GitHub Pages, what the organiser changes here will not show there:
+the editor changes the copy nginx serves. See *While the site is still on
+GitHub Pages* below.
+
+The overlay itself — what was changed, and what it was before — lives in
+`server/data/site-*.json`, outside the web root with the registrations.
 
 ### 4. nginx
 

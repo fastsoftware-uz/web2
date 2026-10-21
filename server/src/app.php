@@ -17,7 +17,17 @@ function app_config(): array
     if ($config !== null) {
         return $config;
     }
-    $own = __DIR__ . '/config.php';
+    /**
+     * FORUM_CONFIG names a config file to use instead of src/config.php.
+     *
+     * It exists for qa/backend.mjs, which needs its own password and its own
+     * data directory. The suite used to get them by writing over config.php
+     * and putting it back afterwards, and an interrupted run left the real
+     * installation with the test password — which is exactly the sort of
+     * thing a test suite must not be able to do.
+     */
+    $env = getenv('FORUM_CONFIG');
+    $own = is_string($env) && $env !== '' && is_file($env) ? $env : __DIR__ . '/config.php';
     $config = is_file($own)
         ? require $own
         : require __DIR__ . '/config.example.php';

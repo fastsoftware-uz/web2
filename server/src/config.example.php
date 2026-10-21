@@ -41,6 +41,26 @@ return [
      */
     'admin_password_hash' => '',
 
+    /**
+     * Where the built site is — the directory holding index.html, assets/
+     * and data/.
+     *
+     * The admin writes the site's own data/*.json so that a change to a date,
+     * a contact or a project shows on the page immediately, with no rebuild.
+     * It never edits them blind: see src/site.php — the build output is kept
+     * as a base and the admin's changes are an overlay on top of it, so a
+     * redeploy cannot silently lose them.
+     *
+     * Leave it empty and the repository's own build output is used, which is
+     * what `npm run server` serves. On the server set it to the nginx root:
+     *
+     *   'site_dir' => '/var/www/forum/public',
+     *
+     * The PHP-FPM user must be able to write data/ inside it. If it cannot,
+     * the registrations still work and only the site editor is unavailable.
+     */
+    'site_dir' => '',
+
     /** Shown in the admin header, so you can tell staging from live. */
     'site_name' => 'Tourism Investment Forum 2026',
 

@@ -45,7 +45,13 @@ Litsenziyalar va atributlar: `CREDITS.md`.
 `/register/` — alohida sahifa, alohida bundle (GSAP ham, three.js ham
 yoʻq; manbada `register/index.html`). U `POST /api/register` ga yuboradi; shu endpoint va uni oʻqish uchun
 adminka `server/` ichida — PHP + nginx, Alpine Linux uchun. Oʻrnatish
-yoʻriqnomasi: `server/README.md`.
+yoʻriqnomasi: `server/README.md`, adminkadan foydalanish qoʻllanmasi:
+`server/QOLLANMA.md`.
+
+Adminka faqat arizalarni emas, saytning oʻzini ham boshqaradi: sana, shahar,
+dastur, aloqa, matnlar va 83 ta loyiha — hammasi uch tilda. Oʻzgartirilgan
+narsa darhol saytga chiqadi, chunki sahifa maʼlumotni `data/*.json` dan
+ishga tushganda oʻqiydi. Build ham, deploy ham shart emas.
 
 Sayt GitHub Pages'da, API esa tashkilotchining serverida turganda endpoint
 manzilini repo sozlamalaridan berish kerak: **Settings → Secrets and
