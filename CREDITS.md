@@ -258,14 +258,30 @@ Names of organisations that took part in TIIF 2026 appear as **text only**, from
 The Tourism Investment Forum content on site 2 comes from documents supplied by
 the organiser for this project: the forum concept, the preliminary programme, and
 three batches of investment project sheets (`onepager .zip`, `Лойиҳалар new.zip`,
-`Лойиҳалар.zip`). They are read by `scripts/build-forum-data.mjs` and are **not
-redistributed** — the originals stay out of the repository and only the parsed
-facts are published.
+`Лойиҳалар.zip`), plus the corrected sheets sent since, which arrive in a
+dated folder of their own (`brand/loyhainfo/<date>/`). They are read by
+`scripts/build-forum-data.mjs` and are **not redistributed** — the originals stay
+out of the repository and only the parsed facts are published.
 
 The sheets arrive in three generations of the same template with different field
 lists, and the same project appears in more than one batch. The newest sheet for
-a project wins; every sheet it was found in is recorded on the record, so a
-figure can be traced back.
+a project wins — a dated folder outranks every archive — and every sheet it was
+found in is recorded on the record, so a figure can be traced back.
+
+### The City of Tashkent's proposal deck
+
+One document in the batch of 21 October 2026 is not a one-pager deck:
+*Истиқболли лойиҳа таклифлари* is nine proposals from the city for raising
+visitor numbers, in three different layouts and written in Uzbek Cyrillic, which
+is not one of the three scripts this site publishes in. It could not be parsed
+and it could not be published as it stood, so it was read and translated by hand
+into `scripts/data/tashkent-proposals.mjs`, the way the forum's own framing was
+transcribed from the two Russian concept documents.
+
+**No figure in it was retyped from memory.** Every number on those nine records
+carries the exact run of text it was read from, and the build checks each one
+against the slide it names before writing anything — 41 of them. A revised deck,
+or a figure that was never on the slide, stops the build.
 
 The project sheets contain an `INVESTMENT CONTACT` block with an initiator's name
 and personal mobile number, and the raw Tashkent-region tables add taxpayer

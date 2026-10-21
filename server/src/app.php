@@ -58,7 +58,7 @@ const FIELDS = [
 function app_cut(string $value, int $max): string
 {
     if (function_exists('mb_substr')) {
-        return app_cut($value, $max);
+        return mb_substr($value, 0, $max);
     }
     if (preg_match('/^.{0,' . $max . '}/us', $value, $m) === 1) {
         return $m[0];

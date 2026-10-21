@@ -42,8 +42,8 @@ Litsenziyalar va atributlar: `CREDITS.md`.
 
 ## Roʻyxatdan oʻtish va adminka
 
-`register.html` — alohida sahifa, alohida bundle (GSAP ham, three.js ham
-yoʻq). U `POST /api/register` ga yuboradi; shu endpoint va uni oʻqish uchun
+`/register/` — alohida sahifa, alohida bundle (GSAP ham, three.js ham
+yoʻq; manbada `register/index.html`). U `POST /api/register` ga yuboradi; shu endpoint va uni oʻqish uchun
 adminka `server/` ichida — PHP + nginx, Alpine Linux uchun. Oʻrnatish
 yoʻriqnomasi: `server/README.md`.
 

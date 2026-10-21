@@ -11,6 +11,6 @@ import RegisterApp from './RegisterApp.vue';
 import '../styles/index.css';
 
 const root = document.getElementById('register');
-if (!root) throw new Error('#register is missing from register.html');
+if (!root) throw new Error('#register is missing from register/index.html');
 
 createApp(RegisterApp).mount(root);

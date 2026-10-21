@@ -47,6 +47,58 @@ const DICTIONARY: Record<string, { uz: string; ru: string }> = {
   'GLEMPING RESORT': { uz: 'Glemping kurorti', ru: 'Глэмпинг-курорт' },
   '4-STAR RESORT HOTEL': { uz: '4 yulduzli kurort mehmonxonasi', ru: '4-звёздочный курортный отель' },
   'INN (CARAVANSERAI)': { uz: 'Karvonsaroy', ru: 'Караван-сарай' },
+
+  /* --- the City of Tashkent's proposal deck ----------------------------
+     These stretch the rule above, and the reason they may is that English is
+     not the original here. That deck is written in Uzbek Cyrillic and was
+     read into English for the portfolio; putting these rows back into Uzbek
+     and Russian restores what the city wrote rather than translating a fact
+     away from it. Figures are untouched either way. */
+  'PUBLIC–PRIVATE PARTNERSHIP': {
+    uz: 'Davlat-xususiy sheriklik',
+    ru: 'Государственно-частное партнёрство',
+  },
+  'CITY OF TASHKENT': { uz: 'Toshkent shahri', ru: 'город Ташкент' },
+  '44 TOURISM STREETS CREATED OR BEING CREATED IN 2025–2026': {
+    uz: '2025–2026-yillarda tashkil etilgan va etilayotgan 44 ta turizm koʻchasi',
+    ru: '44 туристические улицы, созданные и создаваемые в 2025–2026 годах',
+  },
+  'ON THE PLANT’S OWN SITE': {
+    uz: 'Zavodning oʻz hududida',
+    ru: 'На собственной территории завода',
+  },
+  'TASHKENT PLANETARIUM — 2,000 M²': {
+    uz: 'Toshkent planetariysi — 2 000 m²',
+    ru: 'Ташкентский планетарий — 2 000 м²',
+  },
+  'TWELVE HISTORIC GATE SITES AND THE OLD CITY': {
+    uz: '12 ta tarixiy darvoza nuqtasi va Eski shahar',
+    ru: '12 точек исторических ворот и Старый город',
+  },
+  'CITY ADMINISTRATION + TSUE + VISITING CHEFS': {
+    uz: 'Hokimlik + TDIU + xorijiy sheflar',
+    ru: 'Хокимият + ТГЭУ + иностранные шеф-повара',
+  },
+  'WORKING COOKS AND TALENTED YOUNG PEOPLE': {
+    uz: 'Oshpazlar va iqtidorli yoshlar',
+    ru: 'Повара и талантливая молодёжь',
+  },
+  'THEORY + PRACTICE + DUAL TRAINING': {
+    uz: 'Nazariya + amaliyot + dual taʼlim',
+    ru: 'Теория + практика + дуальное обучение',
+  },
+  'LAND ADJOINING THE TASHKENT-VOSTOCHNY AERODROME': {
+    uz: '“Toshkent-Sharqiy” aerodromiga tutash hudud',
+    ru: 'Территория, прилегающая к аэродрому «Ташкент-Восточный»',
+  },
+  'SAYILGOH STREET — 1.2 KM': {
+    uz: 'Sayilgoh koʻchasi — 1,2 km',
+    ru: 'улица Сайилгох — 1,2 км',
+  },
+  'NEW TASHKENT — 5,000–7,000 M²': {
+    uz: 'Yangi Toshkent — 5 000–7 000 m²',
+    ru: 'Новый Ташкент — 5 000–7 000 м²',
+  },
 };
 
 /**
@@ -66,6 +118,29 @@ const PATTERNS: { test: RegExp; uz: (n: string) => string; ru: (n: string) => st
     test: /^construction\s*[·.,-]\s*(\d+%)$/i,
     uz: (n) => `Qurilish jarayonida · ${n}`,
     ru: (n) => `В стадии строительства · ${n}`,
+  },
+  /* --- durations and head-counts, as the city's proposal deck states them.
+         The figure is captured whole, ranges included ("18–24"), and only
+         the unit word after it is said in the reader's language. */
+  {
+    test: /^([\d–—-]+)\s*years?$/i,
+    uz: (n) => `${n} yil`,
+    ru: (n) => `${n} г.`,
+  },
+  {
+    test: /^([\d–—-]+)\s*months?$/i,
+    uz: (n) => `${n} oy`,
+    ru: (n) => `${n} мес.`,
+  },
+  {
+    test: /^([\d–—-]+)\s*thousand\s*visitors$/i,
+    uz: (n) => `${n} ming kishi`,
+    ru: (n) => `${n} тыс. человек`,
+  },
+  {
+    test: /^([\d–—-]+)\s*thousand\+$/i,
+    uz: (n) => `${n} ming+`,
+    ru: (n) => `${n} тыс.+`,
   },
 ];
 

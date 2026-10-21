@@ -24,15 +24,22 @@ import vue from '@vitejs/plugin-vue';
  * The filenames are hashed at build time, so they are read out of the bundle
  * rather than written down. `crossorigin` is required even for same-origin
  * fonts — a preload without it is fetched again by the font loader.
+ *
+ * The href is relative, and the two pages do not sit at the same depth:
+ * `/register/` is a directory, so its preloads need one `../` that the site's
+ * own index must not have. `ctx.path` is the page being written, and the
+ * number of slashes in it is the number of levels to climb.
  */
 function preloadFonts() {
   return {
     name: 'preload-fonts',
     enforce: 'post' as const,
-    transformIndexHtml(html: string, ctx: { bundle?: Record<string, unknown> }) {
+    transformIndexHtml(html: string, ctx: { path?: string; bundle?: Record<string, unknown> }) {
       const fonts = Object.keys(ctx.bundle ?? {}).filter((name) =>
         /-latin-wght-normal-[^/]*\.woff2$/.test(name),
       );
+      const depth = (ctx.path ?? '/index.html').replace(/^\/+/, '').split('/').length - 1;
+      const up = depth > 0 ? '../'.repeat(depth) : './';
       return {
         html,
         tags: fonts.map((file) => ({
@@ -41,7 +48,7 @@ function preloadFonts() {
             rel: 'preload',
             as: 'font',
             type: 'font/woff2',
-            href: `./${file}`,
+            href: `${up}${file}`,
             crossorigin: '',
           },
           injectTo: 'head-prepend' as const,
@@ -64,10 +71,14 @@ export default defineConfig({
        * the site and nothing else, so it is a second entry rather than a
        * route: somebody who came to register is not made to download a
        * scroll-driven narrative and a WebGL globe first.
+       *
+       * `register/index.html`, not `register.html`, so the address reads
+       * `/register/`. A file extension in a URL somebody is asked to type or
+       * is sent in an invitation is an implementation detail on show.
        */
       input: {
         index: fileURLToPath(new URL('./index.html', import.meta.url)),
-        register: fileURLToPath(new URL('./register.html', import.meta.url)),
+        register: fileURLToPath(new URL('./register/index.html', import.meta.url)),
       },
       output: {
         // three.js is only needed by the hero globe, which is loaded on idle and

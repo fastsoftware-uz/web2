@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
  * Relative, so it keeps working under whatever base path the site is served
  * from — /web2/ on Pages today, / on the organiser's own server tomorrow.
  */
-const registerHref = computed(() => `./register.html?lang=${lang.value}`);
+const registerHref = computed(() => `./register/?lang=${lang.value}`);
 
 
 function go(id: string) {

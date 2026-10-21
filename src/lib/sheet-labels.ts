@@ -294,6 +294,24 @@ const DICTIONARY: Record<string, { uz: string; ru: string }> = {
     uz: 'Mehmonxona qismini sotib olish',
     ru: 'Приобретение гостиничной части',
   },
+
+  /* --- the City of Tashkent's own proposal deck ------------------------
+     Its rows are not the one-pager template's; these are the labels that
+     deck uses, in the English the portfolio stores them under. */
+  'VALUE PER PROJECT': { uz: 'Har bir loyiha qiymati', ru: 'Стоимость одного проекта' },
+  'JOBS CREATED': { uz: 'Yaratiladigan ish oʻrinlari', ru: 'Создаваемые рабочие места' },
+  'TIME TO LAUNCH': { uz: 'Ishga tushish muddati', ru: 'Срок запуска' },
+  'STREETS PROPOSED': { uz: 'Taklif etilayotgan koʻchalar', ru: 'Предлагаемые улицы' },
+  'ANNUAL TURNOVER': { uz: 'Yillik aylanma', ru: 'Годовой оборот' },
+  'PROPOSED LOCATION': { uz: 'Tavsiya etiladigan hudud', ru: 'Рекомендуемая территория' },
+  'CAPACITY BY 2030': { uz: '2030-yildagi quvvati', ru: 'Мощность к 2030 году' },
+  'ROUTE LENGTH': { uz: 'Marshrut uzunligi', ru: 'Длина маршрута' },
+  'ANNUAL VISITORS': { uz: 'Yillik tashrif buyuruvchilar', ru: 'Посетителей в год' },
+  'ANNUAL REVENUE POTENTIAL': { uz: 'Yillik tushum salohiyati', ru: 'Потенциал годовой выручки' },
+  PARTNERS: { uz: 'Asosiy hamkorlar', ru: 'Основные партнёры' },
+  TRAINEES: { uz: 'Asosiy tinglovchilar', ru: 'Основные слушатели' },
+  'TRAINING MODEL': { uz: 'Taʼlim modeli', ru: 'Модель обучения' },
+  STRUCTURE: { uz: 'Tuzilmasi', ru: 'Структура' },
 };
 
 /** `Land area` and `LAND AREA` are the same field in two templates. */

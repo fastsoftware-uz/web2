@@ -72,7 +72,8 @@ function applyHead(): void {
 onMounted(applyHead);
 
 /** The site, in whatever language this page is being read in. */
-const siteHref = computed(() => `./?lang=${lang.value}`);
+// `../`: the page is served as /register/, so the site is one level up.
+const siteHref = computed(() => `../?lang=${lang.value}`);
 </script>
 
 <template>

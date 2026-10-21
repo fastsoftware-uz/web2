@@ -33,6 +33,31 @@ server/
 pointed at the wrong directory, the password hash and the registrations are
 still not downloadable.
 
+## Running the whole thing on your own machine
+
+Before any of this is copied anywhere, the chain can be driven end to end
+locally — form, endpoint, store, admin, CSV — with PHP 8.1+ on PATH:
+
+```sh
+npm run server:password -- "the password you choose"   # writes src/config.php
+npm run server                                          # builds site 2, then serves it
+```
+
+| | |
+|---|---|
+| Site | http://127.0.0.1:8787/ |
+| Registration | http://127.0.0.1:8787/register/ |
+| Admin | http://127.0.0.1:8787/admin/ |
+| Health | http://127.0.0.1:8787/api/health |
+
+`dev-server.php` is the nginx block below written as a router for `php -S`,
+so the addresses are the ones the real deployment serves. It is a development
+server and nothing else: single threaded, and never part of a deployment.
+
+`node qa/backend.mjs` runs the same chain unattended, against a throwaway
+data directory and a throwaway password, and puts your config.php back
+afterwards.
+
 ## Storage
 
 **SQLite when `pdo_sqlite` is installed, an append-only JSON-lines file when
@@ -68,8 +93,10 @@ cp -r site-2-silkroad/dist/. /var/www/forum/public   # the built site
 install -d -o php-dev -g php-dev -m 750 /var/www/forum/server/data
 ```
 
-`/var/www/forum/public` holds `index.html`, `register.html` and `assets/` —
-the output of `npm run build:2`.
+`/var/www/forum/public` holds `index.html`, `register/index.html` and
+`assets/` — the output of `npm run build:2`. The registration page is a
+directory rather than a `.html` file so that its address reads
+`/register/`; `try_files $uri $uri/` below is what serves it.
 
 ### 3. Configure
 
