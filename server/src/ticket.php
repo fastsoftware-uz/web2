@@ -28,6 +28,15 @@ require_once __DIR__ . '/storage.php';
 const TICKET_PREFIX = 'TITF26';
 
 /**
+ * The word printed across the badge, in both of its languages.
+ *
+ * It is set in capitals because it is read across a room, and it is the one
+ * thing on the badge that is not the guest's own words.
+ */
+const TICKET_ROLE_UZ = ['vip' => 'VIP', 'investor' => 'INVESTOR', 'visitor' => 'MEHMON', 'speaker' => 'SPIKER'];
+const TICKET_ROLE_EN = ['vip' => 'VIP', 'investor' => 'INVESTOR', 'visitor' => 'VISITOR', 'speaker' => 'SPEAKER'];
+
+/**
  * The alphabet the signature is written in: Crockford's base 32, which drops
  * I, L, O and U so that a number copied off a printed badge by hand cannot
  * turn a 1 into an I or a 0 into an O.
@@ -135,6 +144,83 @@ function ticket_url(int $id, array $config, bool $scan = false): string
     return ticket_base($config) . '/ticket/' . ticket_number($id, $config) . ($scan ? '?scan=1' : '');
 }
 
+/* ------------------------------------------------------- who has a ticket */
+
+/**
+ * The ids whose ticket the organisers released by hand.
+ *
+ * A flat list in the data directory rather than a column on the
+ * registration: the registration's shape is what the CSV exports and what the
+ * form validates, and a badge nobody has handed over yet is not something a
+ * guest wrote down. One file, rewritten under a lock, holding integers.
+ */
+function ticket_released_path(array $config): string
+{
+    return storage_dir($config) . '/tickets-released.json';
+}
+
+/** @return int[] */
+function ticket_released_all(array $config): array
+{
+    $path = ticket_released_path($config);
+    if (!is_file($path)) {
+        return [];
+    }
+    $read = json_decode((string) file_get_contents($path), true);
+    return is_array($read) ? array_values(array_filter(array_map('intval', $read))) : [];
+}
+
+function ticket_released(array $config, int $id): bool
+{
+    return in_array($id, ticket_released_all($config), true);
+}
+
+/** Hands a ticket over, or takes it back. Returns the new state. */
+function ticket_release(array $config, int $id, bool $on): bool
+{
+    $path = ticket_released_path($config);
+    $handle = fopen($path, 'c+b');
+    if ($handle === false || !flock($handle, LOCK_EX)) {
+        if ($handle) {
+            fclose($handle);
+        }
+        throw new RuntimeException('Cannot write the released-tickets file');
+    }
+    try {
+        rewind($handle);
+        $read = json_decode((string) stream_get_contents($handle), true);
+        $ids = is_array($read) ? array_values(array_filter(array_map('intval', $read))) : [];
+        $ids = array_values(array_diff($ids, [$id]));
+        if ($on) {
+            $ids[] = $id;
+        }
+        sort($ids);
+        ftruncate($handle, 0);
+        rewind($handle);
+        fwrite($handle, json_encode($ids));
+        fflush($handle);
+        @chmod($path, 0660);
+        return $on;
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
+}
+
+/**
+ * Whether this registration's badge may be opened at all.
+ *
+ * An investor and a visitor are given theirs by the form. A VIP and a speaker
+ * are invited rather than registered, so theirs waits until the organisers
+ * have spoken to them and released it — until then the address answers, and
+ * says so, rather than printing a badge nobody meant to issue.
+ */
+function ticket_available(array $config, array $row): bool
+{
+    return in_array(app_role($row['role'] ?? ''), TICKET_AUTO, true)
+        || ticket_released($config, (int) ($row['id'] ?? 0));
+}
+
 /** The registration a ticket belongs to, or null if it is gone. */
 function ticket_row(array $config, int $id): ?array
 {
@@ -155,7 +241,7 @@ function ticket_row(array $config, int $id): ?array
  */
 function ticket_badge(array $row, array $config): array
 {
-    $role = (string) ($row['role'] ?? 'guest');
+    $role = app_role($row['role'] ?? '');
     $status = (string) ($row['status'] ?? 'new');
     return [
         'id' => (int) $row['id'],
@@ -165,8 +251,8 @@ function ticket_badge(array $row, array $config): array
         'organisation' => (string) ($row['organisation'] ?? ''),
         'country' => (string) ($row['country'] ?? ''),
         'role' => $role,
-        'role_uz' => $role === 'speaker' ? 'SPIKER' : 'MEHMON',
-        'role_en' => $role === 'speaker' ? 'SPEAKER' : 'GUEST',
+        'role_uz' => TICKET_ROLE_UZ[$role] ?? 'MEHMON',
+        'role_en' => TICKET_ROLE_EN[$role] ?? 'GUEST',
         'status' => $status,
         // 'declined' is the admin's own word for it — see storage_set_status,
         // which is the only place a status is ever written.

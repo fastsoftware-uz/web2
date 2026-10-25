@@ -11,6 +11,18 @@
  * there is one form and one set of labels; only the first field differs.
  */
 
+/**
+ * How somebody takes part.
+ *
+ * A visitor and an investor are given their badge by the form; a VIP and a
+ * speaker are invited, and the committee releases theirs by hand. The list
+ * and that rule live in server/src/app.php — this is the same list said in
+ * the reader's language.
+ */
+export type Role = 'vip' | 'investor' | 'visitor' | 'speaker';
+
+export const ROLES: readonly Role[] = ['visitor', 'investor', 'vip', 'speaker'];
+
 export type Lang = 'uz' | 'ru' | 'en';
 
 export type Copy = {
@@ -21,8 +33,10 @@ export type Copy = {
   lead: string;
   dates: string;
   roleLabel: string;
-  roles: { guest: string; speaker: string };
-  roleHint: { guest: string; speaker: string };
+  roles: Record<Role, string>;
+  roleHint: Record<Role, string>;
+  /** Shown to the roles whose badge the committee issues by hand. */
+  ticketLater: string;
   fields: {
     full_name: string;
     organisation: string;
@@ -83,11 +97,15 @@ export const MESSAGES: Record<Lang, Copy> = {
     lead: 'Mehmon yoki spiker sifatida. Ikkalasidan ham bir xil maʼlumot soʻraladi.',
     dates: '25–27 noyabr 2026 · Toshkent',
     roleLabel: 'Ishtirok turi',
-    roles: { guest: 'Mehmon', speaker: 'Spiker' },
+    roles: { vip: 'VIP mehmon', investor: 'Investor', visitor: 'Mehmon', speaker: 'Spiker' },
     roleHint: {
-      guest: 'Forum sessiyalari va B2B uchrashuvlarida qatnashasiz.',
+      vip: 'Taklif asosida. Ishtirok tashkiliy qoʻmita bilan alohida kelishiladi.',
+      investor: 'Loyihalar bilan tanishish, B2B va B2G uchrashuvlar.',
+      visitor: 'Forum sessiyalarida qatnashasiz.',
       speaker: 'Sessiyalardan birida chiqish qilishni taklif qilasiz.',
     },
+    ticketLater:
+      'E-bilet avtomatik berilmaydi: tashkiliy qoʻmita siz bilan bogʻlanadi va beyjni shundan soʻng yuboradi.',
     fields: {
       full_name: 'Familiya, ism va sharif',
       organisation: 'Tashkilot',
@@ -150,11 +168,15 @@ export const MESSAGES: Record<Lang, Copy> = {
     lead: 'Как гость или как спикер. У обоих спрашивается одно и то же.',
     dates: '25–27 ноября 2026 · Ташкент',
     roleLabel: 'Тип участия',
-    roles: { guest: 'Гость', speaker: 'Спикер' },
+    roles: { vip: 'VIP-гость', investor: 'Инвестор', visitor: 'Гость', speaker: 'Спикер' },
     roleHint: {
-      guest: 'Участие в сессиях форума и B2B-встречах.',
+      vip: 'По приглашению. Участие согласовывается с оргкомитетом отдельно.',
+      investor: 'Знакомство с проектами, встречи B2B и B2G.',
+      visitor: 'Участие в сессиях форума.',
       speaker: 'Вы предлагаете выступление на одной из сессий.',
     },
+    ticketLater:
+      'Электронный билет не выдаётся автоматически: оргкомитет свяжется с вами и пришлёт бейдж после этого.',
     fields: {
       full_name: 'Фамилия, имя и отчество',
       organisation: 'Организация',
@@ -210,17 +232,21 @@ export const MESSAGES: Record<Lang, Copy> = {
   en: {
     docTitle: 'Registration — Tourism Investment Forum 2026',
     docDescription:
-      'First International Tourism Investment Forum, Tashkent, 25–27 November 2026. Register as a guest or as a speaker.',
+      'First International Tourism Investment Forum, Tashkent, 25–27 November 2026. Register as a visitor, an investor, a VIP guest or a speaker.',
     back: 'Back to the site',
     title: 'Registration',
-    lead: 'As a guest or as a speaker. Both are asked the same questions.',
+    lead: 'As a visitor, an investor, a VIP guest or a speaker. All four are asked the same questions.',
     dates: '25–27 November 2026 · Tashkent',
     roleLabel: 'Taking part as',
-    roles: { guest: 'Guest', speaker: 'Speaker' },
+    roles: { vip: 'VIP guest', investor: 'Investor', visitor: 'Visitor', speaker: 'Speaker' },
     roleHint: {
-      guest: 'Attending the sessions and the B2B meetings.',
+      vip: 'By invitation. Attendance is arranged with the organising committee.',
+      investor: 'Seeing the projects, and the B2B and B2G meetings.',
+      visitor: 'Attending the sessions of the forum.',
       speaker: 'Proposing to speak in one of the sessions.',
     },
+    ticketLater:
+      'The e-ticket is not issued automatically: the organising committee will be in touch and send the badge afterwards.',
     fields: {
       full_name: 'Full name',
       organisation: 'Organisation',

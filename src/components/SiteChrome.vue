@@ -425,9 +425,18 @@ function choose(code: Lang) {
      not by width, or it pushes the bar open on small screens. */
   display: block;
   flex: 0 0 auto;
-  /* Floored lower than the design size: at 280px the bar carried the lockup,
-     the language button and the menu button past the edge of the screen. */
-  height: clamp(2.5rem, 6.5vw, 4rem);
+  /**
+   * Sized against the section links beside it, not against the bar.
+   *
+   * At 4rem the mark set its own three lines at about 11px while the links
+   * next to them were 17px, and the emblem over them came out at 28px — a
+   * mark that reads as a caption to the navigation rather than as the thing
+   * the navigation hangs off. At 5rem the type lands near the links' size and
+   * the emblem is half as big again. The floor is still low, because at
+   * 280px the bar has to carry the mark, the language button and the menu
+   * button between the edges of the screen.
+   */
+  height: clamp(2.75rem, 7vw, 5rem);
 }
 
 /* The section links. Hidden below 68rem, where the overlay takes over — the

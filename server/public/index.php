@@ -87,6 +87,24 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
     exit;
 }
 
+/**
+ * Handing a VIP's or a speaker's badge over, or taking it back.
+ *
+ * The two roles that are invited rather than registered have no badge until
+ * somebody here decides they do — see TICKET_AUTO in src/app.php.
+ */
+if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'ticket') {
+    if (admin_check_token()) {
+        try {
+            ticket_release($config, (int) ($_POST['id'] ?? 0), ($_POST['on'] ?? '') === '1');
+        } catch (Throwable $e) {
+            error_log('[forum-admin] ticket: ' . $e->getMessage());
+        }
+    }
+    header('Location: ?' . ($_POST['back'] ?? ''));
+    exit;
+}
+
 if ($authed && $action === 'csv') {
     $rows = admin_filter(storage_all($config), $_GET);
     header('Content-Type: text/csv; charset=utf-8');
@@ -122,7 +140,7 @@ function admin_filter(array $rows, array $q): array
     $status = (string) ($q['status'] ?? '');
 
     return array_values(array_filter($rows, static function (array $row) use ($needle, $role, $status): bool {
-        if ($role !== '' && ($row['role'] ?? '') !== $role) {
+        if ($role !== '' && app_role($row['role'] ?? '') !== $role) {
             return false;
         }
         if ($status !== '' && ($row['status'] ?? 'new') !== $status) {
@@ -151,9 +169,10 @@ if ($authed) {
     }
 }
 
-$counts = ['all' => count($all), 'guest' => 0, 'speaker' => 0, 'new' => 0, 'confirmed' => 0, 'declined' => 0];
+$counts = ['all' => count($all), 'vip' => 0, 'investor' => 0, 'visitor' => 0, 'speaker' => 0,
+    'new' => 0, 'confirmed' => 0, 'declined' => 0];
 foreach ($all as $row) {
-    $r = (string) ($row['role'] ?? '');
+    $r = app_role($row['role'] ?? '');
     $s = (string) ($row['status'] ?? 'new');
     if (isset($counts[$r])) {
         $counts[$r]++;
@@ -169,7 +188,7 @@ $query = http_build_query(array_filter([
     'status' => $_GET['status'] ?? '',
 ]));
 
-$ROLE_LABEL = ['guest' => 'Mehmon', 'speaker' => 'Spiker'];
+$ROLE_LABEL = ['vip' => 'VIP', 'investor' => 'Investor', 'visitor' => 'Mehmon', 'speaker' => 'Spiker'];
 /**
  * Short names for the six directions.
  *
@@ -243,12 +262,11 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
     <a class="tile <?= ($_GET['role'] ?? '') === '' && ($_GET['status'] ?? '') === '' ? 'tile--on' : '' ?>" href="?">
       <b><?= $counts['all'] ?></b><span>Jami</span>
     </a>
-    <a class="tile <?= ($_GET['role'] ?? '') === 'guest' ? 'tile--on' : '' ?>" href="?role=guest">
-      <b><?= $counts['guest'] ?></b><span>Mehmon</span>
-    </a>
-    <a class="tile <?= ($_GET['role'] ?? '') === 'speaker' ? 'tile--on' : '' ?>" href="?role=speaker">
-      <b><?= $counts['speaker'] ?></b><span>Spiker</span>
-    </a>
+    <?php foreach ($ROLE_LABEL as $k => $v): ?>
+      <a class="tile <?= ($_GET['role'] ?? '') === $k ? 'tile--on' : '' ?>" href="?role=<?= $k ?>">
+        <b><?= $counts[$k] ?></b><span><?= $v ?></span>
+      </a>
+    <?php endforeach; ?>
     <a class="tile <?= ($_GET['status'] ?? '') === 'new' ? 'tile--on' : '' ?>" href="?status=new">
       <b><?= $counts['new'] ?></b><span>Yangi</span>
     </a>
@@ -320,10 +338,30 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
             <noscript><button type="submit">Saqlash</button></noscript>
           </form>
         </td>
-        <?php /* The guest already has this link — it came back with their
-                 registration. It is here for the times they lost the mail. */ ?>
-        <td class="nowrap">
-          <a class="btn btn--quiet" href="/ticket/<?= app_h(ticket_number((int) $row['id'], $config)) ?>" target="_blank" rel="noopener">E-bilet</a>
+        <?php
+        /**
+         * An investor and a visitor already have this link — it came back
+         * with their registration, and the button is here for the times
+         * they lost it. A VIP and a speaker have no badge until it is
+         * handed over here.
+         */
+        $auto = in_array(app_role($row['role'] ?? ''), TICKET_AUTO, true);
+        $given = $auto || ticket_released($config, (int) $row['id']);
+        ?>
+        <td class="nowrap ticket">
+          <?php if ($given): ?>
+            <a class="btn btn--quiet" href="/ticket/<?= app_h(ticket_number((int) $row['id'], $config)) ?>" target="_blank" rel="noopener">E-bilet</a>
+          <?php endif; ?>
+          <?php if (!$auto): ?>
+            <form method="post" class="ticket__give">
+              <input type="hidden" name="action" value="ticket">
+              <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+              <input type="hidden" name="id" value="<?= (int) ($row['id'] ?? 0) ?>">
+              <input type="hidden" name="back" value="<?= app_h($query) ?>">
+              <input type="hidden" name="on" value="<?= $given ? '0' : '1' ?>">
+              <button type="submit" class="btn btn--quiet"><?= $given ? 'Bekor qilish' : 'Biletni berish' ?></button>
+            </form>
+          <?php endif; ?>
         </td>
       </tr>
       <?php if (($row['note'] ?? '') !== ''): ?>

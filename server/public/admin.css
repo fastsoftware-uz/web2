@@ -187,8 +187,23 @@ td b { color: var(--ink); font-weight: 600; }
   font-weight: 700;
   white-space: nowrap;
 }
-.pill--guest { background: rgb(29 53 119 / 0.1); color: var(--cobalt); }
+.pill--guest,
+.pill--visitor { background: rgb(29 53 119 / 0.1); color: var(--cobalt); }
+.pill--investor { background: rgb(0 117 147 / 0.12); color: #00566e; }
+.pill--vip { background: rgb(179 36 59 / 0.1); color: #8c1c2e; }
 .pill--speaker { background: rgb(153 95 0 / 0.12); color: var(--gold); }
+
+/* The badge column: a link when there is one, and the button that hands a
+   VIP's or a speaker's badge over when there is not. */
+.ticket {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+.ticket__give {
+  margin: 0;
+}
 
 .status select { min-width: 9rem; }
 

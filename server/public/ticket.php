@@ -41,6 +41,10 @@ if ($number === '') {
 
 $id = $number === '' ? null : ticket_id($number, $config);
 $row = $id === null ? null : ticket_row($config, $id);
+/* A VIP's or a speaker's badge waits for the organisers to release it. The
+   number is theirs and the address answers; it simply has nothing to print
+   yet, and says which. */
+$waiting = $row !== null && !ticket_available($config, $row);
 $scan = isset($_GET['scan']);
 
 header('Content-Type: text/html; charset=utf-8');
@@ -133,8 +137,8 @@ function ticket_mark(array $config): string
 }
 
 $event = ticket_event($config);
-$badge = $row === null ? null : ticket_badge($row, $config);
-if ($badge === null) {
+$badge = $row === null || $waiting ? null : ticket_badge($row, $config);
+if ($row === null) {
     http_response_code(404);
 }
 
@@ -370,7 +374,21 @@ $h = static fn(?string $v): string => htmlspecialchars((string) $v, ENT_QUOTES, 
 </style>
 </head>
 <body>
-<?php if ($badge === null): ?>
+<?php if ($waiting): ?>
+  <div class="missing">
+    <h1>Bilet hali berilmagan</h1>
+    <p>
+      Sizning ishtirokingiz tashkiliy qoʻmita bilan alohida kelishiladi.
+      Beyj shu kelishuvdan soʻng aynan shu havolada ochiladi.<br>
+      <em>Your attendance is arranged with the organising committee. The badge
+      opens at this same address once it has been.</em>
+    </p>
+    <p>
+      <?= $h($event['organiser_uz']) ?><br>
+      investforum@uzbektourism.uz
+    </p>
+  </div>
+<?php elseif ($badge === null): ?>
   <div class="missing">
     <h1>Bilet topilmadi</h1>
     <p>

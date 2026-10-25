@@ -15,7 +15,14 @@
  */
 import { computed, reactive, ref, watch } from 'vue';
 
-import { DIRECTION_IDS, MESSAGES, ORGANISER_EMAIL, type Lang } from '../lib/register-copy';
+import {
+  DIRECTION_IDS,
+  MESSAGES,
+  ORGANISER_EMAIL,
+  ROLES,
+  type Lang,
+  type Role,
+} from '../lib/register-copy';
 
 const props = withDefaults(
   defineProps<{
@@ -51,7 +58,7 @@ const REQUIRED = ['full_name', 'organisation', 'position', 'country', 'email', '
 type Required = (typeof REQUIRED)[number];
 
 const form = reactive({
-  role: 'guest' as 'guest' | 'speaker',
+  role: 'visitor' as Role,
   full_name: '',
   organisation: '',
   position: '',
@@ -93,7 +100,7 @@ function validate(): boolean {
     const value = form[key].trim();
     errors[key] = key === 'email' ? !EMAIL.test(value) : value.length < 2;
   }
-  errors.role = form.role !== 'guest' && form.role !== 'speaker';
+  errors.role = !ROLES.includes(form.role);
   return !Object.values(errors).some(Boolean);
 }
 
@@ -223,7 +230,11 @@ const mailHref = computed(() => {
 
   <!-- The e-ticket. A guest who has just filled in a form leaves with
        something in their hand rather than with a promise of a mail. -->
-  <div v-if="ticket" class="reg__ticket">
+  <!-- A VIP and a speaker are invited rather than registered, so the badge
+       waits until the committee has been in touch. Saying so here is the
+       difference between "later" and "something went wrong". -->
+  <p v-if="!ticket" class="reg__ticketLater">{{ t.ticketLater }}</p>
+  <div v-else class="reg__ticket">
     <p class="reg__ticketTitle">{{ t.ticketTitle }}</p>
     <p class="reg__ticketBody">{{ t.ticketBody }}</p>
     <a class="btn btn--solid reg__ticketOpen" :href="ticket.url" target="_blank" rel="noopener">
@@ -256,7 +267,7 @@ const mailHref = computed(() => {
   <form class="reg__form" novalidate @submit.prevent="submit">
     <fieldset class="reg__roles">
       <legend>{{ t.roleLabel }}</legend>
-      <label v-for="role in (['guest', 'speaker'] as const)" :key="role" class="reg__role">
+      <label v-for="role in ROLES" :key="role" class="reg__role">
         <input v-model="form.role" type="radio" name="role" :value="role" />
         <span class="reg__roleBody">
           <strong>{{ t.roles[role] }}</strong>
@@ -613,6 +624,13 @@ const mailHref = computed(() => {
 }
 /* The e-ticket block. It is the one thing on this card a reader has to act
    on, so it is the one thing that carries the forum's gold. */
+.reg__ticketLater {
+  margin-block: 1.25rem 0;
+  padding-block-start: 1rem;
+  border-block-start: 1px solid var(--hairline);
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
 .reg__ticket {
   margin-block: 1.5rem 0;
   padding: 1.1rem 1.2rem 1.3rem;

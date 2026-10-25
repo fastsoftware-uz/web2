@@ -133,7 +133,13 @@ try {
  */
 $ticket = null;
 try {
-    $ticket = ['number' => ticket_number($id, $config), 'url' => ticket_url($id, $config)];
+    // A VIP and a speaker are invited rather than registered: the organisers
+    // speak to them and release the badge from the admin. The number exists
+    // either way — it is the registration's id signed — but it is not handed
+    // back here, and the address says so until it is released.
+    if (in_array($row['role'], TICKET_AUTO, true)) {
+        $ticket = ['number' => ticket_number($id, $config), 'url' => ticket_url($id, $config)];
+    }
 } catch (Throwable $e) {
     error_log('[forum-register] ticket: ' . $e->getMessage());
 }
@@ -147,9 +153,9 @@ $notify = (string) ($config['notify_email'] ?? '');
 if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
     try {
         $lines = ["#{$id} — {$row['role']}"];
-        if ($ticket !== null) {
-            $lines[] = 'e-ticket: ' . $ticket['url'];
-        }
+        $lines[] = $ticket !== null
+            ? 'e-ticket: ' . $ticket['url']
+            : 'e-ticket: not issued automatically for this role — release it in the admin';
         foreach (['full_name', 'organisation', 'position', 'country', 'email', 'phone', 'direction', 'note'] as $f) {
             if ($row[$f] !== '') {
                 $lines[] = "{$f}: {$row[$f]}";

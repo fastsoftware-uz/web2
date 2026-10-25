@@ -55,7 +55,7 @@ chiqqan satrni `server/src/config.php` dagi `admin_password_hash` ga qoʻying.
 Kirgach birinchi koʻradigan sahifangiz. Yuqorida beshta raqam:
 
 - **Jami** — kelgan arizalar soni
-- **Mehmon** / **Spiker** — ariza turi boʻyicha
+- **VIP** / **Investor** / **Mehmon** / **Spiker** — ishtirok turi boʻyicha
 - **Yangi** — hali koʻrib chiqilmagan
 - **Tasdiqlangan** — siz tasdiqlagan
 
@@ -88,20 +88,38 @@ kirill harflari toʻgʻri ochiladi, ustunlar nuqta-vergul bilan ajratilgan.
 
 ## 2a. E-bilet
 
-Mehmon roʻyxatdan oʻtgan zahoti ekranda **E-biletingiz tayyor** degan yozuv va
-havola chiqadi. Oʻsha havola — uning beyji; siz hech narsa yubormaysiz.
+### Kimga avtomatik beriladi
 
-Adminkada har bir qatorning oʻng chekkasida **E-bilet** tugmasi bor. U mehmon
-koʻrgan sahifani ochadi: mehmon havolani yoʻqotgan boʻlsa, shu tugmadan
-nusxalab yuborasiz.
+| Ishtirok turi | E-bilet |
+|---|---|
+| **Mehmon** | Roʻyxatdan oʻtgan zahoti avtomatik |
+| **Investor** | Roʻyxatdan oʻtgan zahoti avtomatik |
+| **VIP mehmon** | Avtomatik berilmaydi — siz berasiz |
+| **Spiker** | Avtomatik berilmaydi — siz berasiz |
+
+Mehmon va investor formani yuborgan zahoti ekranda **E-biletingiz tayyor**
+degan yozuv va havola chiqadi. Oʻsha havola — uning beyji; siz hech narsa
+yubormaysiz.
+
+VIP va spikerga esa ekranda «tashkiliy qoʻmita siz bilan bogʻlanadi» deb
+yoziladi, beyj esa ochilmaydi. Siz u bilan gaplashib, kelishgandan soʻng
+adminkadagi **Biletni berish** tugmasini bosasiz — shundan keyin oʻsha
+havola ochiladi va beyjni yuborsangiz boʻladi. Kerak boʻlsa **Bekor qilish**
+bilan qaytarib olasiz.
+
+Adminkada har bir qatorning oʻng chekkasida **E-bilet** tugmasi bor. U
+ishtirokchi koʻradigan sahifani ochadi: havolani yoʻqotgan boʻlsa, shu
+tugmadan nusxalab yuborasiz.
 
 ### Beyj qanday koʻrinadi
 
 Bitta A4 varaq, toʻrtga boʻlingan:
 
 - **Yuqori chapda** — beyjning oʻzbekcha yuzi: forum belgisi, ism, lavozim,
-  tashkilot, QR kod, sana va **MEHMON** yoki **SPIKER**;
-- **Yuqori oʻngda** — xuddi shu, inglizcha (**GUEST** / **SPEAKER**);
+  tashkilot, QR kod, sana va ishtirok turi: **MEHMON**, **INVESTOR**, **VIP**
+  yoki **SPIKER**;
+- **Yuqori oʻngda** — xuddi shu, inglizcha (**VISITOR**, **INVESTOR**, **VIP**,
+  **SPEAKER**);
 - **Pastki chapda** — forum sanasi, shahri va tashkiliy qoʻmita manzili;
 - **Pastki oʻngda** — yoʻriqnoma, buklash chizmasi va bilet raqami.
 
@@ -308,6 +326,7 @@ qoʻshadi va siz bu yerdan tahrirlaysiz.
 | Saqladim, lekin saytda oʻzgarmadi | Brauzerni `Ctrl+F5` bilan yangilang. Baribir boʻlmasa — **Nashr → Saytni qayta nashr etish** |
 | “Sahifa eskirgan” | Adminka uzoq ochiq turgan. Sahifani yangilang va qaytadan saqlang |
 | «Bilet topilmadi» | Havola toʻliq nusxalanmagan. Adminkadagi **E-bilet** tugmasidan qayta oling |
+| «Bilet hali berilmagan» | VIP yoki spiker: adminkadan **Biletni berish** tugmasini bosing |
 | Ariza kelmayapti | `https://<sayt>/api/health` ni oching. `{"ok":true…}` chiqmasa, dasturchiga ayting |
 
 Boshqa hamma holatda — dasturchiga murojaat qiling va **nima qilganingizni**

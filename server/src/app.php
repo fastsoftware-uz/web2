@@ -34,8 +34,36 @@ function app_config(): array
     return $config;
 }
 
-/** The two kinds of participant. Both answer the same questions. */
-const ROLES = ['guest', 'speaker'];
+/**
+ * The four kinds of participant. All four answer the same questions.
+ *
+ * The order is the order the form offers them in. Two of them get their
+ * e-ticket from the form itself and two do not — see TICKET_AUTO below.
+ */
+const ROLES = ['vip', 'investor', 'visitor', 'speaker'];
+
+/**
+ * Roles whose e-ticket is issued the moment the form is sent.
+ *
+ * A visitor and an investor register themselves and walk in; a VIP and a
+ * speaker are invited, their attendance is arranged by hand, and a badge
+ * issued before that conversation has happened would be a badge the
+ * organisers did not mean to give. So those two are released one at a time
+ * from the admin — see ticket_available() in src/ticket.php.
+ */
+const TICKET_AUTO = ['investor', 'visitor'];
+
+/**
+ * 'guest' was what a visitor was called until 25 October 2026.
+ *
+ * Rows stored under the old word keep it; everything that reads a role goes
+ * through here, so the admin, the badge and the counts all say one thing.
+ */
+function app_role(?string $role): string
+{
+    $role = (string) $role;
+    return $role === 'guest' ? 'visitor' : $role;
+}
 
 /**
  * The thematic directions, as ids.
@@ -138,6 +166,8 @@ function app_validate(array $input, string $ip): array
     ];
 
     $bad = [];
+    // A page cached before the roles were renamed still posts 'guest'.
+    $row['role'] = app_role($row['role']);
     if (!in_array($row['role'], ROLES, true)) {
         $bad[] = 'role';
     }

@@ -101,10 +101,17 @@ is not a password: whoever holds the ticket can open it, which is the point of
 sending it to them. The page shows only what a badge shows — never the e-mail
 address, the telephone number or the note.
 
-**Issued on registration, approved in the admin.** The guest leaves the form
-with the badge in their hand; the badge carries the status, so a registration
-the organisers decline says `BEKOR QILINGAN · CANCELLED` on its own face and
-the scan view turns red. Nothing has to be re-sent.
+**Issued on registration for two of the four roles.** A visitor and an
+investor register themselves and leave the form with the badge in their hand.
+A VIP and a speaker are invited rather than registered — their attendance is
+arranged by hand — so their badge waits: the address answers and says it is
+not issued yet, and one click in the admin releases it. The list and the rule
+are `ROLES` and `TICKET_AUTO` in `src/app.php`; what has been released by hand
+is a list of ids in `data/tickets-released.json`.
+
+**Approval stays with the organisers.** The badge carries the status, so a
+registration they decline says `BEKOR QILINGAN · CANCELLED` on its own face
+and the scan view turns red. Nothing has to be re-sent.
 
 **The QR code is drawn by PHP**, in `src/qr.php` — byte mode, level M,
 versions 1 to 10, as SVG. No composer, no GD, and nothing that depends on

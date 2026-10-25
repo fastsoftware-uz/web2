@@ -34,18 +34,41 @@ export interface ForumParticipant {
   who: I18nText;
 }
 
+/** One line of a session's own timetable. */
+export interface SessionItem {
+  start: string;
+  /** Absent where the document leaves it absent, or states it impossibly. */
+  end?: string;
+  title: I18nText;
+  speaker?: I18nText;
+}
+
 export interface ForumSession {
   id: string;
   number: number;
   title: I18nText;
   workingTitle: string;
   topics: I18nText;
+  /** The hours the session occupies, as one string: "14:05–18:00". */
+  time?: string;
+  items?: SessionItem[];
 }
 
 export interface ProgrammeItem {
   start: string;
-  end: string;
-  kind: 'break' | 'opening' | 'keynote' | 'plenary' | 'showcase' | 'b2b' | 'closing';
+  /** The last item of the day has a start and no end. */
+  end?: string;
+  kind:
+    | 'registration'
+    | 'break'
+    | 'opening'
+    | 'speech'
+    | 'keynote'
+    | 'plenary'
+    | 'parallel'
+    | 'showcase'
+    | 'b2b'
+    | 'closing';
   plenary?: number;
   title: I18nText;
   body?: I18nText;

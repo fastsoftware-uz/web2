@@ -75,7 +75,7 @@ const dates = computed(() => {
 
       <div class="closing__foot">
         <p class="closing__event">{{ event ? tr(event.name) : '' }}</p>
-        <p class="closing__dates">{{ dates }}<template v-if="event">· {{ tr(event.within) }}</template></p>
+        <p class="closing__dates">{{ dates }}<template v-if="event"> · {{ tr(event.within) }}</template></p>
       </div>
     </div>
   </section>

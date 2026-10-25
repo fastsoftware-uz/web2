@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * Chapter V — the day, hour by hour, and the four key sessions under it.
+ * Chapter V — the day, hour by hour, and the three sessions under it.
  *
  * The timeline is a description list rather than a table: the rows are not
  * comparable along a second axis, and a <dl> keeps the time attached to the
@@ -12,7 +12,7 @@
 import { computed, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import type { ProgrammeItem } from '../lib/forum-types';
+import type { ForumSession, ProgrammeItem } from '../lib/forum-types';
 import { useChapterTimeline } from '../lib/motion';
 import { tr, useStore } from '../lib/state';
 
@@ -25,6 +25,20 @@ const programme = computed(() => forum.value?.programme);
 const sessions = computed(() => forum.value?.sessions ?? []);
 
 const keyOf = (item: ProgrammeItem) => `${item.start}-${item.kind}`;
+
+/**
+ * Which session timetables are open.
+ *
+ * The three sessions run at the same time, so a reader is choosing between
+ * them rather than reading all three: the cards show what each one is about,
+ * and the hour-by-hour list is one click away.
+ */
+const openSessions = ref(new Set<string>());
+function toggleSession(session: ForumSession) {
+  const next = new Set(openSessions.value);
+  if (!next.delete(session.id)) next.add(session.id);
+  openSessions.value = next;
+}
 
 function toggle(item: ProgrammeItem) {
   const key = keyOf(item);
@@ -61,8 +75,12 @@ useChapterTimeline(
         <div v-for="item in programme.items" :key="keyOf(item)" class="day__row" :class="`day__row--${item.kind}`">
           <dt class="day__time">
             <span class="day__clock">{{ item.start }}</span>
-            <span class="day__dash" aria-hidden="true">–</span>
-            <span class="day__clock day__clock--end">{{ item.end }}</span>
+            <!-- The last item of the day has no end in the organiser's own
+                 programme, and inventing one would be inventing a fact. -->
+            <template v-if="item.end">
+              <span class="day__dash" aria-hidden="true">–</span>
+              <span class="day__clock day__clock--end">{{ item.end }}</span>
+            </template>
           </dt>
           <dd class="day__item">
             <p class="day__kind">{{ kindLabel(item) }}</p>
@@ -87,12 +105,15 @@ useChapterTimeline(
       </dl>
 
 
-      <!-- The four key sessions --------------------------------------------- -->
+      <!-- The three sessions, each with its own hours ----------------------- -->
       <h3 class="programme__sub">{{ t('programme.sessionsTitle') }}</h3>
 
       <ol class="sessions">
         <li v-for="session in sessions" :key="session.id" class="sessions__item card">
-          <span class="sessions__n">{{ String(session.number).padStart(2, '0') }}</span>
+          <p class="sessions__head">
+            <span class="sessions__n">{{ String(session.number).padStart(2, '0') }}</span>
+            <span v-if="session.time" class="sessions__time">{{ session.time }}</span>
+          </p>
           <h4>{{ tr(session.title) }}</h4>
           <p class="sessions__topics">{{ tr(session.topics) }}</p>
           <!-- The English title the organiser gave the session, under the
@@ -101,6 +122,33 @@ useChapterTimeline(
           <p class="sessions__working">
             <em>{{ session.workingTitle }}</em>
           </p>
+
+          <template v-if="session.items?.length">
+            <button
+              type="button"
+              class="day__toggle sessions__toggle"
+              :aria-expanded="openSessions.has(session.id)"
+              @click="toggleSession(session)"
+            >
+              {{ openSessions.has(session.id) ? t('programme.sessionHide') : t('programme.sessionProgramme') }}
+              <span class="day__chev" :class="{ 'day__chev--up': openSessions.has(session.id) }" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="12" height="12">
+                  <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+              </span>
+            </button>
+            <dl v-if="openSessions.has(session.id)" class="run">
+              <div v-for="(item, i) in session.items" :key="i" class="run__row">
+                <dt class="run__time">
+                  {{ item.start }}<template v-if="item.end">–{{ item.end }}</template>
+                </dt>
+                <dd class="run__item">
+                  {{ tr(item.title) }}
+                  <span v-if="item.speaker" class="run__speaker">{{ tr(item.speaker) }}</span>
+                </dd>
+              </div>
+            </dl>
+          </template>
         </li>
       </ol>
     </div>
@@ -233,6 +281,10 @@ h2 {
   display: grid;
   gap: 1rem;
   counter-reset: none;
+  /* Each card is its own height: one of them opens a timetable of a dozen
+     lines, and stretching the other two to match leaves them holding a
+     paragraph in the middle of an empty card. */
+  align-items: start;
 }
 @media (min-width: 56rem) {
   .sessions {
@@ -244,11 +296,64 @@ h2 {
   gap: 0.5rem;
   padding: clamp(1.25rem, 2.5vw, 1.75rem);
 }
+/* Three cards side by side rather than two and a gap. */
+@media (min-width: 72rem) {
+  .sessions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.sessions__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+}
 .sessions__n {
   font-size: 0.75rem;
   letter-spacing: 0.2em;
   color: var(--accent-soft);
   font-variant-numeric: tabular-nums;
+}
+/* The three run at once, so the hours are what a reader compares them on. */
+.sessions__time {
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
+}
+.sessions__toggle {
+  justify-self: start;
+  margin-block-start: 0.25rem;
+}
+
+/* One session's own timetable. */
+.run {
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.1rem;
+}
+.run__row {
+  display: grid;
+  grid-template-columns: 5.6rem 1fr;
+  gap: 0.75rem;
+  padding-block: 0.5rem;
+  border-block-start: 1px solid var(--hairline);
+  font-size: 0.85rem;
+}
+.run__time {
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.run__item {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.run__speaker {
+  display: block;
+  margin-block-start: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
 }
 .sessions h4 {
   margin: 0;
