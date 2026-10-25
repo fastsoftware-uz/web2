@@ -126,9 +126,17 @@ useChapterTimeline(
         <span>{{ tr(event.city) }}</span>
       </p>
 
-      <!-- One action, not two. The enquiry is reachable from the bar and
-           from the end of the page; on the title card it was a second button
-           competing with the one thing a reader has come to do. -->
+      <!--
+        Two actions, at the client's asking on 25 October 2026.
+
+        It was one for a while, and for a reason: a second button competes
+        with the one thing most readers have come to do. What changed is that
+        registration opened — somebody who already knows they are coming
+        should not have to read a chapter to find the form. So the portfolio
+        keeps the solid gold and registration stands beside it outlined,
+        which reads as a first and a second rather than as a choice between
+        equals.
+      -->
       <div class="prologue__actions prologue__reveal">
         <!-- No aria-label: an accessible name that does not contain the
              visible words is a name speech-input users cannot say. The count
@@ -144,6 +152,12 @@ useChapterTimeline(
             <span class="sr-only">{{ t('prologue.ctaUnit') }}</span>
           </template>
           <ActionIcon name="down" class="prologue__nudge" />
+        </button>
+
+        <button type="button" class="btn prologue__register" @click="scrollToId('epilogue')">
+          <ActionIcon name="enquiry" />
+          <span>{{ t('nav.register') }}</span>
+          <ActionIcon name="right" class="prologue__onward" />
         </button>
       </div>
 
@@ -251,6 +265,66 @@ useChapterTimeline(
   line-height: 1.7;
 }
 
+/**
+ * Registration, beside the portfolio.
+ *
+ * Two things move on it, and both say the same thing twice over: the arrow
+ * leans the way the button goes, the way every arrow on the site does, and
+ * once in a while a line of gold crosses the face of it — the same gold as
+ * the seams between the chapters, at the speed of something catching the
+ * light rather than something demanding attention. Both stop under
+ * `prefers-reduced-motion`, with every other animation on the page.
+ */
+.prologue__register {
+  position: relative;
+  overflow: hidden;
+}
+.prologue__register::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: -45%;
+  inline-size: 34%;
+  /**
+   * A gleam, not a grey bar.
+   *
+   * Two things were wrong with the obvious way of writing this. `color-mix`
+   * with `transparent` mixes a colour with transparent *black*, which drains
+   * it; and gold at 40% over navy composites to grey whatever the colour,
+   * because the two are that far apart. So the band is near-opaque at its
+   * centre and it is screened over the button, which adds light instead of
+   * averaging it — the way a sheen behaves on a lit surface.
+   *
+   * It is ::before because every .btn already has an ::after: the keyline
+   * inset three pixels inside it, at 18% opacity. Hanging the gleam on the
+   * same pseudo-element inherited that opacity and that border, and the
+   * sweep came out as a grey rectangle with two hard edges.
+   */
+  background: linear-gradient(
+    100deg,
+    rgb(228 187 125 / 0) 0%,
+    rgb(240 206 152 / 0.78) 48%,
+    rgb(240 206 152 / 0.78) 52%,
+    rgb(228 187 125 / 0) 100%
+  );
+  mix-blend-mode: screen;
+  animation: sheen 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  pointer-events: none;
+}
+.prologue__register .prologue__onward {
+  animation: onward 2.4s ease-in-out infinite;
+}
+.prologue__register:hover .prologue__onward,
+.prologue__register:focus-visible .prologue__onward {
+  animation-play-state: paused;
+}
+/* Nothing crosses a button somebody is already pressing. */
+.prologue__register:hover::before,
+.prologue__register:focus-visible::before {
+  animation-play-state: paused;
+  opacity: 0;
+}
+
 /* The arrow keeps nodding at the page below, the same cue the scroll hint
    gives, because the button's whole promise is that there is more down
    there. It stops under `prefers-reduced-motion`, with everything else. */
@@ -288,6 +362,28 @@ useChapterTimeline(
 }
 .prologue__scroll svg {
   animation: nudge 2.4s ease-in-out infinite;
+}
+
+@keyframes sheen {
+  0% {
+    translate: 0;
+  }
+  16% {
+    translate: 400%;
+  }
+  100% {
+    translate: 400%;
+  }
+}
+
+@keyframes onward {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(3px);
+  }
 }
 
 @keyframes nudge {
