@@ -13,8 +13,9 @@ oʻrnatish va server sozlamalari alohida faylda: [`README.md`](README.md).
 |---|---|
 | **Roʻyxatdan oʻtganlar** | Arizalarni oʻqish, qidirish, holatini oʻzgartirish, Excel uchun CSV yuklab olish |
 | **Saytni tahrirlash → Boʻlimlar** | Sayt yozadigan har bir matn: sana, shahar, dastur, sessiyalar, aloqa, barchasi uch tilda |
-| **Saytni tahrirlash → Loyihalar** | 83 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
+| **Saytni tahrirlash → Loyihalar** | 86 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
 | **Saytni tahrirlash → Nashr** | Qilingan oʻzgarishlar roʻyxati; har birini yoki hammasini asl holiga qaytarish |
+| **E-bilet** | Har bir mehmonning beyji: ochish, chop etish, havolasini yuborish |
 
 **Muhim:** saytda oʻzgartirilgan narsa **darhol** chiqadi. Qayta qurish
 (`build`), qayta yuklash (`deploy`) shart emas — saqlash tugmasini bosganingiz
@@ -85,6 +86,53 @@ kirill harflari toʻgʻri ochiladi, ustunlar nuqta-vergul bilan ajratilgan.
 
 ---
 
+## 2a. E-bilet
+
+Mehmon roʻyxatdan oʻtgan zahoti ekranda **E-biletingiz tayyor** degan yozuv va
+havola chiqadi. Oʻsha havola — uning beyji; siz hech narsa yubormaysiz.
+
+Adminkada har bir qatorning oʻng chekkasida **E-bilet** tugmasi bor. U mehmon
+koʻrgan sahifani ochadi: mehmon havolani yoʻqotgan boʻlsa, shu tugmadan
+nusxalab yuborasiz.
+
+### Beyj qanday koʻrinadi
+
+Bitta A4 varaq, toʻrtga boʻlingan:
+
+- **Yuqori chapda** — beyjning oʻzbekcha yuzi: forum belgisi, ism, lavozim,
+  tashkilot, QR kod, sana va **MEHMON** yoki **SPIKER**;
+- **Yuqori oʻngda** — xuddi shu, inglizcha (**GUEST** / **SPEAKER**);
+- **Pastki chapda** — forum sanasi, shahri va tashkiliy qoʻmita manzili;
+- **Pastki oʻngda** — yoʻriqnoma, buklash chizmasi va bilet raqami.
+
+Mehmon varaqni chop etib, punktir chiziqlar boʻyicha buklaydi — ikki yuzida
+ham ismi boʻladi.
+
+### Bilet raqami
+
+`TITF26-000417-K7F3QA` koʻrinishida. Oʻrtadagi raqam — ariza raqami, oxirgi
+olti belgi — imzo. Imzosiz yoki notoʻgʻri imzo bilan havola ochilmaydi, yaʼni
+birovning biletini raqamni oʻzgartirib topib boʻlmaydi.
+
+### Kirishda tekshirish
+
+Beyjdagi QR kodni oddiy telefon kamerasi bilan skanerlaysiz — maxsus qurilma
+kerak emas. Ochilgan sahifada:
+
+| Rang | Maʼnosi |
+|---|---|
+| **Yashil** — «Bilet haqiqiy» | Kirishga ruxsat. Ostida «tasdiqlangan» yoki «tasdiq kutilmoqda» deb yoziladi |
+| **Qizil** — «Bilet bekor qilingan» | Kirishga ruxsat berilmaydi |
+
+Sahifada mehmonning ismi, lavozimi, tashkiloti va davlati koʻrinadi.
+**Elektron pochtasi va telefon raqami koʻrinmaydi** — beyjda ham yozilmagan.
+
+Biror mehmonning bileti amal qilmasligi kerak boʻlsa, uning holatini
+**Rad etilgan** qilib qoʻying: beyj ham, QR kod ham shu zahoti qizil holatga
+oʻtadi. Qaytarish uchun holatni **Tasdiqlangan** qilsangiz kifoya.
+
+---
+
 ## 3. Saytni tahrirlash
 
 Yuqoridagi **Saytni tahrirlash** tugmasi orqali kiriladi.
@@ -130,7 +178,7 @@ yoki **Nashr** boʻlimidan **Asl holiga** tugmasini bosish.
 
 ## 4. Loyihalar
 
-**Saytni tahrirlash → Loyihalar** — 83 ta investitsiya loyihasi.
+**Saytni tahrirlash → Loyihalar** — 86 ta investitsiya loyihasi.
 
 ### Qidirish va koʻrish
 
@@ -163,7 +211,7 @@ Oʻchirmaydi — adminkada qoladi va **Qaytarish** bilan qaytariladi.
 
 Yashirilgan loyiha jadvalda xira koʻrinadi va “saytda yoʻq” belgisi bilan
 turadi. Hududlar va yoʻnalishlar boʻyicha raqamlar ham avtomatik qayta
-sanaladi, ya'ni sayt “83 ta loyiha” deb turib 82 tasini koʻrsatib qolmaydi.
+sanaladi, ya'ni sayt “86 ta loyiha” deb turib 85 tasini koʻrsatib qolmaydi.
 
 ---
 
@@ -259,6 +307,7 @@ qoʻshadi va siz bu yerdan tahrirlaysiz.
 | “Saytning maʼlumot fayli topilmadi” | `server/src/config.php` dagi `site_dir` notoʻgʻri. Dasturchiga ayting |
 | Saqladim, lekin saytda oʻzgarmadi | Brauzerni `Ctrl+F5` bilan yangilang. Baribir boʻlmasa — **Nashr → Saytni qayta nashr etish** |
 | “Sahifa eskirgan” | Adminka uzoq ochiq turgan. Sahifani yangilang va qaytadan saqlang |
+| «Bilet topilmadi» | Havola toʻliq nusxalanmagan. Adminkadagi **E-bilet** tugmasidan qayta oling |
 | Ariza kelmayapti | `https://<sayt>/api/health` ni oching. `{"ok":true…}` chiqmasa, dasturchiga ayting |
 
 Boshqa hamma holatda — dasturchiga murojaat qiling va **nima qilganingizni**

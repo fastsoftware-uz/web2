@@ -61,6 +61,18 @@ return [
      */
     'site_dir' => '',
 
+    /**
+     * The address the site is reached at from outside, with no trailing
+     * slash — https://forum.example.uz.
+     *
+     * Only the e-ticket needs it, and only for the link inside the QR code:
+     * a badge is printed and carried out of the building, so the address on
+     * it has to be the public one even when the request that drew it came in
+     * over a private name. Left empty, the host of the request is used, which
+     * is right in every ordinary case including the development server.
+     */
+    'site_url' => '',
+
     /** Shown in the admin header, so you can tell staging from live. */
     'site_name' => 'Tourism Investment Forum 2026',
 

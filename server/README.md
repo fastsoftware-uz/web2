@@ -51,6 +51,7 @@ npm run server                                          # builds site 2, then se
 | Site | http://127.0.0.1:8787/ |
 | Registration | http://127.0.0.1:8787/register/ |
 | Admin | http://127.0.0.1:8787/admin/ |
+| E-ticket | http://127.0.0.1:8787/ticket/&lt;number&gt; |
 | Health | http://127.0.0.1:8787/api/health |
 
 `dev-server.php` is the nginx block below written as a router for `php -S`,
@@ -73,6 +74,47 @@ you got.
 Set `'storage' => 'jsonl'` in the config if you would rather be able to read
 the registrations with `cat` and count them with `wc -l` than install an
 extension. On a forum's guest list that is a reasonable preference.
+
+---
+
+## The e-ticket
+
+A registration is answered with one, there and then:
+
+```json
+{"ok":true,"id":417,"ticket":{"number":"TITF26-000417-K7F3QA",
+ "url":"https://forum.example.uz/ticket/TITF26-000417-K7F3QA"}}
+```
+
+| | |
+|---|---|
+| `/ticket/<number>` | the badge: one A4 sheet, four quadrants, folds into a badge with Uzbek on one face and English on the other |
+| `/ticket/<number>?scan=1` | what the QR code opens: name, role and one line saying whether to admit the holder |
+
+**The number is the credential.** It is the registration's id with six
+characters of HMAC after it, keyed from `data/ticket-secret.key`, which is
+created on first use and is the one thing that must be backed up with the
+registrations — delete it and every ticket issued so far stops opening. The id
+alone is a counter, so without the signature every guest's badge would be one
+URL away from every other; with it, a guessed address is one of a billion. It
+is not a password: whoever holds the ticket can open it, which is the point of
+sending it to them. The page shows only what a badge shows — never the e-mail
+address, the telephone number or the note.
+
+**Issued on registration, approved in the admin.** The guest leaves the form
+with the badge in their hand; the badge carries the status, so a registration
+the organisers decline says `BEKOR QILINGAN · CANCELLED` on its own face and
+the scan view turns red. Nothing has to be re-sent.
+
+**The QR code is drawn by PHP**, in `src/qr.php` — byte mode, level M,
+versions 1 to 10, as SVG. No composer, no GD, and nothing that depends on
+JavaScript: a badge whose barcode needs a script is blank when it is printed
+from a saved file. `node qa/ticket.mjs` renders what it draws and reads it
+back with a real decoder.
+
+`site_url` in the configuration is the address that goes inside the QR code.
+Empty means "the host this request came in on", which is right everywhere
+except behind a proxy that rewrites it.
 
 ---
 
@@ -167,6 +209,14 @@ server {
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+    }
+
+    # The e-ticket. The number is in the path; ticket.php reads it from
+    # REQUEST_URI, so there is nothing to capture here.
+    location ^~ /ticket/ {
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php-fpm84/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME /var/www/forum/server/public/ticket.php;
     }
 
     # The one public endpoint.

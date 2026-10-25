@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The ground of the first page of a printed project sheet, at A4.
+
+  It is an image rather than a set of backgrounds because a browser's print
+  dialogue can be told not to print backgrounds, and on a cover that would
+  leave white type on white paper. An <img> prints either way.
+
+  Drawn here, from the site's own vocabulary: the Registan cobalt the stage is
+  built on, the pointed arch the photographs are seen through, the gold seam
+  that separates the chapters, and a row of girih diamonds along the foot. The
+  type sits over it in HTML, so it stays selectable and translatable.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <defs>
+    <linearGradient id="ground" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#23417f" />
+      <stop offset="0.45" stop-color="#1d3577" />
+      <stop offset="1" stop-color="#0b1535" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#b87d24" />
+      <stop offset="0.38" stop-color="#d2a156" />
+      <stop offset="0.72" stop-color="#e4bb7d" />
+      <stop offset="1" stop-color="#c18429" />
+    </linearGradient>
+    <linearGradient id="arch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.075" />
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.03" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="archline" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16" />
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="seam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e4bb7d" stop-opacity="0" />
+      <stop offset="0.25" stop-color="#e4bb7d" stop-opacity="0.85" />
+      <stop offset="0.75" stop-color="#e4bb7d" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#e4bb7d" stop-opacity="0" />
+    </linearGradient>
+    <!-- One girih diamond, repeated along the foot. -->
+    <pattern id="frieze" width="14" height="14" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="0.4">
+        <path d="M7 1.6L12.4 7L7 12.4L1.6 7Z" />
+        <path d="M0 7H1.6M12.4 7H14" />
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="210" height="297" fill="url(#ground)" />
+
+  <!-- The arch, as a wash rather than a drawing: it reads at arm's length and
+       disappears behind the type. -->
+  <g>
+    <path d="M52 297V146Q52 100 105 74Q158 100 158 146V297Z" fill="url(#arch)" />
+    <path
+      d="M52 297V146Q52 100 105 74Q158 100 158 146V297"
+      fill="none"
+      stroke="url(#archline)"
+      stroke-width="0.5"
+    />
+    <path
+      d="M66 297V152Q66 114 105 92Q144 114 144 152V297"
+      fill="none"
+      stroke="url(#archline)"
+      stroke-width="0.5"
+    />
+  </g>
+
+  <!-- The seam under the organiser's mark. -->
+  <rect x="0" y="62" width="210" height="0.5" fill="url(#seam)" />
+
+  <!-- The band the project's name is set in. -->
+  <rect x="0" y="118" width="210" height="54" fill="url(#gold)" />
+  <rect x="0" y="118" width="210" height="0.8" fill="#8a5a12" fill-opacity="0.55" />
+  <rect x="0" y="171.2" width="210" height="0.8" fill="#8a5a12" fill-opacity="0.55" />
+
+  <!-- The foot. -->
+  <rect x="0" y="268" width="210" height="14" fill="url(#frieze)" />
+  <rect x="0" y="264.5" width="210" height="0.4" fill="#e4bb7d" fill-opacity="0.5" />
+</svg>

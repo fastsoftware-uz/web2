@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  The ground of the last page of a printed project sheet, at A4.
+
+  The cover turned upside down, which is what makes the two read as a pair:
+  the gold band moves to the head of the page, the arch rises from the foot
+  instead of standing on it, and the girih runs along the top. Same reason it
+  is an image rather than a background — see print-cover.svg.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 297" width="210mm" height="297mm">
+  <defs>
+    <linearGradient id="ground" x1="0" y1="1" x2="0.35" y2="0">
+      <stop offset="0" stop-color="#23417f" />
+      <stop offset="0.45" stop-color="#1d3577" />
+      <stop offset="1" stop-color="#0b1535" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="0.6">
+      <stop offset="0" stop-color="#c18429" />
+      <stop offset="0.3" stop-color="#e4bb7d" />
+      <stop offset="0.68" stop-color="#d2a156" />
+      <stop offset="1" stop-color="#b87d24" />
+    </linearGradient>
+    <linearGradient id="arch" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.075" />
+      <stop offset="0.55" stop-color="#ffffff" stop-opacity="0.03" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="archline" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.16" />
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.04" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+    <linearGradient id="seam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#e4bb7d" stop-opacity="0" />
+      <stop offset="0.25" stop-color="#e4bb7d" stop-opacity="0.85" />
+      <stop offset="0.75" stop-color="#e4bb7d" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#e4bb7d" stop-opacity="0" />
+    </linearGradient>
+    <pattern id="frieze" width="14" height="14" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#ffffff" stroke-opacity="0.22" stroke-width="0.4">
+        <path d="M7 1.6L12.4 7L7 12.4L1.6 7Z" />
+        <path d="M0 7H1.6M12.4 7H14" />
+      </g>
+    </pattern>
+  </defs>
+
+  <rect width="210" height="297" fill="url(#ground)" />
+
+  <!-- The arch, rising out of the foot of the page. -->
+  <g>
+    <path d="M28 297V168Q28 126 76 102Q124 126 124 168V297Z" fill="url(#arch)" />
+    <path
+      d="M28 297V168Q28 126 76 102Q124 126 124 168V297"
+      fill="none"
+      stroke="url(#archline)"
+      stroke-width="0.5"
+    />
+  </g>
+
+  <!-- The band, at the head this time, carrying the heading and the mark. -->
+  <rect x="0" y="0" width="210" height="34" fill="url(#gold)" />
+  <rect x="0" y="33.2" width="210" height="0.8" fill="#8a5a12" fill-opacity="0.55" />
+
+  <rect x="0" y="40" width="210" height="14" fill="url(#frieze)" />
+  <rect x="0" y="57" width="210" height="0.4" fill="#e4bb7d" fill-opacity="0.45" />
+
+  <!-- The foot, closing the document. -->
+  <rect x="0" y="281" width="210" height="0.4" fill="#e4bb7d" fill-opacity="0.5" />
+</svg>

@@ -31,6 +31,8 @@ import { sheetLabel } from '../lib/sheet-labels';
 import { sheetValue } from '../lib/sheet-values';
 import { eventDates, tr, useStore } from '../lib/state';
 import ForumMark from './ForumMark.vue';
+import PrintCover from './PrintCover.vue';
+import PrintClosing from './PrintClosing.vue';
 
 const props = defineProps<{
   project: Project | null;
@@ -401,17 +403,50 @@ onBeforeUnmount(() => {
           </button>
         </header>
 
-        <!-- Only on paper. A sheet that has been saved as a PDF is going to
-             be forwarded on its own, so it carries the mark it came from, the
-             dates, and somewhere to write back to. -->
-        <div class="panel__letterhead" aria-hidden="true">
-          <ForumMark form="lockup" variant="dark" class="panel__letterheadMark" />
-          <p>{{ eventLine }}</p>
-        </div>
+        <!-- Only on paper, and only as the first page: a sheet that has been
+             saved as a PDF is forwarded on its own, so it opens the way a
+             proposal opens rather than halfway through a reading. -->
+        <PrintCover
+          :kicker="t('portfolio.coverKicker')"
+          :title="heading"
+          :meta="[regionName, themeName].filter(Boolean).join(' · ')"
+          :money="money ?? noMoney"
+          :money-label="t('portfolio.labels.investment')"
+        />
 
-        <!-- data-lenis-prevent: this element scrolls itself, so the
-             smooth-scroll driver must leave its wheel and touch events alone. -->
-        <div ref="body" class="panel__body" data-lenis-prevent>
+        <!--
+          A table, and not for want of a div.
+
+          On paper the page box has no margins — that is the only way the
+          cover and the closing page reach the edge of the sheet — so the
+          reading has to carry its own. Padding gives it to the first page and
+          the last and leaves the pages between running into the paper's edge;
+          a table header group is the one thing a browser repeats at the top
+          of every fragment. So the letterhead sits in a <thead>, where it
+          becomes a running head: every page of the reading carries the mark
+          and the dates, the way the organiser's own decks do.
+
+          On screen the whole table is `display: contents` and the sheet's
+          flex layout sees the body exactly as it did before.
+        -->
+        <table class="panel__doc">
+          <thead>
+            <tr>
+              <td>
+                <div class="panel__letterhead" aria-hidden="true">
+                  <ForumMark form="lockup" variant="dark" class="panel__letterheadMark" />
+                  <p>{{ eventLine }}</p>
+                </div>
+              </td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <!-- data-lenis-prevent: this element scrolls itself, so the
+                     smooth-scroll driver must leave its wheel and touch
+                     events alone. -->
+                <div ref="body" class="panel__body" data-lenis-prevent>
           <p class="panel__where">
             {{ regionName }}
             <span v-if="themeName" class="panel__theme">{{ regionName ? '· ' : '' }}{{ themeName }}</span>
@@ -501,9 +536,18 @@ onBeforeUnmount(() => {
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
 
           <p class="panel__note">{{ t('credits.projectLanguage') }}</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-          <p class="panel__colophon" aria-hidden="true">{{ t('portfolio.pdfFooter') }}</p>
-        </div>
+        <!-- The last page: where to write back to, as the committee rather
+             than as a person. -->
+        <PrintClosing
+          :heading="t('portfolio.contactsTitle')"
+          :lead="t('portfolio.contactsLead')"
+        />
 
         <!-- What a reader can do with the project they have just read. -->
         <footer class="panel__act">
@@ -928,9 +972,19 @@ onBeforeUnmount(() => {
 
 /* Both exist only on paper. Declared before the print block so the print
    rules, which match at the same specificity, come later and win. */
-.panel__letterhead,
-.panel__colophon {
+.panel__letterhead {
   display: none;
+}
+
+/* On screen the wrapper is scaffolding for the printed page and nothing
+   else, so it steps out of the box tree entirely and the sheet's flex
+   layout sees .panel__body as its own child. */
+.panel__doc,
+.panel__doc > tbody,
+.panel__doc > tbody > tr,
+.panel__doc > tbody > tr > td,
+.panel__doc > thead {
+  display: contents;
 }
 
 /* ------------------------------------------------------------------ print */
@@ -965,10 +1019,12 @@ onBeforeUnmount(() => {
   .panel {
     position: static;
     display: block;
+    overflow: visible;
   }
   .panel__sheet {
     position: static;
     display: block;
+    overflow: visible;
     inline-size: auto;
     block-size: auto;
     max-block-size: none;
@@ -978,10 +1034,34 @@ onBeforeUnmount(() => {
     background: #fff;
     animation: none;
   }
+  /* The page box has no margins at all (index.css), so the reading supplies
+     its own: the running head pays for the top of every page, the body for
+     the sides and the foot. */
+  .panel__doc {
+    display: table;
+    inline-size: 100%;
+    border-collapse: collapse;
+  }
+  .panel__doc > thead {
+    display: table-header-group;
+  }
+  .panel__doc > tbody {
+    display: table-row-group;
+  }
+  .panel__doc > thead > tr,
+  .panel__doc > tbody > tr {
+    display: table-row;
+  }
+  .panel__doc > thead > tr > td,
+  .panel__doc > tbody > tr > td {
+    display: table-cell;
+    padding: 0;
+  }
+
   .panel__body {
     overflow: visible;
     max-block-size: none;
-    padding: 0;
+    padding: 0 14mm 16mm;
     font-size: 10pt;
   }
 
@@ -992,9 +1072,9 @@ onBeforeUnmount(() => {
     align-items: flex-end;
     justify-content: space-between;
     gap: 1rem;
+    margin: 14mm 14mm 7mm;
     padding-block-end: 0.6rem;
     border-block-end: 1px solid #c9ccd8;
-    margin-block-end: 1.4rem;
   }
   /* 54mm, not 42: the lockup sets its five lines at one size beside the
      emblem now, so the same measure would print the name a third smaller. */
@@ -1005,14 +1085,6 @@ onBeforeUnmount(() => {
   .panel__letterhead p {
     margin: 0;
     font-size: 9pt;
-    color: #4a5070;
-  }
-  .panel__colophon {
-    display: block;
-    margin-block-start: 1.4rem;
-    padding-block-start: 0.6rem;
-    border-block-start: 1px solid #c9ccd8;
-    font-size: 8pt;
     color: #4a5070;
   }
 

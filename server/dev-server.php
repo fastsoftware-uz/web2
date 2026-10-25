@@ -26,6 +26,13 @@ if ($path === '/api/register' || $path === '/api/health') {
     return true;
 }
 
+/* The e-ticket. The number is in the path so that the address reads as one
+   thing in a mail and on a printed badge. */
+if (preg_match('#^/ticket(/|$)#', $path) === 1) {
+    require $public . '/ticket.php';
+    return true;
+}
+
 /* The admin. `/admin` without the slash would make every relative link on
    the page resolve one level too high, so it is redirected rather than
    served — the same thing nginx's `index` directive does. */

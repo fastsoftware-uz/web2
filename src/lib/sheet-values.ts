@@ -143,6 +143,36 @@ const PATTERNS: { test: RegExp; uz: (n: string) => string; ru: (n: string) => st
     uz: (n) => `${n} ming+`,
     ru: (n) => `${n} тыс.+`,
   },
+  /* --- the units a capacity is counted in.
+         The working group's intake rows state capacity as a count and a unit
+         word ("32 rooms"), and so do a good many of the sheets, so these earn
+         their place twice over. The count is captured whole and copied; only
+         the unit is said in the reader's language. */
+  {
+    test: /^([\d\s.,–—-]+?)\s*rooms?$/i,
+    uz: (n) => `${n} xona`,
+    ru: (n) => `${n} номеров`,
+  },
+  {
+    test: /^([\d\s.,–—-]+?)\s*beds?$/i,
+    uz: (n) => `${n} oʻrin`,
+    ru: (n) => `${n} мест`,
+  },
+  {
+    test: /^([\d\s.,–—-]+?)\s*people\s*\/\s*day$/i,
+    uz: (n) => `${n} kishi/kun`,
+    ru: (n) => `${n} человек/сутки`,
+  },
+  {
+    test: /^([\d\s.,–—-]+?)\s*people$/i,
+    uz: (n) => `${n} kishi`,
+    ru: (n) => `${n} человек`,
+  },
+  {
+    test: /^([\d\s.,–—-]+?)\s*ha$/i,
+    uz: (n) => `${n} ga`,
+    ru: (n) => `${n} га`,
+  },
 ];
 
 const key = (value: string) => value.replace(/\s+/g, ' ').trim().toUpperCase();

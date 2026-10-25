@@ -58,6 +58,11 @@ export type Copy = {
   doneTitle: string;
   doneBody: string;
   doneRef: string;
+  /** The e-ticket the registration comes back with. */
+  ticketTitle: string;
+  ticketBody: string;
+  ticketOpen: string;
+  ticketNumber: string;
   again: string;
   /**
    * Offered when the request could not reach the API at all, so that a
@@ -124,6 +129,11 @@ export const MESSAGES: Record<Lang, Copy> = {
     doneBody:
       'Arizangiz tashkiliy qoʻmitaga yetib bordi. Tafsilotlar elektron pochtangizga yuboriladi.',
     doneRef: 'Ariza raqami',
+    ticketTitle: 'E-biletingiz tayyor',
+    ticketBody:
+      'Havolani saqlab qoʻying: beyj shu yerda, A4 qogʻozda chop etiladi. Forumga kirishda shu beyjni koʻrsatasiz.',
+    ticketOpen: 'E-biletni ochish',
+    ticketNumber: 'Bilet raqami',
     again: 'Yana bitta ariza',
     byEmail: 'Yoki arizangizni elektron pochta orqali yuboring:',
     mailSubject: 'Forumga roʻyxatdan oʻtish',
@@ -185,6 +195,11 @@ export const MESSAGES: Record<Lang, Copy> = {
     doneTitle: 'Заявка принята',
     doneBody: 'Заявка получена оргкомитетом. Подробности придут на указанную почту.',
     doneRef: 'Номер заявки',
+    ticketTitle: 'Ваш электронный билет готов',
+    ticketBody:
+      'Сохраните ссылку: бейдж открывается по ней и печатается на листе A4. Его показывают на входе на форум.',
+    ticketOpen: 'Открыть билет',
+    ticketNumber: 'Номер билета',
     again: 'Ещё одна заявка',
     byEmail: 'Либо отправьте заявку по электронной почте:',
     mailSubject: 'Регистрация на форум',
@@ -247,6 +262,11 @@ export const MESSAGES: Record<Lang, Copy> = {
     doneBody:
       'Your registration has reached the organising committee. Details will follow by email.',
     doneRef: 'Reference',
+    ticketTitle: 'Your e-ticket is ready',
+    ticketBody:
+      'Keep the link: the badge opens there and prints on one A4 sheet. You show it at the entrance.',
+    ticketOpen: 'Open the e-ticket',
+    ticketNumber: 'Ticket number',
     again: 'Register somebody else',
     byEmail: 'Or send your registration by email instead:',
     mailSubject: 'Forum registration',

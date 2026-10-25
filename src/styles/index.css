@@ -988,10 +988,21 @@ body::before {
  * is not the component's to decide: the page furniture, and the page itself
  * when a sheet is open over it.
  */
+/**
+ * No margins at all.
+ *
+ * The first and the last page of a printed sheet carry artwork to the edge of
+ * the paper, which a page box with margins cannot do — and a box that has
+ * margins on some pages and not on others lays the pages that follow against
+ * the wrong inline origin in Chrome, so the reading comes out shifted off the
+ * sheet. One box, no margins, and the reading supplies its own: see the
+ * running head in ProjectPanel.vue.
+ */
 @page {
   size: A4;
-  margin: 16mm 14mm;
+  margin: 0;
 }
+
 
 @media print {
   html,

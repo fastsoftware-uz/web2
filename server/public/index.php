@@ -12,6 +12,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../src/app.php';
+require_once __DIR__ . '/../src/ticket.php';
 
 $config = app_config();
 
@@ -283,7 +284,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
     <thead>
       <tr>
         <th>#</th><th>Sana</th><th>Tur</th><th>Ism</th><th>Tashkilot</th>
-        <th>Aloqa</th><th>Yoʻnalish</th><th>Holat</th>
+        <th>Aloqa</th><th>Yoʻnalish</th><th>Holat</th><th>Bilet</th>
       </tr>
     </thead>
     <tbody>
@@ -319,9 +320,14 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
             <noscript><button type="submit">Saqlash</button></noscript>
           </form>
         </td>
+        <?php /* The guest already has this link — it came back with their
+                 registration. It is here for the times they lost the mail. */ ?>
+        <td class="nowrap">
+          <a class="btn btn--quiet" href="/ticket/<?= app_h(ticket_number((int) $row['id'], $config)) ?>" target="_blank" rel="noopener">E-bilet</a>
+        </td>
       </tr>
       <?php if (($row['note'] ?? '') !== ''): ?>
-      <tr class="note"><td></td><td colspan="7"><?= app_h($row['note']) ?></td></tr>
+      <tr class="note"><td></td><td colspan="8"><?= app_h($row['note']) ?></td></tr>
       <?php endif; ?>
       <?php endforeach; ?>
     </tbody>

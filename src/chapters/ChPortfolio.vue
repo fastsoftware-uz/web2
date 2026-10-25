@@ -513,10 +513,23 @@ useChapterTimeline(
            is comparing rows, and a photograph each would make it four times
            as long for nothing. -->
       <div class="portfolio__doc" aria-hidden="true">
-        <div class="portfolio__docHead">
-          <ForumMark form="lockup" variant="dark" class="portfolio__docMark" />
-          <p>{{ eventLine }}</p>
-        </div>
+        <!-- The page box has no margins (index.css), so the running head in
+             this table's <thead> pays for the top of every page — see the
+             same arrangement, and the reason for it, in ProjectPanel.vue. -->
+        <table class="portfolio__paged">
+          <thead>
+            <tr>
+              <td>
+                <div class="portfolio__docHead">
+                  <ForumMark form="lockup" variant="dark" class="portfolio__docMark" />
+                  <p>{{ eventLine }}</p>
+                </div>
+              </td>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="portfolio__docCell">
         <h3>{{ t('chapters.portfolio.title') }}</h3>
         <p class="portfolio__docMeta">
           {{ t('portfolio.results', shown.length) }}<template v-if="printFilters"> · {{ printFilters }}</template>
@@ -540,6 +553,10 @@ useChapterTimeline(
           </tbody>
         </table>
         <p class="portfolio__docFoot">{{ t('portfolio.pdfFooter') }}</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- The list -------------------------------------------------------- -->
@@ -993,14 +1010,29 @@ h2 {
     display: none !important;
   }
 
+  .portfolio__paged {
+    inline-size: 100%;
+    border-collapse: collapse;
+  }
+  .portfolio__paged > thead > tr > td,
+  .portfolio__paged > tbody > tr > td {
+    padding: 0;
+  }
+  /* The margins the page box no longer has, on the cell that holds the
+     whole document — the table inside it sizes itself to what is left. */
+  .portfolio__docCell {
+    padding: 0 14mm 16mm !important;
+  }
   .portfolio__docHead {
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
     gap: 1rem;
+    margin: 14mm 14mm 7mm;
     padding-block-end: 0.6rem;
     border-block-end: 1px solid #c9ccd8;
   }
+
   /* 54mm, not 42: the lockup sets its five lines at one size beside the
      emblem now, so the same measure would print the name a third smaller. */
   .portfolio__docMark {

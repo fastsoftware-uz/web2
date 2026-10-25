@@ -111,6 +111,12 @@ const en = {
     enquire: 'Register',
     pdf: 'PDF',
     listPdf: 'The list as a PDF',
+    /* The printed sheet opens and closes on pages of its own — see
+       PrintCover.vue and PrintClosing.vue. */
+    coverKicker: 'Investment proposal',
+    contactsTitle: 'Contacts',
+    contactsLead:
+      'This sheet is one project out of the forum portfolio. For the rest of it, for a site visit, or to be put in touch with the party holding the land, write to the organising committee.',
     docCols: { project: 'Project', region: 'Region', direction: 'Direction' },
     /* The address is written {'@'} because a bare @ starts a linked
        message in vue-i18n's syntax and the sheet then failed to render. */
@@ -287,6 +293,10 @@ const uz: Messages = {
     enquire: 'Roʻyxatdan oʻtish',
     pdf: 'PDF',
     listPdf: 'Roʻyxat — PDF',
+    coverKicker: 'Investitsiya taklifi',
+    contactsTitle: 'Aloqa',
+    contactsLead:
+      'Bu varaq — forum portfelidagi bitta loyiha. Portfelning qolgan qismi, obyektni joyida koʻrish yoki yer egasi bilan bogʻlanish uchun tashkiliy qoʻmitaga murojaat qiling.',
     docCols: { project: 'Loyiha', region: 'Hudud', direction: 'Yoʻnalish' },
     pdfFooter:
       'Birinchi xalqaro turizm investitsiya forumi 2026, Toshkent. Oʻzbekiston Respublikasi Turizm qoʻmitasi — investforum{\'@\'}uzbektourism.uz',
@@ -450,6 +460,10 @@ const ru: Messages = {
     enquire: 'Регистрация',
     pdf: 'PDF',
     listPdf: 'Список в PDF',
+    coverKicker: 'Инвестиционное предложение',
+    contactsTitle: 'Контакты',
+    contactsLead:
+      'Этот лист — один проект из портфеля форума. За остальной частью портфеля, осмотром объекта или контактом с балансодержателем участка обращайтесь в организационный комитет.',
     docCols: { project: 'Проект', region: 'Регион', direction: 'Направление' },
     pdfFooter:
       'Первый международный инвестиционный форум в сфере туризма 2026, Ташкент. Комитет по туризму Республики Узбекистан — investforum{\'@\'}uzbektourism.uz',

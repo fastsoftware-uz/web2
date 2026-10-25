@@ -68,6 +68,8 @@ const errors = reactive<Partial<Record<Required | 'role', boolean>>>({});
 const state = ref<'idle' | 'sending' | 'done' | 'failed'>('idle');
 const failure = ref<'network' | 'rate' | 'server' | 'fields' | ''>('');
 const reference = ref(0);
+/** The badge the backend issues with the registration, when it issues one. */
+const ticket = ref<{ url: string; number: string } | null>(null);
 const root = ref<HTMLElement | null>(null);
 
 watch(
@@ -128,10 +130,19 @@ async function submit(): Promise<void> {
       id?: number;
       fields?: string[];
       error?: string;
+      ticket?: { number?: string; url?: string };
     };
 
     if (res.ok && body.ok) {
       reference.value = Number(body.id) || 0;
+      /* The badge, when the backend issued one. It is not a certainty: a
+         server whose data directory has gone read-only still stores the
+         registration and says so, and the organiser hands the ticket over
+         from the admin afterwards. */
+      ticket.value =
+        body.ticket?.url && body.ticket?.number
+          ? { url: body.ticket.url, number: body.ticket.number }
+          : null;
       state.value = 'done';
       emit('sent', reference.value);
       // Inside a chapter the confirmation can be off-screen; on the page it
@@ -165,6 +176,7 @@ function again(): void {
   form.direction = '';
   form.note = '';
   reference.value = 0;
+  ticket.value = null;
   state.value = 'idle';
   failure.value = '';
 }
@@ -208,6 +220,17 @@ const mailHref = computed(() => {
   <p v-if="reference" class="reg__ref">
     {{ t.doneRef }}: <strong>№ {{ reference }}</strong>
   </p>
+
+  <!-- The e-ticket. A guest who has just filled in a form leaves with
+       something in their hand rather than with a promise of a mail. -->
+  <div v-if="ticket" class="reg__ticket">
+    <p class="reg__ticketTitle">{{ t.ticketTitle }}</p>
+    <p class="reg__ticketBody">{{ t.ticketBody }}</p>
+    <a class="btn btn--solid reg__ticketOpen" :href="ticket.url" target="_blank" rel="noopener">
+      {{ t.ticketOpen }}
+    </a>
+    <p class="reg__ticketNo">{{ t.ticketNumber }}: <code>{{ ticket.number }}</code></p>
+  </div>
   <div class="reg__doneActions">
     <button type="button" class="btn btn--solid" @click="again">{{ t.again }}</button>
     <!-- The page adds "back to the site" here; the chapter has the rest
@@ -588,6 +611,38 @@ const mailHref = computed(() => {
   color: var(--gold);
   font-variant-numeric: tabular-nums;
 }
+/* The e-ticket block. It is the one thing on this card a reader has to act
+   on, so it is the one thing that carries the forum's gold. */
+.reg__ticket {
+  margin-block: 1.5rem 0;
+  padding: 1.1rem 1.2rem 1.3rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 0.6rem;
+  background: var(--raise);
+}
+.reg__ticketTitle {
+  margin: 0;
+  font-weight: 700;
+}
+.reg__ticketBody {
+  margin: 0.4rem 0 1rem;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.reg__ticketOpen {
+  display: inline-block;
+}
+.reg__ticketNo {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+.reg__ticketNo code {
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+
 .reg__doneActions {
   display: flex;
   flex-wrap: wrap;

@@ -18,6 +18,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../src/app.php';
+require_once __DIR__ . '/../src/ticket.php';
 
 $config = app_config();
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -118,6 +119,26 @@ try {
 }
 
 /**
+ * The ticket goes back with the answer.
+ *
+ * It is issued on registration rather than on approval, which the client
+ * chose: a guest who has just filled in a form leaves with something in their
+ * hand. Approval is still what the door reads — the badge carries the status,
+ * and a registration the organisers reject says so on its own face.
+ *
+ * A ticket that cannot be signed must not fail a registration that is already
+ * stored, so the whole thing is wrapped: the guest is then simply told the
+ * registration arrived, and the organisers hand the ticket over from the
+ * admin afterwards.
+ */
+$ticket = null;
+try {
+    $ticket = ['number' => ticket_number($id, $config), 'url' => ticket_url($id, $config)];
+} catch (Throwable $e) {
+    error_log('[forum-register] ticket: ' . $e->getMessage());
+}
+
+/**
  * The optional notification. A mail that cannot be sent must never fail a
  * registration that is already safely stored, so it is last and it is
  * wrapped.
@@ -126,6 +147,9 @@ $notify = (string) ($config['notify_email'] ?? '');
 if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
     try {
         $lines = ["#{$id} — {$row['role']}"];
+        if ($ticket !== null) {
+            $lines[] = 'e-ticket: ' . $ticket['url'];
+        }
         foreach (['full_name', 'organisation', 'position', 'country', 'email', 'phone', 'direction', 'note'] as $f) {
             if ($row[$f] !== '') {
                 $lines[] = "{$f}: {$row[$f]}";
@@ -142,4 +166,4 @@ if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
     }
 }
 
-app_json(200, ['ok' => true, 'id' => $id]);
+app_json(200, ['ok' => true, 'id' => $id] + ($ticket === null ? [] : ['ticket' => $ticket]));
