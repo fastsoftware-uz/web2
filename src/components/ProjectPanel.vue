@@ -31,6 +31,8 @@ import { sheetLabel } from '../lib/sheet-labels';
 import { sheetValue } from '../lib/sheet-values';
 import { eventDates, tr, useStore } from '../lib/state';
 import ForumMark from './ForumMark.vue';
+import PrintBrief from './PrintBrief.vue';
+import PrintContext from './PrintContext.vue';
 import PrintCover from './PrintCover.vue';
 import PrintClosing from './PrintClosing.vue';
 
@@ -111,6 +113,15 @@ function altFor(index: number): string {
     : t('portfolio.photoAltNoRegion', { title });
 }
 const shown = ref(0);
+
+/**
+ * The renders the printed sheet shows after the first one.
+ *
+ * On screen these are the thumbnail strip, which is a control and prints as
+ * nothing; on paper there is no reason to show one picture of a building
+ * when the sheet supplied four.
+ */
+const otherShots = computed(() => shots.value.filter((_, i) => i !== shown.value));
 
 const money = computed(() => {
   const p = props.project;
@@ -446,6 +457,12 @@ onBeforeUnmount(() => {
                 <!-- data-lenis-prevent: this element scrolls itself, so the
                      smooth-scroll driver must leave its wheel and touch
                      events alone. -->
+                <!-- Only on paper, and before the reading: the sheet is
+                     forwarded to somebody who has not seen the site, and
+                     the project means more with the forum around it. -->
+                <PrintBrief />
+                <PrintContext :region="project.region" :segment="project.segment" />
+
                 <div ref="body" class="panel__body" data-lenis-prevent>
           <p class="panel__where">
             {{ regionName }}
@@ -486,6 +503,21 @@ onBeforeUnmount(() => {
               </button>
             </figcaption>
           </figure>
+
+          <!-- Only on paper: the sheet's other renders, which on screen are
+               the thumbnail strip above. -->
+          <div v-if="otherShots.length" class="panel__plates" aria-hidden="true">
+            <img
+              v-for="shot in otherShots"
+              :key="shot"
+              :src="`photos/${shot}-full.webp`"
+              alt=""
+              width="1000"
+              height="563"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
 
           <p class="panel__money">
             <span class="eyebrow">{{ t('portfolio.labels.investment') }}</span>
@@ -972,7 +1004,8 @@ onBeforeUnmount(() => {
 
 /* Both exist only on paper. Declared before the print block so the print
    rules, which match at the same specificity, come later and win. */
-.panel__letterhead {
+.panel__letterhead,
+.panel__plates {
   display: none;
 }
 
@@ -1063,6 +1096,9 @@ onBeforeUnmount(() => {
     max-block-size: none;
     padding: 0 14mm 16mm;
     font-size: 10pt;
+    /* The general pages come first and run on into one another; the project
+       itself always opens a page. */
+    break-before: page;
   }
 
   /* A sheet saved as a PDF is forwarded on its own, so it carries the mark it
@@ -1091,6 +1127,28 @@ onBeforeUnmount(() => {
   .panel__title {
     font-size: 20pt;
     line-height: 1.15;
+  }
+
+  /**
+   * The other renders, two to a row.
+   *
+   * They are let through `print-color-adjust` for the same reason the first
+   * one is, and each is capped so that a sheet with six renders does not
+   * become a sheet that is mostly renders.
+   */
+  .panel__plates {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3mm;
+    margin-block-start: 4mm;
+  }
+  .panel__plates img {
+    inline-size: 100%;
+    block-size: 52mm;
+    object-fit: cover;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   /* A photograph is most of what a project looks like; without this it prints

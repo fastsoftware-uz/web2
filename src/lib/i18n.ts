@@ -177,6 +177,40 @@ const en = {
       closing: 'Closing',
     },
   },
+  /**
+   * The pages a printed project sheet carries besides the project itself —
+   * see PrintBrief.vue and PrintContext.vue. Only on paper, so none of it
+   * appears anywhere on the screen.
+   */
+  print: {
+    aboutTitle: 'About the forum',
+    when: 'When and where',
+    within: 'Held within',
+    organiser: 'Organised by',
+    languages: 'Working languages',
+    languagesValue: 'English, with translation into Uzbek and Russian',
+    portfolioTitle: 'The portfolio in numbers',
+    nProjects: 'projects',
+    nRegions: 'regions',
+    nDirections: 'directions',
+    nTotal: 'stated in US dollars',
+    totalNote:
+      'The total adds the projects whose figure is stated in US dollars. Sheets that state a sum in Uzbek soums, or leave it open, are counted but not added.',
+    sessionsTitle: 'The three sessions',
+    dayEyebrow: 'The programme',
+    sessionsEyebrow: 'After lunch',
+    sessionsNote:
+      'The three run at the same time, in three halls. Presentations are in English with translation into Uzbek and Russian.',
+    goalsTitle: 'What the forum sets out to do',
+    contextEyebrow: 'Where this project sits',
+    contextTitle: 'The rest of the portfolio',
+    contextLead:
+      'This sheet is one of {n} projects the regions and the private sector brought to the forum. Here is the whole portfolio counted two ways; the row this project belongs to is marked.',
+    byRegion: 'By region',
+    byDirection: 'By direction',
+    contextNote:
+      'Counted from the organiser’s own project sheets. Ask the organising committee for any of the others, or for the whole portfolio as one document.',
+  },
   path: {
     criteriaTitle: 'How projects are chosen',
     stagesTitle: 'How the forum itself was built',
@@ -360,6 +394,35 @@ const uz: Messages = {
       closing: 'Yakun',
     },
   },
+  print: {
+    aboutTitle: 'Forum haqida',
+    when: 'Qachon va qayerda',
+    within: 'Doirasida',
+    organiser: 'Tashkilotchi',
+    languages: 'Ish tillari',
+    languagesValue: 'Ingliz tili, oʻzbek va rus tillariga tarjima bilan',
+    portfolioTitle: 'Portfel raqamlarda',
+    nProjects: 'loyiha',
+    nRegions: 'hudud',
+    nDirections: 'yoʻnalish',
+    nTotal: 'AQSH dollarida koʻrsatilgan',
+    totalNote:
+      'Jami — summasi AQSH dollarida koʻrsatilgan loyihalar yigʻindisi. Soʻmda koʻrsatilgan yoki summasi ochiq qoldirilgan varaqalar sanaladi, lekin qoʻshilmaydi.',
+    sessionsTitle: 'Uchta sessiya',
+    dayEyebrow: 'Kun tartibi',
+    sessionsEyebrow: 'Tushlikdan soʻng',
+    sessionsNote:
+      'Uchalasi bir vaqtda, uchta zalda oʻtadi. Maʼruzalar ingliz tilida, oʻzbek va rus tillariga tarjima bilan.',
+    goalsTitle: 'Forum nimaga qaratilgan',
+    contextEyebrow: 'Bu loyiha qayerda turibdi',
+    contextTitle: 'Portfelning qolgan qismi',
+    contextLead:
+      'Ushbu varaq — hududlar va xususiy sektor forumga olib chiqqan {n} ta loyihadan biri. Quyida portfel ikki xil sanoqda; bu loyiha tegishli qator ajratib koʻrsatilgan.',
+    byRegion: 'Hududlar boʻyicha',
+    byDirection: 'Yoʻnalishlar boʻyicha',
+    contextNote:
+      'Tashkilotchining loyiha varaqalaridan sanab chiqildi. Qolganlarini yoki butun portfelni bitta hujjat holida tashkiliy qoʻmitadan soʻrang.',
+  },
   path: {
     criteriaTitle: 'Loyihalar qanday tanlanadi',
     stagesTitle: 'Forumning oʻzi qanday tayyorlandi',
@@ -531,6 +594,35 @@ const ru: Messages = {
       b2b: 'B2B',
       closing: 'Закрытие',
     },
+  },
+  print: {
+    aboutTitle: 'О форуме',
+    when: 'Когда и где',
+    within: 'В рамках',
+    organiser: 'Организатор',
+    languages: 'Рабочие языки',
+    languagesValue: 'Английский, с переводом на узбекский и русский',
+    portfolioTitle: 'Портфель в цифрах',
+    nProjects: 'проектов',
+    nRegions: 'регионов',
+    nDirections: 'направлений',
+    nTotal: 'указано в долларах США',
+    totalNote:
+      'Итог — сумма проектов, стоимость которых указана в долларах США. Листы со стоимостью в сумах или без неё учтены, но не суммированы.',
+    sessionsTitle: 'Три сессии',
+    dayEyebrow: 'Программа',
+    sessionsEyebrow: 'После обеда',
+    sessionsNote:
+      'Все три идут одновременно, в трёх залах. Выступления на английском языке с переводом на узбекский и русский.',
+    goalsTitle: 'На что направлен форум',
+    contextEyebrow: 'Где находится этот проект',
+    contextTitle: 'Остальная часть портфеля',
+    contextLead:
+      'Этот лист — один из {n} проектов, которые регионы и частный сектор представили форуму. Ниже весь портфель в двух разрезах; строка, к которой относится проект, выделена.',
+    byRegion: 'По регионам',
+    byDirection: 'По направлениям',
+    contextNote:
+      'Подсчитано по проектным листам организатора. Остальные проекты или весь портфель одним документом запрашивайте в оргкомитете.',
   },
   path: {
     criteriaTitle: 'Как отбираются проекты',
