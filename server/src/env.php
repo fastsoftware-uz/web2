@@ -49,6 +49,7 @@ const ENV_DEFAULTS = [
     'login_max_attempts' => 5,
     'login_lock_minutes' => 15,
     'force_https' => false,
+    'trust_proxy' => false,
 ];
 
 /**
@@ -74,6 +75,7 @@ const ENV_MAP = [
     'LOGIN_MAX_ATTEMPTS' => ['login_max_attempts', 'int'],
     'LOGIN_LOCK_MINUTES' => ['login_lock_minutes', 'int'],
     'FORCE_HTTPS' => ['force_https', 'bool'],
+    'TRUST_PROXY' => ['trust_proxy', 'bool'],
 ];
 
 /** The env file this request reads. `$FORUM_ENV` wins, for the QA suites. */

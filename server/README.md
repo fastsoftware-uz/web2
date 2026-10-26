@@ -530,6 +530,12 @@ nothing inline allowed — which is why the admin's two behaviours live in
 learned something. One address may send `RATE_LIMIT_PER_HOUR` registrations
 an hour. A body over 32 KB is refused before it is parsed.
 
+**The address a request came from** is `REMOTE_ADDR`, which with nginx and
+FastCGI is the real one. `X-Forwarded-For` is read only when `TRUST_PROXY=1`
+says there is really a proxy in front, because it is a header the caller
+writes: believed by default, it would be a login throttle anybody can reset
+and an allow-list anybody can satisfy.
+
 **Optionally, the door.** `ADMIN_IP_ALLOW` in `.env` — exact addresses and
 IPv4 ranges. Empty by default, because organisers travel and an admin they
 cannot open from a hotel is an admin somebody will ask to have the password

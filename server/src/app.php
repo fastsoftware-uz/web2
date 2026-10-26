@@ -185,9 +185,28 @@ function app_validate(array $input, string $ip): array
     return [$row, $bad];
 }
 
-/** The address the request came from, honouring one reverse proxy. */
+/**
+ * The address the request came from.
+ *
+ * X-Forwarded-For is a header the client sends. With nginx talking to PHP-FPM
+ * over FastCGI — which is this installation — REMOTE_ADDR is already the real
+ * client address and the forwarded header is whatever the caller felt like
+ * typing. Believing it there would mean a login throttle anybody can reset by
+ * changing one header, and an ADMIN_IP_ALLOW list anybody can satisfy by
+ * claiming to be the office.
+ *
+ * So it is read only when TRUST_PROXY says there really is a proxy in front —
+ * Cloudflare, or nginx on another host forwarding over HTTP — and even then
+ * only the first entry, and only if it parses as an address.
+ */
 function app_client_ip(): string
 {
+    $remote = $_SERVER['REMOTE_ADDR'] ?? '';
+    $remote = is_string($remote) ? $remote : '';
+
+    if (empty(app_config()['trust_proxy'])) {
+        return $remote;
+    }
     $forwarded = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? '';
     if (is_string($forwarded) && $forwarded !== '') {
         $first = trim(explode(',', $forwarded)[0]);
@@ -195,8 +214,7 @@ function app_client_ip(): string
             return $first;
         }
     }
-    $remote = $_SERVER['REMOTE_ADDR'] ?? '';
-    return is_string($remote) ? $remote : '';
+    return $remote;
 }
 
 function app_json(int $status, array $body): void
