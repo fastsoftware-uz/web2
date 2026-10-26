@@ -344,3 +344,17 @@ fieldset fieldset { margin-inline: 0; }
 .small { font-size: 0.82rem; }
 .row--off { opacity: 0.55; }
 .row--off td b { text-decoration: line-through; }
+
+/* ------------------------------------------------------- the password panel
+
+   The login card again, but inside the page rather than in front of it: the
+   organiser is already logged in, and this is one more thing on the list
+   rather than a gate. */
+
+.pw { margin-block: 0 1.5rem; }
+.pw .card { width: min(100%, 26rem); padding: 1.25rem 1.5rem; }
+.pw .card h2 { margin: 0 0 1rem; font-size: 1.05rem; color: var(--ink); }
+.pw .card label { margin-top: 0.9rem; }
+.pw .card label:first-of-type { margin-top: 0; }
+.pw .card p.muted { margin: 0.9rem 0 0; font-size: 0.82rem; }
+.pw .card .btn--quiet { display: block; margin-top: 0.5rem; text-align: center; }

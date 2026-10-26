@@ -27,26 +27,39 @@ bilan sayt yangilanadi. Sahifani yangilab koʻring.
 
 Manzil: **`https://<sayt-manzili>/admin/`**
 
-Parolni dasturchi oʻrnatadi (`README.md`, 3-bosqich). Parol faqat sizda boʻlsin:
-adminkada forum mehmonlarining ismi, telefoni va elektron pochtasi turadi.
+Dastlabki parolni dasturchi oʻrnatadi. Parol faqat sizda boʻlsin: adminkada
+forum mehmonlarining ismi, telefoni va elektron pochtasi turadi.
 
-Parolni unutsangiz tiklab boʻlmaydi — yangisi qoʻyiladi. Serverda:
+### Parolni oʻzgartirish
+
+Buni oʻzingiz qilasiz, dasturchini kutmasdan: oʻng yuqoridagi **Parol**
+tugmasi. Hozirgi parolni va yangisini ikki marta soʻraydi.
+
+- Kamida **10 belgi**. Faqat raqamdan iborat boʻlmasin.
+- Hozirgi parol ham soʻraladi — ochiq qolgan kompyuter yangi parol qoʻyish
+  huquqi emas.
+- Saqlagandan keyin **boshqa qurilmalardagi** sessiyalar yopiladi: kim
+  qayerda kirib qolgan boʻlsa, chiqib ketadi. Oʻzingiz ochiq qolasiz.
+
+### Parolni unutib qoʻysangiz
+
+Tiklab boʻlmaydi — faqat yangisini qoʻyish mumkin, va buni serverga kira
+oladigan odam qiladi:
 
 ```sh
-cd /var/www/forum
-npm run server:password -- "yangi parol"
+php /var/www/forum/server/bin/password.php
 ```
 
-yoki Node oʻrnatilmagan boʻlsa, qoʻlda:
+Soʻraydi, ekranda koʻrsatmaydi, hech qayerga yozmaydi.
 
-```sh
-php -r 'echo password_hash("yangi parol", PASSWORD_DEFAULT), "\n";'
-```
+### Xato parol bir necha marta kiritilsa
 
-chiqqan satrni `server/src/config.php` dagi `admin_password_hash` ga qoʻying.
+Besh marta xato kiritilgandan keyin **shu manzil 15 daqiqaga bloklanadi**, va
+har takrorlanganda muddat ikki barobar oshadi. Oʻzingiz bloklanib qolsangiz —
+kutish kerak; bir necha daqiqada oʻtadi.
 
 > Chiqish uchun oʻng yuqoridagi **Chiqish** tugmasi. Umumiy kompyuterda ishlab
-> boʻlgach albatta chiqing.
+> boʻlgach albatta chiqing. Tegilmasa, sessiya **30 daqiqada** oʻzi yopiladi.
 
 ---
 
@@ -342,7 +355,9 @@ qoʻshadi va siz bu yerdan tahrirlaysiz.
 | Alomat | Nima qilish |
 |---|---|
 | “Parol notoʻgʻri” — lekin parol toʻgʻri | Katta-kichik harfga, klaviatura tiliga qarang. Baribir kirmasa — parolni qaytadan qoʻying (1-boʻlim) |
-| “Saytning maʼlumot fayli topilmadi” | `server/src/config.php` dagi `site_dir` notoʻgʻri. Dasturchiga ayting |
+| “Saytning maʼlumot fayli topilmadi” | `server/.env` dagi `SITE_DIR` notoʻgʻri. Dasturchiga ayting — serverda `php server/bin/doctor.php` nima deyishini aytsin |
+| “Koʻp marta xato kiritildi” | Parol bir necha marta xato kiritilgan; manzil vaqtincha bloklangan. Yozilgan daqiqani kutib, qaytadan kiring |
+| Sahifa oʻzi chiqib ketdi | Sessiya vaqti tugadi (30 daqiqa tegilmasa) yoki kimdir parolni oʻzgartirdi |
 | Saqladim, lekin saytda oʻzgarmadi | Brauzerni `Ctrl+F5` bilan yangilang. Baribir boʻlmasa — **Nashr → Saytni qayta nashr etish** |
 | “Sahifa eskirgan” | Adminka uzoq ochiq turgan. Sahifani yangilang va qaytadan saqlang |
 | «Bilet topilmadi» | Havola toʻliq nusxalanmagan. Adminkadagi **E-bilet** tugmasidan qayta oling |

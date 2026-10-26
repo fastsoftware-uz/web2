@@ -17,18 +17,22 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/app.php';
 require_once __DIR__ . '/../src/site.php';
+require_once __DIR__ . '/../src/guard.php';
 
 $config = app_config();
 
-session_name('forum_admin');
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Strict',
-    'secure' => (($_SERVER['HTTPS'] ?? '') !== '' && $_SERVER['HTTPS'] !== 'off')
-        || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
-    'path' => '/',
-]);
-session_start();
+/* The same headers, the same session and the same locks as the list; this
+   page shows no telephone numbers but it can change what the site says. */
+guard_require_https($config);
+guard_headers('admin');
+guard_admin_session($config);
+
+if (!guard_ip_allowed($config, app_client_ip())) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Bu manzildan kirish yopilgan.\n";
+    exit;
+}
 
 if (empty($_SESSION['admin'])) {
     header('Location: ./');
@@ -373,6 +377,7 @@ $projectId = (string) ($_GET['id'] ?? '');
 <meta name="robots" content="noindex, nofollow">
 <title><?= app_h($title) ?> — <?= app_h($config['site_name'] ?? 'Forum') ?></title>
 <link rel="stylesheet" href="admin.css">
+<script src="admin.js" defer></script>
 </head>
 <body>
 <header class="bar">
@@ -406,8 +411,8 @@ $projectId = (string) ($_GET['id'] ?? '');
 <?php endif; ?>
 
 <?php if ($base === null): ?>
-  <p class="muted">Saytning maʼlumot fayli topilmadi. <code>src/config.php</code> dagi
-    <code>site_dir</code> qiymatini tekshiring — u saytning <code>index.html</code> turgan papkasi
+  <p class="muted">Saytning maʼlumot fayli topilmadi. <code>server/.env</code> dagi
+    <code>SITE_DIR</code> qiymatini tekshiring — u saytning <code>index.html</code> turgan papkasi
     boʻlishi kerak.</p>
 
 <?php elseif ($page === 'projects' && $key === 'forum'): ?>
@@ -532,7 +537,7 @@ $projectId = (string) ($_GET['id'] ?? '');
       <input type="hidden" name="do" value="republish">
       <button type="submit">Saytni qayta nashr etish</button>
     </form>
-    <form method="post" class="inline" onsubmit="return confirm('Barcha oʻzgarishlar bekor qilinadi. Davom etilsinmi?')">
+    <form method="post" class="inline" data-confirm="Barcha oʻzgarishlar bekor qilinadi. Davom etilsinmi?">
       <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
       <input type="hidden" name="do" value="revert-all">
       <button class="btn btn--quiet" type="submit">Hammasini asl holiga qaytarish</button>

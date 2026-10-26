@@ -58,5 +58,14 @@ manzilini repo sozlamalaridan berish kerak: **Settings → Secrets and
 variables → Actions → Variables → `REGISTER_ENDPOINT`**. U berilmaguncha
 forma arizani elektron pochta orqali yuborishni taklif qiladi.
 
-`server/src/config.php` va `server/data/` git'ga tushmaydi: biri parol
+Oʻrnatish bitta faylga sigʻadi: `server/.env.example` dan `server/.env`
+yasaladi va toʻldiriladi, xolos. Ishlamay qolsa — `php server/bin/doctor.php`
+nimasi notoʻgʻri ekanini aytadi.
+
+Har push ikki joyga chiqadi: `deploy.yml` — GitHub Pages (statik nusxa),
+`deploy-server.yml` — tashkilotchining serveri (sayt + API + adminka).
+Ikkinchisi server manzili berilmaguncha oʻtkazib yuboriladi; sozlamalari
+`server/README.md` da.
+
+`server/.env` va `server/data/` git'ga tushmaydi: biri parol
 hash'i, ikkinchisi arizalarning oʻzi.

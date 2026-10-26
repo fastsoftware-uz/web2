@@ -25,8 +25,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/../src/ticket.php';
 require_once __DIR__ . '/../src/qr.php';
 require_once __DIR__ . '/../src/site.php';
+require_once __DIR__ . '/../src/guard.php';
 
 $config = app_config();
+guard_require_https($config);
 
 /* The number arrives either as a path segment (/ticket/NUMBER, which is what
    nginx and the dev router rewrite) or as ?t=, which is the form that
@@ -47,9 +49,15 @@ $row = $id === null ? null : ticket_row($config, $id);
 $waiting = $row !== null && !ticket_available($config, $row);
 $scan = isset($_GET['scan']);
 
+/*
+ * A badge carries somebody's name and where they work, and its address is a
+ * credential anybody who has the link holds. So: no store, no index, no
+ * referrer, and nothing loaded from anywhere but this server. See
+ * guard_headers() — the 'ticket' policy allows the inline stylesheet the
+ * badge has to carry to survive being printed from a saved file.
+ */
+guard_headers('ticket');
 header('Content-Type: text/html; charset=utf-8');
-header('Referrer-Policy: no-referrer');
-header('X-Robots-Tag: noindex, nofollow');
 
 /* ------------------------------------------------------------- the event */
 

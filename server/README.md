@@ -12,29 +12,43 @@ touches that site; everything is under one prefix you choose.
 > so. This directory is the exception, added at the client's request on
 > 17 October 2026 — the site now needs somewhere for a registration to go.
 
+**One file configures an installation: `server/.env`.** Copy
+`.env.example` to it, fill it in, and nothing else on the server is edited by
+hand. **One command says whether it will work: `php server/bin/doctor.php`.**
+
 ---
 
 ## What it is
 
 ```
 server/
+  .env.example       ← copy to .env and fill in. The only file you edit.
   public/            ← the only directory nginx is allowed to reach
     api.php          ← POST a registration; GET it for a health check
-    index.php        ← the admin: login, list, search, status, CSV
+    index.php        ← the admin: login, list, search, status, password, CSV
     site.php         ← the editor: the site's own texts, and the projects
-    admin.css
+    admin.css  admin.js
   src/
-    config.example.php ← copy to config.php and edit
+    env.php            ← reads .env; the whole configuration is assembled here
+    guard.php          ← sessions, headers, the login throttle, the password
     app.php            ← validation and the record's shape
     storage.php        ← SQLite, or a flat file when SQLite is missing
     site.php           ← the overlay the editor saves into
-  data/              ← the registrations and the overlay. NOT under public/.
-                       Must be writable.
+    ticket.php  qr.php ← the e-ticket and the QR code it carries
+  bin/
+    doctor.php       ← why it is not working. Run this first.
+    password.php     ← set the admin password
+    publish.php      ← re-apply the admin's edits after a deploy
+  data/              ← the registrations, the overlay, the ticket key, the
+                       password if it was changed from the admin.
+                       NOT under public/. Must be writable.
 ```
 
-`src/` and `data/` are outside the web root on purpose: if nginx is ever
-pointed at the wrong directory, the password hash and the registrations are
-still not downloadable.
+`src/`, `bin/` and `data/` are outside the web root on purpose: if nginx is
+ever pointed at the wrong directory, the password hash and the registrations
+are still not downloadable. `.env` is outside it for the same reason, and the
+nginx block below refuses dotfiles as well — two locks on one door, because
+this is the file that would matter.
 
 ## Running the whole thing on your own machine
 
@@ -42,7 +56,7 @@ Before any of this is copied anywhere, the chain can be driven end to end
 locally — form, endpoint, store, admin, CSV — with PHP 8.1+ on PATH:
 
 ```sh
-npm run server:password -- "the password you choose"   # writes src/config.php
+npm run server:password -- "the password you choose"   # writes server/.env
 npm run server                                          # builds site 2, then serves it
 ```
 
@@ -58,9 +72,9 @@ npm run server                                          # builds site 2, then se
 so the addresses are the ones the real deployment serves. It is a development
 server and nothing else: single threaded, and never part of a deployment.
 
-`node qa/backend.mjs` runs the same chain unattended, against a throwaway
-data directory and a throwaway password, and puts your config.php back
-afterwards.
+`node qa/backend.mjs` runs the same chain unattended — twenty-seven checks,
+against a throwaway data directory, a throwaway password and its own `.env`.
+It never touches a real installation's configuration.
 
 ## Storage
 
@@ -71,8 +85,8 @@ that assumes it is a backend that 500s on arrival. Both stores are safe to
 write from several PHP-FPM workers at once. `GET /api/health` says which one
 you got.
 
-Set `'storage' => 'jsonl'` in the config if you would rather be able to read
-the registrations with `cat` and count them with `wc -l` than install an
+Set `STORAGE=jsonl` in `.env` if you would rather be able to read the
+registrations with `cat` and count them with `wc -l` than install an
 extension. On a forum's guest list that is a reasonable preference.
 
 ---
@@ -99,7 +113,8 @@ alone is a counter, so without the signature every guest's badge would be one
 URL away from every other; with it, a guessed address is one of a billion. It
 is not a password: whoever holds the ticket can open it, which is the point of
 sending it to them. The page shows only what a badge shows — never the e-mail
-address, the telephone number or the note.
+address, the telephone number or the note — and it is sent with `no-store`, so
+it is not left behind in a browser's cache on a shared machine.
 
 **Issued on registration for two of the four roles.** A visitor and an
 investor register themselves and leave the form with the badge in their hand.
@@ -119,9 +134,9 @@ JavaScript: a badge whose barcode needs a script is blank when it is printed
 from a saved file. `node qa/ticket.mjs` renders what it draws and reads it
 back with a real decoder.
 
-`site_url` in the configuration is the address that goes inside the QR code.
-Empty means "the host this request came in on", which is right everywhere
-except behind a proxy that rewrites it.
+`SITE_URL` in `.env` is the address that goes inside the QR code. Empty means
+"the host this request came in on", which is right everywhere except behind a
+proxy that rewrites it.
 
 ---
 
@@ -133,78 +148,131 @@ except behind a proxy that rewrites it.
 apk add nginx php84 php84-fpm php84-session php84-json php84-mbstring php84-opcache
 # Optional but recommended — without it the flat file is used instead:
 apk add php84-pdo php84-pdo_sqlite
+# For the automatic deploy below:
+apk add rsync openssh
 ```
 
-### 2. Files
+### 2. A group both users are in
+
+PHP-FPM writes the registrations; the deploy writes the files. They are two
+different users and they share two directories, so they share a group — and
+the group sticks to anything created later, which is what `2770` buys:
 
 ```sh
-install -d -o php-dev -g www-data /var/www/forum
-cp -r server /var/www/forum/server          # this directory
-cp -r site-2-silkroad/dist/. /var/www/forum/public   # the built site
+addgroup forum
+adduser php-dev forum          # the PHP-FPM user
+adduser deploy                 # the user the deploy logs in as
+adduser deploy forum
 
-install -d -o php-dev -g php-dev -m 750 /var/www/forum/server/data
+install -d -o deploy -g forum -m 2775 /var/www/forum
+install -d -o deploy -g forum -m 2775 /var/www/forum/public
+install -d -o deploy -g forum -m 2775 /var/www/forum/public/data
+install -d -o deploy -g forum -m 2775 /var/www/forum/server
+install -d -o php-dev -g forum -m 2770 /var/www/forum/server/data
 ```
 
-`/var/www/forum/public` holds `index.html`, `register/index.html` and
-`assets/` — the output of `npm run build:2`. The registration page is a
-directory rather than a `.html` file so that its address reads
-`/register/`; `try_files $uri $uri/` below is what serves it.
+The group write bit and the setgid bit are both load-bearing: PHP-FPM writes
+as `php-dev`, the deploy writes as `deploy`, and anything either of them
+creates has to stay writable by the other. The deploy sets the same modes on
+what it uploads, so this survives a push.
 
-### 3. Configure
+`server/data` is the only directory PHP has to write, and `public/data` is the
+only one it has to write inside the web root — those are the two files the
+site reads at runtime, which is how an edit in the admin shows on the page
+with no rebuild. Nothing else in the web root is writable.
+
+### 3. Files
 
 ```sh
-cd /var/www/forum/server/src
-cp config.example.php config.php
-php -r 'echo password_hash("the password you chose", PASSWORD_DEFAULT), "\n";'
+cp -r server/. /var/www/forum/server/          # this directory
+cp -r site-2-silkroad/dist/. /var/www/forum/public/   # the built site
 ```
 
-Paste the hash into `admin_password_hash` in `config.php`. Leave
-`allowed_origins` empty if nginx serves the site and the API from the same
-host, which is what the nginx block below does.
+`/var/www/forum/public` holds `index.html`, `register/index.html`, `assets/`
+and `data/` — the output of `npm run build:2`. The registration page is a
+directory rather than a `.html` file so that its address reads `/register/`;
+`try_files $uri $uri/` below is what serves it.
+
+After this first copy, every later one is the deploy workflow's job — see
+**Automatic deploy** below.
+
+### 4. `.env` — the one file
 
 ```sh
-chown php-dev:php-dev config.php && chmod 640 config.php
+cd /var/www/forum/server
+cp .env.example .env
+php bin/password.php                  # asks for the password, writes the hash
+chown php-dev:forum .env && chmod 640 .env
 ```
 
-### 3b. The site editor
+Then open `.env` and fill in the three that have no sensible default:
 
-Set `site_dir` in `config.php` to the directory nginx serves the site from:
-
-```php
-'site_dir' => '/var/www/forum/public',
+```
+SITE_DIR=/var/www/forum/public
+SITE_URL=https://forum.example.uz
+DATA_DIR=/var/www/forum/server/data
 ```
 
-The admin publishes by rewriting `data/forum-2026.json` and `data/content.json`
-inside it — those are the two files the page fetches at runtime, so an edit is
-live the moment it is saved. PHP-FPM therefore has to be able to write that one
-directory:
+Everything else in that file is commented, has a default, and can be left
+alone to begin with. `FORCE_HTTPS=1` once the certificate answers.
 
 ```sh
-chown -R php-dev:php-dev /var/www/forum/public/data
-chmod 750 /var/www/forum/public/data
+php bin/doctor.php
 ```
 
-Nothing else in the web root needs to be writable, and nothing is. If this step
-is skipped the registrations still work and only the editor reports that it
-cannot save, which is the right way round.
+It checks the PHP version, the extensions, the password, both data
+directories, the site directory and the two files the site reads, and says
+which one is wrong in the words of the thing that has to change. Run it again
+after any change here.
 
-**It edits the site on this server and nowhere else.** While the published site
-is still on GitHub Pages, what the organiser changes here will not show there:
-the editor changes the copy nginx serves. See *While the site is still on
-GitHub Pages* below.
+> An installation made before 25 October 2026 has a `src/config.php` instead.
+> It still works and still takes precedence; `bin/password.php` moves its
+> values into `.env` and renames it the first time it runs.
 
-The overlay itself — what was changed, and what it was before — lives in
-`server/data/site-*.json`, outside the web root with the registrations.
+### 5. nginx
 
-### 4. nginx
+At `http` level, once — a rate limit for the two addresses that are worth
+hammering:
+
+```nginx
+# /etc/nginx/nginx.conf, inside http { }
+server_tokens off;
+limit_req_zone $binary_remote_addr zone=forum_admin:10m rate=30r/m;
+limit_req_zone $binary_remote_addr zone=forum_api:10m rate=20r/m;
+```
+
+Then the site:
 
 ```nginx
 server {
     listen 80;
     server_name forum.example.uz;
+    # Everything else is https. certbot writes this for you; this is what it
+    # amounts to.
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name forum.example.uz;
+
+    ssl_certificate     /etc/letsencrypt/live/forum.example.uz/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/forum.example.uz/privkey.pem;
 
     root /var/www/forum/public;
     index index.html;
+
+    # A registration is a couple of kilobytes. Nothing here accepts a file.
+    client_max_body_size 64k;
+
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    # Nothing in this tree begins with a dot, so anything that asks for one
+    # is asking for something it should not have. .env is outside the root
+    # already; this is the second lock.
+    location ~ /\. { deny all; }
 
     # The built site. Everything is a real file; there is no SPA router to
     # fall back for, so a miss is a miss.
@@ -218,6 +286,12 @@ server {
         add_header Cache-Control "public, immutable";
     }
 
+    # The two files the admin rewrites. They must never be served from a
+    # cache: the whole point of the editor is that a change is live at once.
+    location /data/ {
+        add_header Cache-Control "no-cache";
+    }
+
     # The e-ticket. The number is in the path; ticket.php reads it from
     # REQUEST_URI, so there is nothing to capture here.
     location ^~ /ticket/ {
@@ -228,6 +302,7 @@ server {
 
     # The one public endpoint.
     location = /api/register {
+        limit_req zone=forum_api burst=10 nodelay;
         include fastcgi_params;
         fastcgi_pass unix:/run/php-fpm84/php-fpm.sock;
         fastcgi_param SCRIPT_FILENAME /var/www/forum/server/public/api.php;
@@ -240,9 +315,12 @@ server {
         fastcgi_param REQUEST_METHOD GET;
     }
 
-    # The admin. Add `allow`/`deny` here if it should only open from the
-    # office; the password is the lock, this would be the second one.
+    # The admin. The password is the lock and the throttle is inside PHP;
+    # this is the one in front of it. Add `allow`/`deny` here too if it
+    # should only open from the office — or set ADMIN_IP_ALLOW in .env,
+    # which does the same thing without an nginx reload.
     location /admin/ {
+        limit_req zone=forum_admin burst=20 nodelay;
         alias /var/www/forum/server/public/;
         index index.php;
 
@@ -252,10 +330,35 @@ server {
             fastcgi_param SCRIPT_FILENAME /var/www/forum/server/public/$1;
         }
     }
-
-    # src/ and data/ are not under root, so there is nothing to deny here —
-    # but if the layout is ever changed, deny them before anything else.
 }
+```
+
+### 6. PHP
+
+Two settings matter and one of them is not about safety:
+
+```ini
+; /etc/php84/php.ini
+display_errors = Off      ; a notice printed into a response lands inside the
+                          ; CSV and corrupts it. That is not a theory.
+expose_php = Off
+opcache.enable = 1
+opcache.memory_consumption = 128
+opcache.max_accelerated_files = 10000
+opcache.validate_timestamps = 1
+opcache.revalidate_freq = 2
+```
+
+`validate_timestamps = 1` is what makes a deploy take effect without
+reloading anything; turn it off and every deploy needs
+`rc-service php-fpm84 reload` after it.
+
+Alpine installs the interpreter as `php84` and often leaves no plain `php` on
+PATH. The deploy copes with either, and the commands in this file are shorter
+if you make one:
+
+```sh
+ln -sf /usr/bin/php84 /usr/local/bin/php
 ```
 
 ```sh
@@ -263,7 +366,7 @@ rc-update add php-fpm84 && rc-service php-fpm84 start
 rc-update add nginx && rc-service nginx restart
 ```
 
-### 5. Check it
+### 7. Check it
 
 ```sh
 curl -s https://forum.example.uz/api/health
@@ -274,36 +377,94 @@ Then open `https://forum.example.uz/admin/` and log in.
 
 ---
 
+## Automatic deploy
+
+Every push to `main` in the repository that carries this directory builds the
+site, copies it and the backend to this server, and puts the admin's own
+edits back on top. `.github/workflows/deploy-server.yml`.
+
+**On the server, once:** a key for the deploy to log in with.
+
+```sh
+# as the deploy user
+ssh-keygen -t ed25519 -f ~/.ssh/deploy -N ''
+cat ~/.ssh/deploy.pub >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+cat ~/.ssh/deploy          # the private key — this goes into GitHub, once
+ssh-keyscan -p 22 forum.example.uz   # the host key — this goes in too
+```
+
+**In GitHub,** *Settings → Secrets and variables → Actions*:
+
+| | Name | Value |
+|---|---|---|
+| Secret | `SSH_KEY` | the whole private key, `-----BEGIN` to `-----END` |
+| Secret | `SSH_KNOWN_HOSTS` | the `ssh-keyscan` output |
+| Variable | `SSH_HOST` | `forum.example.uz` |
+| Variable | `SSH_USER` | `deploy` |
+| Variable | `SSH_PORT` | `22` (omit for 22) |
+| Variable | `DEPLOY_PATH` | `/var/www/forum` |
+| Variable | `SITE_URL` | `https://forum.example.uz` |
+| Variable | `REGISTER_ENDPOINT` | empty once the site is on this server |
+
+Until `SSH_HOST` is set the job is skipped rather than failed, so a push to a
+repository with no server yet is still a green push.
+
+**What a deploy does not touch:** `server/.env`, `server/data/`. They are
+excluded from the copy, which also protects them from `--delete`.
+
+**What it does touch:** everything else under `public/` and `server/`.
+`--delete` is on, so a file put into `public/` by hand will be removed by the
+next deploy — put it in the repository instead.
+
+**The step that matters.** A deploy replaces `public/data/*.json` with the
+build output. Those are exactly the two files the admin publishes into, so
+for a moment the site says what the build says and not what the organiser
+edited. The last step is therefore:
+
+```sh
+php /var/www/forum/server/bin/publish.php
+```
+
+which re-reads the new build as the base and re-applies the overlay on top of
+it. The organiser's dates, texts and hidden projects survive a push they did
+not make. `qa/backend.mjs` has a check for exactly this, and so does the
+workflow: the deploy fails if the republish does.
+
+It then runs `bin/doctor.php` on the server, so a deploy onto a
+misconfigured installation says so in the deploy log rather than in a
+telephone call from the organiser.
+
+---
+
 ## While the site is still on GitHub Pages
 
 The published site is served from `*.github.io` and this API is on the
 organiser's server, so the browser treats the POST as cross-origin. Two
 changes:
 
-1. In `config.php`:
-   ```php
-   'allowed_origins' => ['https://fastsoftware-uz.github.io'],
+1. In `.env`:
+   ```
+   ALLOWED_ORIGINS=https://fastsoftware-uz.github.io
    ```
    A request from any other origin is refused, so that list is the whole of
    the guest list.
 
-2. Build the site with the absolute endpoint:
-   ```sh
-   VITE_REGISTER_ENDPOINT=https://forum.example.uz/api/register npm run build:2
-   ```
-
-   The Pages repository builds itself, so set it there instead of rebuilding
-   by hand: **Settings → Secrets and variables → Actions → Variables → New
-   variable**, named `REGISTER_ENDPOINT`, with that same URL as its value.
-   The deploy workflow passes it to the build, and the next push picks it up.
+2. The Pages build needs the absolute endpoint: **Settings → Secrets and
+   variables → Actions → Variables → `REGISTER_ENDPOINT`**, with
+   `https://forum.example.uz/api/register` as its value. The next push picks
+   it up.
 
 Until that variable is set the POST goes nowhere, and the page says so and
 offers the organiser's address with the answers already filled into the
 message — a registration is not lost in the meantime, it just arrives by
 email.
 
-When the site moves onto this server, empty the list and drop the variable:
-same-origin needs neither.
+When the site moves onto this server, empty both: same-origin needs neither.
+
+**The editor edits the site on this server and nowhere else.** While the
+published site is still on Pages, what the organiser changes in the admin
+will not show there — the editor rewrites the copy nginx serves.
 
 ---
 
@@ -312,8 +473,9 @@ same-origin needs neither.
 ### `POST /api/register`
 
 ```json
-{ "role": "guest|speaker", "full_name": "", "organisation": "", "position": "",
-  "country": "", "email": "", "phone": "", "direction": "", "note": "", "lang": "uz" }
+{ "role": "vip|investor|visitor|speaker", "full_name": "", "organisation": "",
+  "position": "", "country": "", "email": "", "phone": "", "direction": "",
+  "note": "", "lang": "uz" }
 ```
 
 `role`, `full_name`, `organisation`, `position`, `country`, `email` and
@@ -323,8 +485,9 @@ is dropped. A form POST is accepted as well as JSON.
 | Status | Body | Means |
 |---|---|---|
 | 200 | `{"ok":true,"id":12}` | Stored. `id` is the reference the visitor is shown. |
+| 413 | `{"ok":false,"error":"body"}` | Over 32 KB. Not a registration. |
 | 422 | `{"ok":false,"fields":["email"]}` | Named fields are wrong. No prose: the page knows the reader's language and this does not. |
-| 429 | `{"ok":false,"error":"rate"}` | More than `rate_limit_per_hour` from one address. |
+| 429 | `{"ok":false,"error":"rate"}` | More than `RATE_LIMIT_PER_HOUR` from one address. |
 | 403 | `{"ok":false,"error":"origin"}` | Cross-origin, and the origin is not in the list. |
 | 500 | `{"ok":false,"error":"store"}` | Could not write. The reason is in the PHP error log, not in the response. |
 
@@ -337,26 +500,53 @@ browser that nginx, PHP and the data directory are all talking to each other.
 
 ## What is guarded, and what is not
 
-**Guarded.** The admin is behind `password_hash`/`password_verify` with a
-fixed delay on a wrong answer and a fresh session id on a right one. Status
-changes carry a CSRF token. The session cookie is `HttpOnly`, `SameSite=Strict`,
-and `Secure` whenever the request arrived over HTTPS. Every value that reaches
-the page goes through `htmlspecialchars`, and SQLite is only ever given bound
-parameters. The form carries a honeypot field, and a bot that fills it is
-answered `200` and stored nowhere — told it had failed, it would come back
-having learned something. One address may send `rate_limit_per_hour`
-registrations an hour.
+**The password.** `password_hash`/`password_verify`, no default, and the
+application refuses every login until an installation sets one. A wrong
+answer costs 0.4 s however wrong it is, and five of them lock that address
+out for fifteen minutes — doubling each time it is earned again, up to a day.
+The counter is one small file under a lock, so several PHP-FPM workers cannot
+be used to outrun it, and it is only read on a login. The organiser changes
+the password from the admin itself: the current one is asked for, the new one
+goes into `data/admin.json`, and every other session is ended by the change.
+`bin/password.php` is the way back in when it has been forgotten.
+
+**The session.** A fresh id on a successful login, so a session fixed before
+it is not the one that ends up logged in; `session.use_strict_mode`, so an id
+the server never issued is never adopted. The cookie is `HttpOnly`,
+`SameSite=Strict`, and `Secure` whenever the request arrived over HTTPS. It
+expires after 30 idle minutes and after 12 hours whatever it was doing.
+
+**The pages.** Every value that reaches one goes through `htmlspecialchars`,
+and SQLite is only ever given bound parameters. Every state-changing POST
+carries a CSRF token. The admin, the CSV and the e-ticket are sent
+`no-store`, so the guest list is not left in a browser's cache on a shared
+machine; `noindex`, so it is not in a search engine; `X-Frame-Options: DENY`,
+so it cannot be framed; and a content policy of `default-src 'none'` with
+nothing inline allowed — which is why the admin's two behaviours live in
+`admin.js` rather than in attributes.
+
+**The form.** A honeypot field no human sees: a bot that fills it is answered
+`200` and stored nowhere — told it had failed, it would come back having
+learned something. One address may send `RATE_LIMIT_PER_HOUR` registrations
+an hour. A body over 32 KB is refused before it is parsed.
+
+**Optionally, the door.** `ADMIN_IP_ALLOW` in `.env` — exact addresses and
+IPv4 ranges. Empty by default, because organisers travel and an admin they
+cannot open from a hotel is an admin somebody will ask to have the password
+e-mailed from.
 
 **Not guarded, deliberately.** There is no email confirmation: a registration
 is a lead for the organising committee to call, not an account. There is no
-rate limit on admin logins beyond the delay — put the admin behind an nginx
-`allow`/`deny` if it needs more. There is no backup; `data/` is one directory
-and belongs in whatever already backs that server up.
+backup; `data/` is one directory and belongs in whatever already backs that
+server up — including `ticket-secret.key`, without which every badge already
+issued stops opening.
 
 **Please also:**
 
-- Serve this over HTTPS. The admin password crosses the wire on every login.
-- Set `display_errors = Off` in production. A PHP notice printed into a
-  response lands inside the CSV and corrupts it — that is not a theory, it
-  happened while this was being written, and the fix is in the code as well.
-- Back `data/` up. It is the only copy of who is coming.
+- Serve this over HTTPS and set `FORCE_HTTPS=1`. The admin password crosses
+  the wire on every login.
+- Set `display_errors = Off`. A PHP notice printed into a response lands
+  inside the CSV and corrupts it — that is not a theory, it happened while
+  this was being written, and the fix is in the code as well.
+- The CSV holds every guest's telephone number and e-mail address. It is for
+  the organising committee and no one else.

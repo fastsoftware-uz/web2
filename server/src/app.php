@@ -10,27 +10,23 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/storage.php';
+require_once __DIR__ . '/env.php';
 
+/**
+ * The configuration, read once per request.
+ *
+ * What it is made of, and in which order, is env.php's business — one file
+ * (server/.env), with the old src/config.php still honoured on top of it so
+ * that an installation made before this existed keeps working. The password
+ * is the exception: once it has been changed from the admin it comes from the
+ * data directory, which is why that one setting goes through guard.php.
+ */
 function app_config(): array
 {
     static $config = null;
-    if ($config !== null) {
-        return $config;
+    if ($config === null) {
+        $config = env_config();
     }
-    /**
-     * FORUM_CONFIG names a config file to use instead of src/config.php.
-     *
-     * It exists for qa/backend.mjs, which needs its own password and its own
-     * data directory. The suite used to get them by writing over config.php
-     * and putting it back afterwards, and an interrupted run left the real
-     * installation with the test password — which is exactly the sort of
-     * thing a test suite must not be able to do.
-     */
-    $env = getenv('FORUM_CONFIG');
-    $own = is_string($env) && $env !== '' && is_file($env) ? $env : __DIR__ . '/config.php';
-    $config = is_file($own)
-        ? require $own
-        : require __DIR__ . '/config.example.php';
     return $config;
 }
 

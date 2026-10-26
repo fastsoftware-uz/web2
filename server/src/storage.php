@@ -38,7 +38,13 @@ function storage_is_sqlite(): bool
 
 function storage_describe(): string
 {
-    return storage_is_sqlite() ? 'SQLite (pdo_sqlite)' : 'JSON lines (pdo_sqlite not installed)';
+    if (storage_is_sqlite()) {
+        return 'SQLite (pdo_sqlite)';
+    }
+    // Two different reasons to be on the flat file, and an installation that
+    // chose it should not be told its extension is missing.
+    $chosen = (string) (app_config()['storage'] ?? 'auto') === 'jsonl';
+    return $chosen ? 'JSON lines (sozlamada tanlangan)' : 'JSON lines (pdo_sqlite not installed)';
 }
 
 function storage_dir(array $config): string

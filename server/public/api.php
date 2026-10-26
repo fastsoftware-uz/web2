@@ -19,9 +19,16 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/app.php';
 require_once __DIR__ . '/../src/ticket.php';
+require_once __DIR__ . '/../src/guard.php';
 
 $config = app_config();
+guard_require_https($config);
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+
+/* An answer that carries a ticket number is an answer no cache may keep. */
+header('Cache-Control: no-store');
+header('X-Content-Type-Options: nosniff');
+header_remove('X-Powered-By');
 
 /**
  * CORS, only for the origins the configuration names.
@@ -73,6 +80,15 @@ if ($method !== 'POST') {
 }
 
 $raw = file_get_contents('php://input') ?: '';
+/*
+ * A registration is at most a couple of kilobytes — the note is capped at
+ * 1200 characters and everything else is shorter. Anything much larger is
+ * not a registration, and is refused before it is parsed rather than after.
+ */
+if (strlen($raw) > 32768) {
+    app_json(413, ['ok' => false, 'error' => 'body']);
+    exit;
+}
 // A form post is accepted as well as JSON, so the page still works if its
 // JavaScript never ran.
 $input = str_starts_with(trim($raw), '{')

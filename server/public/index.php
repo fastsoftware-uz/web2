@@ -13,22 +13,30 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../src/app.php';
 require_once __DIR__ . '/../src/ticket.php';
+require_once __DIR__ . '/../src/guard.php';
 
 $config = app_config();
 
-session_name('forum_admin');
-session_set_cookie_params([
-    'httponly' => true,
-    'samesite' => 'Strict',
-    // Set over HTTPS only when the request arrived over HTTPS, so the cookie
-    // still works while the site is being set up on plain HTTP.
-    'secure' => (($_SERVER['HTTPS'] ?? '') !== '' && $_SERVER['HTTPS'] !== 'off')
-        || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https',
-    'path' => '/',
-]);
-session_start();
+/*
+ * The headers first, the session second, the page last.
+ *
+ * guard_headers() has to run before anything is printed, and the session has
+ * to be started before anything reads it — including the login throttle,
+ * which is the first thing a request to this page touches. See src/guard.php.
+ */
+guard_require_https($config);
+guard_headers('admin');
+guard_admin_session($config);
 
-$hash = (string) ($config['admin_password_hash'] ?? '');
+$ip = app_client_ip();
+if (!guard_ip_allowed($config, $ip)) {
+    http_response_code(403);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Bu manzildan kirish yopilgan.\n";
+    exit;
+}
+
+$hash = guard_password_hash($config);
 $action = (string) ($_GET['action'] ?? $_POST['action'] ?? '');
 
 /* ------------------------------------------------------------------ auth */
@@ -57,27 +65,73 @@ if ($action === 'logout') {
     exit;
 }
 
+$wait = 0;
+
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $given = (string) ($_POST['password'] ?? '');
-    if ($hash === '') {
+    $wait = guard_login_wait($config, $ip);
+    if ($wait > 0) {
+        // Locked out, and not told whether the password was right: that is
+        // the one thing a word list would still learn from a locked door.
+        $error = 'locked';
+    } elseif ($hash === '') {
         $error = 'no-hash';
     } elseif (password_verify($given, $hash)) {
-        // A fresh id after a successful login, so a session fixed before it
-        // is not the session that ends up logged in.
-        session_regenerate_id(true);
-        $_SESSION['admin'] = true;
+        guard_login_ok($config, $ip);
+        guard_admin_login($config);
         header('Location: ?');
         exit;
     } else {
         // Costs the same whether the password was close or nothing like it.
         usleep(400000);
-        $error = 'bad';
+        guard_login_failed($config, $ip);
+        $wait = guard_login_wait($config, $ip);
+        $error = $wait > 0 ? 'locked' : 'bad';
     }
 }
 
 $authed = !empty($_SESSION['admin']);
+/* Why the last session ended, if it ended by itself. Read once. */
+$ended = (string) ($_SESSION['ended'] ?? '');
+unset($_SESSION['ended']);
 
 /* --------------------------------------------------------------- actions */
+
+/**
+ * Changing the password, from the admin rather than from a file on the server.
+ *
+ * The current one is asked for as well, because the person at the keyboard is
+ * not necessarily the person who logged in — an unlocked laptop should not be
+ * a new password. The new hash goes to data/admin.json and the version it
+ * carries goes up, which logs out every other browser that was logged in; see
+ * guard_password_set() and guard_admin_session().
+ */
+$passwordSaved = false;
+if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') {
+    $new = (string) ($_POST['new'] ?? '');
+    $complaint = guard_password_complaint($new);
+    if (!admin_check_token()) {
+        $error = 'csrf';
+    } elseif (!password_verify((string) ($_POST['current'] ?? ''), $hash)) {
+        usleep(400000);
+        $error = 'pw-current';
+    } elseif ($new !== (string) ($_POST['again'] ?? '')) {
+        $error = 'pw-again';
+    } elseif ($complaint !== '') {
+        $error = 'pw-' . $complaint;
+    } else {
+        try {
+            guard_password_set($config, $new);
+            // This browser stays logged in; the others do not.
+            $_SESSION['pwv'] = guard_password_version($config);
+            $hash = guard_password_hash($config);
+            $passwordSaved = true;
+        } catch (Throwable $e) {
+            error_log('[forum-admin] password: ' . $e->getMessage());
+            $error = 'pw-write';
+        }
+    }
+}
 
 if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
     if (admin_check_token()) {
@@ -215,6 +269,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
 <meta name="robots" content="noindex, nofollow">
 <title>Roʻyxatdan oʻtganlar — <?= app_h($config['site_name'] ?? 'Forum') ?></title>
 <link rel="stylesheet" href="admin.css">
+<script src="admin.js" defer></script>
 </head>
 <body>
 
@@ -228,12 +283,21 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
     <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
     <?php if ($error === 'bad'): ?>
       <p class="err">Parol notoʻgʻri.</p>
+    <?php elseif ($error === 'locked'): ?>
+      <p class="err">
+        Koʻp marta xato kiritildi. <?= (int) ceil($wait / 60) ?> daqiqadan keyin
+        qayta urinib koʻring.
+      </p>
     <?php elseif ($error === 'no-hash'): ?>
       <p class="err">
-        Parol hali oʻrnatilmagan. <code>src/config.php</code> faylida
-        <code>admin_password_hash</code> ni toʻldiring —
-        <code>php -r 'echo password_hash("parol", PASSWORD_DEFAULT);'</code>
+        Parol hali oʻrnatilmagan. Serverda <code>server/.env</code> faylidagi
+        <code>ADMIN_PASSWORD_HASH</code> ni toʻldiring:
+        <code>php server/bin/password.php "yangi parol"</code>
       </p>
+    <?php elseif ($ended === 'timeout'): ?>
+      <p class="muted">Sessiya vaqti tugadi — qaytadan kiring.</p>
+    <?php elseif ($ended === 'password'): ?>
+      <p class="muted">Parol oʻzgartirildi — yangi parol bilan kiring.</p>
     <?php endif; ?>
     <button type="submit">Kirish</button>
   </form>
@@ -249,6 +313,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
     <span class="muted store"><?= app_h(storage_describe()) ?></span>
     <a class="btn" href="?action=csv&amp;<?= app_h($query) ?>">CSV yuklab olish</a>
     <a class="btn btn--quiet" href="site.php">Saytni tahrirlash</a>
+    <a class="btn btn--quiet" href="?action=password">Parol</a>
     <a class="btn btn--quiet" href="?action=logout">Chiqish</a>
   </div>
 </header>
@@ -256,6 +321,47 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
 <main>
   <?php if ($fatal !== ''): ?>
     <p class="err big">Maʼlumotlarni oʻqib boʻlmadi: <?= app_h($fatal) ?></p>
+  <?php endif; ?>
+
+  <?php if ($passwordSaved): ?>
+    <p class="ok big">Parol oʻzgartirildi. Boshqa brauzerlardagi sessiyalar yopildi.</p>
+  <?php endif; ?>
+
+  <?php if ($action === 'password' || str_starts_with($error, 'pw-') || $error === 'csrf'): ?>
+  <section class="pw">
+    <form method="post" class="card">
+      <h2>Parolni oʻzgartirish</h2>
+      <input type="hidden" name="action" value="password">
+      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+      <label for="cur">Hozirgi parol</label>
+      <input id="cur" name="current" type="password" autocomplete="current-password" required>
+      <label for="new">Yangi parol</label>
+      <input id="new" name="new" type="password" autocomplete="new-password" required minlength="10">
+      <label for="again">Yangi parol (yana bir marta)</label>
+      <input id="again" name="again" type="password" autocomplete="new-password" required minlength="10">
+      <?php if ($error === 'pw-current'): ?>
+        <p class="err">Hozirgi parol notoʻgʻri.</p>
+      <?php elseif ($error === 'pw-again'): ?>
+        <p class="err">Ikki marta kiritilgan yangi parol bir xil emas.</p>
+      <?php elseif ($error === 'pw-short'): ?>
+        <p class="err">Parol kamida 10 belgidan boʻlsin.</p>
+      <?php elseif ($error === 'pw-digits'): ?>
+        <p class="err">Faqat raqamdan iborat parol boʻlmaydi.</p>
+      <?php elseif ($error === 'pw-write'): ?>
+        <p class="err">
+          Saqlab boʻlmadi: <code>server/data/</code> papkasiga yozish huquqi yoʻq.
+        </p>
+      <?php elseif ($error === 'csrf'): ?>
+        <p class="err">Sahifa eskirgan — qaytadan urinib koʻring.</p>
+      <?php endif; ?>
+      <p class="muted">
+        Kamida 10 belgi. Saqlaganingizdan keyin boshqa qurilmalardagi
+        sessiyalar yopiladi, bu brauzer esa ochiq qoladi.
+      </p>
+      <button type="submit">Saqlash</button>
+      <a class="btn btn--quiet" href="?">Bekor qilish</a>
+    </form>
+  </section>
   <?php endif; ?>
 
   <section class="tiles">
@@ -330,7 +436,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
             <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
             <input type="hidden" name="id" value="<?= (int) ($row['id'] ?? 0) ?>">
             <input type="hidden" name="back" value="<?= app_h($query) ?>">
-            <select name="status" onchange="this.form.submit()">
+            <select name="status" data-autosubmit>
               <?php foreach ($STATUS_LABEL as $k => $v): ?>
                 <option value="<?= $k ?>" <?= ($row['status'] ?? 'new') === $k ? 'selected' : '' ?>><?= $v ?></option>
               <?php endforeach; ?>

@@ -358,7 +358,7 @@ function site_publish(array $config, string $key): array
     if ($base === null) {
         throw new RuntimeException(
             'Saytning maʼlumot fayli topilmadi: ' . site_published_file($config, $key) .
-            ' — config.php dagi site_dir ni tekshiring.',
+            ' — server/.env dagi SITE_DIR ni tekshiring.',
         );
     }
     $overrides = site_overrides($config, $key);

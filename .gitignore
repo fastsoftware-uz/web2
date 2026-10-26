@@ -11,7 +11,8 @@ Thumbs.db
 *.log
 .vite/
 
-# Deployed secrets and the registrations themselves. Neither belongs in a
-# repository; see server/README.md.
-server/src/config.php
+# The installation's own configuration and the registrations themselves.
+# Neither belongs in a repository; see server/README.md.
+server/.env
+server/src/config.php*
 server/data/

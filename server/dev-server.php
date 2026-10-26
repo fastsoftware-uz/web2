@@ -50,9 +50,18 @@ if (preg_match('#^/admin/([A-Za-z0-9._-]+)$#', $path, $m) === 1) {
         if (str_ends_with($file, '.php')) {
             require $file;
         } else {
-            // The built-in server only guesses content types for files under
-            // its own document root, and admin.css is not under it.
-            header('Content-Type: ' . (str_ends_with($file, '.css') ? 'text/css' : 'application/octet-stream'));
+            // The built-in server only guesses content types for files
+            // under its own document root, and the admin's stylesheet and
+            // script are not under it. A script served as octet-stream is a
+            // script the browser refuses, which under the admin's own
+            // content policy reads as a page whose menus do nothing.
+            $type = 'application/octet-stream';
+            if (str_ends_with($file, '.css')) {
+                $type = 'text/css';
+            } elseif (str_ends_with($file, '.js')) {
+                $type = 'text/javascript';
+            }
+            header('Content-Type: ' . $type);
             readfile($file);
         }
         return true;
