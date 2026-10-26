@@ -401,6 +401,13 @@ function site_kind(mixed $value): string
         return 'number';
     }
     if (is_string($value)) {
+        // A date earns a picker. The forum's own dates are the field most
+        // likely to be edited here, and "2026-11-25" typed into a text box
+        // is a format to get wrong — the site reads it back with
+        // `new Date()`, which gives it no second chance.
+        if (site_is_date($value)) {
+            return 'date';
+        }
         return mb_strlen_safe($value) > 90 || str_contains($value, "\n") ? 'text' : 'line';
     }
     if ($value === null) {
@@ -420,6 +427,15 @@ function site_kind(mixed $value): string
 function mb_strlen_safe(string $s): int
 {
     return function_exists('mb_strlen') ? mb_strlen($s) : strlen($s);
+}
+
+/** An ISO calendar date, `YYYY-MM-DD`, and a real one. */
+function site_is_date(string $value): bool
+{
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) !== 1) {
+        return false;
+    }
+    return checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
 }
 
 /**
@@ -448,6 +464,12 @@ function site_cast(mixed $original, string $posted): mixed
     $value = trim($posted);
     if ($value === '' && $original === null) {
         return null;
+    }
+    // A date field keeps the date it had unless what arrived is one too: an
+    // empty or half-typed box would otherwise leave the site, the badges and
+    // the PDF covers printing "Invalid Date" where the forum's dates go.
+    if (is_string($original) && site_is_date($original) && !site_is_date($value)) {
+        return $original;
     }
     return $value;
 }

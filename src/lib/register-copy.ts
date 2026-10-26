@@ -31,7 +31,13 @@ export type Copy = {
   back: string;
   title: string;
   lead: string;
+  /**
+   * The line under the title, as a template: `{dates}` is filled from the
+   * data file, which the admin edits, and falls back to `defaultDates`.
+   */
   dates: string;
+  /** What `{dates}` says until the data file has been read. */
+  defaultDates: string;
   roleLabel: string;
   roles: Record<Role, string>;
   /** Shown to the roles whose badge the committee issues by hand. */
@@ -90,11 +96,12 @@ export const MESSAGES: Record<Lang, Copy> = {
   uz: {
     docTitle: 'Roʻyxatdan oʻtish — Tourism Investment Forum 2026',
     docDescription:
-      'Birinchi xalqaro turizm investitsiya forumi, Toshkent, 25–27 noyabr 2026. Mehmon yoki spiker sifatida roʻyxatdan oʻting.',
+      'Birinchi xalqaro turizm investitsiya forumi, Toshkent, {dates}. Mehmon yoki spiker sifatida roʻyxatdan oʻting.',
     back: 'Saytga qaytish',
     title: 'Roʻyxatdan oʻtish',
     lead: 'Mehmon yoki spiker sifatida. Ikkalasidan ham bir xil maʼlumot soʻraladi.',
-    dates: '25–27 noyabr 2026 · Toshkent',
+    dates: '{dates} · Toshkent',
+    defaultDates: '25–27 noyabr 2026',
     roleLabel: 'Ishtirok turi',
     roles: { vip: 'VIP mehmon', investor: 'Investor', visitor: 'Mehmon', speaker: 'Spiker' },
     ticketLater:
@@ -155,11 +162,12 @@ export const MESSAGES: Record<Lang, Copy> = {
   ru: {
     docTitle: 'Регистрация — Tourism Investment Forum 2026',
     docDescription:
-      'Первый международный инвестиционный форум в сфере туризма, Ташкент, 25–27 ноября 2026. Регистрация гостей и спикеров.',
+      'Первый международный инвестиционный форум в сфере туризма, Ташкент, {dates}. Регистрация гостей и спикеров.',
     back: 'Вернуться на сайт',
     title: 'Регистрация',
     lead: 'Как гость или как спикер. У обоих спрашивается одно и то же.',
-    dates: '25–27 ноября 2026 · Ташкент',
+    dates: '{dates} · Ташкент',
+    defaultDates: '25–27 ноября 2026',
     roleLabel: 'Тип участия',
     roles: { vip: 'VIP-гость', investor: 'Инвестор', visitor: 'Гость', speaker: 'Спикер' },
     ticketLater:
@@ -219,11 +227,12 @@ export const MESSAGES: Record<Lang, Copy> = {
   en: {
     docTitle: 'Registration — Tourism Investment Forum 2026',
     docDescription:
-      'First International Tourism Investment Forum, Tashkent, 25–27 November 2026. Register as a visitor, an investor, a VIP guest or a speaker.',
+      'First International Tourism Investment Forum, Tashkent, {dates}. Register as a visitor, an investor, a VIP guest or a speaker.',
     back: 'Back to the site',
     title: 'Registration',
     lead: 'As a visitor, an investor, a VIP guest or a speaker. All four are asked the same questions.',
-    dates: '25–27 November 2026 · Tashkent',
+    dates: '{dates} · Tashkent',
+    defaultDates: '25–27 November 2026',
     roleLabel: 'Taking part as',
     roles: { vip: 'VIP guest', investor: 'Investor', visitor: 'Visitor', speaker: 'Speaker' },
     ticketLater:

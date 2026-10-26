@@ -270,6 +270,7 @@ td b { color: var(--ink); font-weight: 600; }
   color: var(--ink);
 }
 .fld input[type='text'],
+.fld input[type='date'],
 .fld textarea {
   width: 100%;
   padding: 0.55rem 0.7rem;
@@ -279,6 +280,7 @@ td b { color: var(--ink); font-weight: 600; }
   font: inherit;
   color: var(--ink);
 }
+.fld input[type='date'] { width: auto; min-width: 11rem; }
 .fld textarea { resize: vertical; line-height: 1.5; }
 .fld input:focus-visible,
 .fld textarea:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 1px; }
@@ -288,6 +290,7 @@ td b { color: var(--ink); font-weight: 600; }
    person who has to undo one is looking at the form, not at a list of paths. */
 .fld--edited > label { color: var(--gold); }
 .fld--edited input[type='text'],
+.fld--edited input[type='date'],
 .fld--edited textarea { border-color: var(--gold); background: rgb(153 95 0 / 0.04); }
 
 .chip {

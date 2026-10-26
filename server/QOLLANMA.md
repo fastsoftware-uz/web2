@@ -273,9 +273,29 @@ tashlasangiz boʻladi.
 ### Forum sanasi oʻzgardi
 
 **Saytni tahrirlash → Tadbir** → `Boshlanish sanasi` va `Tugash sanasi`.
-Format: `2026-11-25` (yil-oy-kun), shu koʻrinishda boʻlishi shart — sayt
-sahifada koʻrinadigan “25–27-noyabr 2026” yozuvini shu ikki sanadan oʻzi
-yasaydi, siz alohida yozmaysiz.
+Ikkalasi ham kalendarli maydon: bosasiz, kundan tanlaysiz. Sanani qoʻlda
+yozmaysiz va “25–27 noyabr” degan yozuvni ham hech qayerga yozmaysiz — sayt
+uni shu ikki sanadan oʻzi yasaydi, uchala tilda.
+
+Saqlab, **Nashr** qilganingizdan keyin yangi sana shu zahoti hamma joyda
+koʻrinadi:
+
+- bosh sahifaning sarlavhasi va brauzer varagʻining nomi;
+- roʻyxatdan oʻtish sahifasi;
+- loyiha PDF-larining muqovasi va har bir sahifaning yuqorigi qatori;
+- shu paytdan keyin ochilgan **e-biletlar va beyjlar**.
+
+Ikki sanani bir xil qilib qoʻysangiz (masalan, ikkalasi ham `2026-11-25`),
+sayt “25 noyabr 2026” deb yozadi — “25–25” emas.
+
+> **Eslatma.** Allaqachon chop etilgan yoki saqlab olingan beyjlarda eski
+> sana qoladi: qogʻozdagi narsani adminka oʻzgartira olmaydi. Sana
+> oʻzgarsa, biletni qaytadan ochib chiqarish kerak.
+
+> **Yana bir eslatma.** Brauzerga sayt ochilgunicha koʻrsatiladigan zaxira
+> sarlavha HTML faylining ichida turadi va u faqat sayt qaytadan yigʻilganda
+> yangilanadi. Odam koʻradigan sarlavha — sahifa ochilgandan keyingisi, u
+> sizning sanangizni koʻrsatadi.
 
 ### Aloqa telefoni yoki manzili oʻzgardi
 

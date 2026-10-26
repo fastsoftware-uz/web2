@@ -10,22 +10,44 @@
 import { createI18n } from 'vue-i18n';
 import type { Lang } from './shared/content-types';
 
+/**
+ * The head of the document, filled in from the data.
+ *
+ * `{dates}`, like `{count}` and `{regions}`, is a hole the store fills: the
+ * forum's dates are the organiser's to change from the admin, and a title
+ * that still said November after they moved it would be the one line of the
+ * page that lies. The default these templates fall back to before the data
+ * arrives is the one written into index.html — 25–27 November 2026.
+ */
 export const UI_META: Record<Lang, { title: string; description: string }> = {
   uz: {
-    title: 'Tourism Investment Forum 2026 — Toshkent, 25–27 noyabr',
+    title: 'Tourism Investment Forum 2026 — Toshkent, {dates}',
     description:
-      'Birinchi xalqaro turizm investitsiya forumi. Oʻzbekiston Respublikasi Turizm qoʻmitasi. {regions} ta hududdan {count} ta investitsiya loyihasi, olti yoʻnalish va bir kunlik ishbilarmonlik dasturi. Konsept/demo loyiha — rasmiy maʼlumot: invest.gov.uz',
+      'Birinchi xalqaro turizm investitsiya forumi. Oʻzbekiston Respublikasi Turizm qoʻmitasi. {regions} ta hududdan {count} ta investitsiya loyihasi, olti yoʻnalish va bir kunlik ishbilarmonlik dasturi.',
   },
   ru: {
-    title: 'Tourism Investment Forum 2026 — Ташкент, 25–27 ноября',
+    title: 'Tourism Investment Forum 2026 — Ташкент, {dates}',
     description:
-      'Первый международный инвестиционный форум в сфере туризма. Комитет по туризму Республики Узбекистан. Инвестиционных проектов — {count}, регионов — {regions}; шесть направлений и однодневная деловая программа. Концепт/демо — официальная информация: invest.gov.uz',
+      'Первый международный инвестиционный форум в сфере туризма. Комитет по туризму Республики Узбекистан. Инвестиционных проектов — {count}, регионов — {regions}; шесть направлений и однодневная деловая программа.',
   },
   en: {
-    title: 'Tourism Investment Forum 2026 — Tashkent, 25–27 November',
+    title: 'Tourism Investment Forum 2026 — Tashkent, {dates}',
     description:
-      'The First International Tourism Investment Forum, convened by the Tourism Committee of the Republic of Uzbekistan. {count} investment projects from {regions} regions, six thematic directions and a one-day business programme. Concept/demo project — official information: invest.gov.uz',
+      'The First International Tourism Investment Forum, convened by the Tourism Committee of the Republic of Uzbekistan. {count} investment projects from {regions} regions, six thematic directions and a one-day business programme.',
   },
+};
+
+/**
+ * The dates the title falls back to until the data file has arrived — the
+ * same ones index.html was built with, so the head does not flicker on a
+ * site nobody has moved. The live value is `event.dateStart` and
+ * `event.dateEnd`, which the admin edits; this is only what stands in for
+ * the few hundred milliseconds before the fetch lands.
+ */
+export const DEFAULT_DATES: Record<Lang, string> = {
+  uz: '25–27 noyabr',
+  ru: '25–27 ноября',
+  en: '25–27 November',
 };
 
 const en = {

@@ -16,13 +16,22 @@ import { useI18n } from 'vue-i18n';
 import ForumMark from '../components/ForumMark.vue';
 import RegisterForm from '../components/RegisterForm.vue';
 import { MESSAGES, type Lang } from '../lib/register-copy';
-import { enquirySubject, setLang, tr, useStore } from '../lib/state';
+import { enquirySubject, eventDates, setLang, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
 const { content, forum, lang } = useStore();
 
 /** The form's own copy follows the language the site is being read in. */
 const reg = computed(() => MESSAGES[lang.value as Lang]);
+
+/**
+ * The same line the registration page prints, with the dates filled in from
+ * the data the chapter already has loaded — here there is a store, so it
+ * never has to fall back.
+ */
+const regDates = computed(() =>
+  reg.value.dates.replace('{dates}', eventDates() || reg.value.defaultDates),
+);
 
 const org = computed(() => content.value?.organization);
 const contact = computed(() => forum.value?.contact);
@@ -64,7 +73,7 @@ const outcomes = computed(() => forum.value?.outcomes);
           heading-tag="h3"
         >
           <template #intro>
-            <p class="epilogue__regDates">{{ reg.dates }}</p>
+            <p class="epilogue__regDates">{{ regDates }}</p>
             <p class="epilogue__regLead">{{ reg.lead }}</p>
           </template>
         </RegisterForm>

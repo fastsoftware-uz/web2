@@ -128,8 +128,7 @@ const numbers = computed(() => {
           </dd>
         </div>
       </dl>
-
-    </section>
+</section>
 
     <!--
       The three sessions, hour by hour, on a page of their own.

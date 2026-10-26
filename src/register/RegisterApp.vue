@@ -28,6 +28,7 @@ import RegisterForm from '../components/RegisterForm.vue';
  */
 import lockupWhite from '../assets/forum-lockup-compact-white.svg?raw';
 import { LANG_NAMES, MESSAGES, type Lang } from '../lib/register-copy';
+import { fetchEventRange, sayRange } from '../lib/register-dates';
 
 const LANG_KEY = 'iu-lang';
 const LANGS: Lang[] = ['uz', 'ru', 'en'];
@@ -48,6 +49,20 @@ function initialLang(): Lang {
 const lang = ref<Lang>(initialLang());
 const t = computed(() => MESSAGES[lang.value]);
 
+/**
+ * The dates, from the data file the admin writes.
+ *
+ * Null until the fetch lands and whenever it cannot, which is what
+ * `defaultDates` is for: the page says the dates it was built with rather
+ * than nothing, and swaps them the moment it knows better.
+ */
+const range = ref<string | null>(null);
+const dates = computed(() =>
+  range.value ? sayRange(range.value, lang.value) : t.value.defaultDates,
+);
+/** Fills `{dates}` in a line of copy. */
+const fill = (line: string): string => line.replace('{dates}', dates.value);
+
 function setLang(next: Lang): void {
   lang.value = next;
   try {
@@ -66,10 +81,15 @@ function applyHead(): void {
   document.title = t.value.docTitle;
   document
     .querySelector('meta[name="description"]')
-    ?.setAttribute('content', t.value.docDescription);
+    ?.setAttribute('content', fill(t.value.docDescription));
 }
 
-onMounted(applyHead);
+onMounted(async () => {
+  applyHead();
+  range.value = await fetchEventRange();
+  // Again, because the description quotes them and the first pass could not.
+  applyHead();
+});
 
 /** The site, in whatever language this page is being read in. */
 // `../`: the page is served as /register/, so the site is one level up.
@@ -108,7 +128,7 @@ const siteHref = computed(() => `../?lang=${lang.value}`);
       <RegisterForm :lang="lang" heading-tag="h1">
         <template #intro>
           <h1 class="reg__title">{{ t.title }}</h1>
-          <p class="reg__dates">{{ t.dates }}</p>
+          <p class="reg__dates">{{ fill(t.dates) }}</p>
           <p class="reg__lead">{{ t.lead }}</p>
         </template>
         <template #done-extra>

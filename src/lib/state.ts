@@ -10,7 +10,7 @@ import { formatDateRange, loadContent } from './shared/content';
 import { isLang, type Content, type Lang } from './shared/content-types';
 import { applyDocumentSeo } from './shared/seo';
 import { loadForum, type ForumData } from './forum-types';
-import { i18n, UI_META } from './i18n';
+import { DEFAULT_DATES, i18n, UI_META } from './i18n';
 
 const LANG_KEY = 'iu-lang';
 
@@ -154,11 +154,21 @@ export const enquirySubject = ref<{ id: string; title: string; segment: string |
   null,
 );
 
-/** The event dates as one string: "25-27 noyabr 2026". */
-export function eventDates(): string {
+/**
+ * The event dates as one string: "25–27 noyabr 2026".
+ *
+ * Every date the page shows comes through here, so that moving the forum is
+ * one edit in the admin — `event.dateStart` and `event.dateEnd` — rather
+ * than a search through the source for "25".
+ *
+ * `withYear: false` is for the page title, which has already said 2026.
+ * `at` is for the head, which is written for the language being switched to
+ * before the ref has caught up.
+ */
+export function eventDates(withYear = true, at: Lang = lang.value): string {
   const event = forum.value?.event;
   if (!event) return '';
-  return formatDateRange(`${event.dateStart}/${event.dateEnd}`, lang.value);
+  return formatDateRange(`${event.dateStart}/${event.dateEnd}`, at, withYear);
 }
 
 export function setLang(next: Lang): void {
@@ -178,12 +188,17 @@ function describe(next: Lang): string {
     .replace('{regions}', String(Object.keys(p?.regionCounts ?? {}).length || ''));
 }
 
+/** The page title, with the dates the data gives — or the built-in default. */
+function headline(next: Lang): string {
+  return UI_META[next].title.replace('{dates}', eventDates(false, next) || DEFAULT_DATES[next]);
+}
+
 watch(
   [lang, forum],
   ([next]) => {
     i18n.global.locale.value = next;
     localStorage.setItem(LANG_KEY, next);
-    applyDocumentSeo({ lang: next, title: UI_META[next].title, description: describe(next) });
+    applyDocumentSeo({ lang: next, title: headline(next), description: describe(next) });
     const url = new URL(window.location.href);
     url.searchParams.set('lang', next);
     window.history.replaceState(null, '', url);

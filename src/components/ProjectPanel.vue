@@ -565,8 +565,7 @@ onBeforeUnmount(() => {
           </template>
 
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
-
-                </div>
+</div>
               </td>
             </tr>
           </tbody>

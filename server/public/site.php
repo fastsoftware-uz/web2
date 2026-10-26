@@ -273,6 +273,9 @@ function field(string $path, string $name, mixed $base, mixed $live, bool $edite
         echo '<input type="hidden" name="bools[]" value="' . app_h($path) . '">';
         echo '<label class="switch"><input id="' . app_h($id) . '" type="checkbox" name="f[' . app_h($path) . ']" value="1"'
             . ($live === true ? ' checked' : '') . '> <span>Yoqilgan</span></label>';
+    } elseif ($kind === 'date') {
+        echo '<input id="' . app_h($id) . '" type="date" name="f[' . app_h($path) . ']" value="'
+            . app_h((string) $live) . '">';
     } elseif ($kind === 'text') {
         echo '<textarea id="' . app_h($id) . '" name="f[' . app_h($path) . ']" rows="4">'
             . app_h((string) $live) . '</textarea>';

@@ -122,17 +122,30 @@ export function formatDateLong(iso: string, lang: Lang): string {
   return `${d.getUTCDate()} ${MONTHS[lang][d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-/** "2026-06-16/2026-06-18" -> "16–18 iyun 2026". */
-export function formatDateRange(range: string, lang: Lang): string {
+/**
+ * "2026-06-16/2026-06-18" -> "16–18 iyun 2026".
+ *
+ * `withYear` is for somewhere that has already said which year it is — a
+ * page title opening with "… Forum 2026" should not close with it again.
+ */
+export function formatDateRange(range: string, lang: Lang, withYear = true): string {
   const [from, to] = range.split('/');
   if (!from || !to) return range;
   const a = new Date(from);
   const b = new Date(to);
   if (Number.isNaN(a.getTime()) || Number.isNaN(b.getTime())) return range;
 
+  const long = (iso: string, d: Date) =>
+    withYear ? formatDateLong(iso, lang) : `${d.getUTCDate()} ${MONTHS[lang][d.getUTCMonth()]}`;
+
+  // One day is not a range. The dates are the organiser's to change from the
+  // admin, and the day somebody sets the forum to a single date an unguarded
+  // range formatter prints "25–25 noyabr", which is not a date at all.
+  if (a.getTime() === b.getTime()) return long(to, b);
+
   const sameMonth =
     a.getUTCMonth() === b.getUTCMonth() && a.getUTCFullYear() === b.getUTCFullYear();
   return sameMonth
-    ? `${a.getUTCDate()}–${formatDateLong(to, lang)}`
-    : `${formatDateLong(from, lang)} – ${formatDateLong(to, lang)}`;
+    ? `${a.getUTCDate()}–${long(to, b)}`
+    : `${long(from, a)} – ${long(to, b)}`;
 }
