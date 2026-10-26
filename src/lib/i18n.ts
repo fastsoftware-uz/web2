@@ -102,8 +102,6 @@ const en = {
     totalLabel: 'Investment sought, stated in USD',
     projectsLabel: 'Projects in the portfolio',
     regionsLabel: 'Regions represented',
-    totalNote:
-      'The total covers the {n} projects whose figure is stated in US dollars. {uzs} are stated in Uzbek soums and {open} leave the figure open, so they are counted but not added.',
     close: 'Close',
     open: 'Open',
     prev: 'Previous project',
@@ -155,7 +153,6 @@ const en = {
       whyInvest: 'Why invest',
       place: 'Location and access',
     },
-    uzsNote: 'Stated in Uzbek soums by the region that submitted it.',
     asStated: 'As written in the project sheet: {raw}',
   },
   programme: {
@@ -244,8 +241,6 @@ const en = {
    */
   credits: {
     contributedBy: 'The portfolio was assembled from proposals by',
-    projectLanguage:
-      'Titles, field names and delivery stages are translated. The longer descriptions are left in the English the organiser prepared them in, so that no figure is changed in the retelling.',
     mapData: 'Region outlines and the title card globe: geoBoundaries (ODbL 1.0) and Natural Earth (public domain). A diagram of administrative areas, not a survey.',
   },
 };
@@ -323,8 +318,6 @@ const uz: Messages = {
     totalLabel: 'AQSh dollarida koʻrsatilgan investitsiya talabi',
     projectsLabel: 'Portfeldagi loyihalar',
     regionsLabel: 'Ishtirok etayotgan hududlar',
-    totalNote:
-      'Jami summa raqami AQSh dollarida koʻrsatilgan {n} ta loyihani qamraydi. Yana {uzs} tasi soʻmda berilgan, {open} tasida raqam koʻrsatilmagan — ular sanalgan, lekin qoʻshilmagan.',
     close: 'Yopish',
     open: 'Ochish',
     prev: 'Oldingi loyiha',
@@ -372,7 +365,6 @@ const uz: Messages = {
       whyInvest: 'Nega aynan shu loyiha',
       place: 'Joylashuv va yoʻllar',
     },
-    uzsNote: 'Taqdim etgan hudud tomonidan soʻmda koʻrsatilgan.',
     asStated: 'Loyiha varaqasida shunday yozilgan: {raw}',
   },
   programme: {
@@ -447,8 +439,6 @@ const uz: Messages = {
   },
   credits: {
     contributedBy: 'Portfel quyidagilarning takliflaridan shakllantirilgan',
-    projectLanguage:
-      'Nomlar, maydon nomlari va loyiha bosqichlari tarjima qilingan. Uzun tavsiflar tashkilotchi tayyorlagan ingliz tilida qoldirilgan — qayta hikoya qilishda birorta raqam oʻzgarmasligi uchun.',
     mapData: 'Hudud konturlari va sarlavha kartasidagi globus: geoBoundaries (ODbL 1.0) va Natural Earth (umumiy mulk). Bu — maʼmuriy hududlar sxemasi, oʻlchov xaritasi emas.',
   },
 };
@@ -524,8 +514,6 @@ const ru: Messages = {
     totalLabel: 'Запрашиваемые инвестиции, указанные в долларах США',
     projectsLabel: 'Проектов в портфеле',
     regionsLabel: 'Представленных регионов',
-    totalNote:
-      'Итог охватывает проекты с суммой в долларах США — их {n}. Ещё {uzs} — в сумах, {open} — без суммы: они учтены, но не просуммированы.',
     close: 'Закрыть',
     open: 'Открыть',
     prev: 'Предыдущий проект',
@@ -573,7 +561,6 @@ const ru: Messages = {
       whyInvest: 'Почему этот проект',
       place: 'Расположение и доступность',
     },
-    uzsNote: 'Указано в сумах регионом, подавшим проект.',
     asStated: 'В проектном листе записано так: {raw}',
   },
   programme: {
@@ -648,8 +635,6 @@ const ru: Messages = {
   },
   credits: {
     contributedBy: 'Портфель сформирован из предложений',
-    projectLanguage:
-      'Названия, наименования полей и стадии проектов переведены. Развёрнутые описания оставлены на английском, как их подготовил организатор, — чтобы при пересказе не изменилась ни одна цифра.',
     mapData: 'Контуры регионов и глобус на титульной карточке: geoBoundaries (ODbL 1.0) и Natural Earth (общественное достояние). Это схема административных границ, а не топографическая карта.',
   },
 };

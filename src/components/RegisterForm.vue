@@ -269,10 +269,7 @@ const mailHref = computed(() => {
       <legend>{{ t.roleLabel }}</legend>
       <label v-for="role in ROLES" :key="role" class="reg__role">
         <input v-model="form.role" type="radio" name="role" :value="role" />
-        <span class="reg__roleBody">
-          <strong>{{ t.roles[role] }}</strong>
-          <small>{{ t.roleHint[role] }}</small>
-        </span>
+        <strong>{{ t.roles[role] }}</strong>
       </label>
     </fieldset>
 
@@ -445,9 +442,10 @@ const mailHref = computed(() => {
   margin-block-start: 2rem;
 }
 
-/* The two kinds of participant, as cards rather than two bare radios: the
-   difference between them is the hint, and a hint beside a 16px dot is a
-   hint nobody reads. */
+/* The kinds of participant, as cards rather than bare radios: a row of
+   16px dots with a name beside each reads as a settings screen, and this is
+   the first choice a guest makes. The cards carry the name alone — the
+   client took the explanatory line under each one off on 26 October 2026. */
 .reg__roles {
   display: grid;
   gap: 0.6rem;
@@ -475,7 +473,7 @@ const mailHref = computed(() => {
 .reg__role {
   display: flex;
   gap: 0.7rem;
-  align-items: flex-start;
+  align-items: center;
   padding: 0.9rem 1rem;
   border: 1px solid var(--hairline);
   border-radius: 0.3rem;
@@ -492,22 +490,13 @@ const mailHref = computed(() => {
   outline-offset: 2px;
 }
 .reg__role input {
-  margin-block-start: 0.25rem;
   accent-color: var(--gold-leaf);
   inline-size: 1.05rem;
   block-size: 1.05rem;
   flex: 0 0 auto;
 }
-.reg__roleBody {
-  display: grid;
-  gap: 0.15rem;
-}
-.reg__roleBody strong {
+.reg__role strong {
   color: var(--ink);
-}
-.reg__roleBody small {
-  font-size: 0.82rem;
-  color: var(--ink-dim);
 }
 
 .reg__grid {

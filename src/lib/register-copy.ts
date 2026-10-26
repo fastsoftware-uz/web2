@@ -34,7 +34,6 @@ export type Copy = {
   dates: string;
   roleLabel: string;
   roles: Record<Role, string>;
-  roleHint: Record<Role, string>;
   /** Shown to the roles whose badge the committee issues by hand. */
   ticketLater: string;
   fields: {
@@ -98,12 +97,6 @@ export const MESSAGES: Record<Lang, Copy> = {
     dates: '25–27 noyabr 2026 · Toshkent',
     roleLabel: 'Ishtirok turi',
     roles: { vip: 'VIP mehmon', investor: 'Investor', visitor: 'Mehmon', speaker: 'Spiker' },
-    roleHint: {
-      vip: 'Taklif asosida. Ishtirok tashkiliy qoʻmita bilan alohida kelishiladi.',
-      investor: 'Loyihalar bilan tanishish, B2B va B2G uchrashuvlar.',
-      visitor: 'Forum sessiyalarida qatnashasiz.',
-      speaker: 'Sessiyalardan birida chiqish qilishni taklif qilasiz.',
-    },
     ticketLater:
       'E-bilet avtomatik berilmaydi: tashkiliy qoʻmita siz bilan bogʻlanadi va beyjni shundan soʻng yuboradi.',
     fields: {
@@ -169,12 +162,6 @@ export const MESSAGES: Record<Lang, Copy> = {
     dates: '25–27 ноября 2026 · Ташкент',
     roleLabel: 'Тип участия',
     roles: { vip: 'VIP-гость', investor: 'Инвестор', visitor: 'Гость', speaker: 'Спикер' },
-    roleHint: {
-      vip: 'По приглашению. Участие согласовывается с оргкомитетом отдельно.',
-      investor: 'Знакомство с проектами, встречи B2B и B2G.',
-      visitor: 'Участие в сессиях форума.',
-      speaker: 'Вы предлагаете выступление на одной из сессий.',
-    },
     ticketLater:
       'Электронный билет не выдаётся автоматически: оргкомитет свяжется с вами и пришлёт бейдж после этого.',
     fields: {
@@ -239,12 +226,6 @@ export const MESSAGES: Record<Lang, Copy> = {
     dates: '25–27 November 2026 · Tashkent',
     roleLabel: 'Taking part as',
     roles: { vip: 'VIP guest', investor: 'Investor', visitor: 'Visitor', speaker: 'Speaker' },
-    roleHint: {
-      vip: 'By invitation. Attendance is arranged with the organising committee.',
-      investor: 'Seeing the projects, and the B2B and B2G meetings.',
-      visitor: 'Attending the sessions of the forum.',
-      speaker: 'Proposing to speak in one of the sessions.',
-    },
     ticketLater:
       'The e-ticket is not issued automatically: the organising committee will be in touch and send the badge afterwards.',
     fields: {

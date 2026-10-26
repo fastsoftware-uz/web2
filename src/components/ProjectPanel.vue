@@ -540,7 +540,6 @@ onBeforeUnmount(() => {
             >
               {{ noMoney }}
             </strong>
-            <small v-if="project.currency === 'UZS'">{{ t('portfolio.uzsNote') }}</small>
           </p>
 
           <ul v-if="metrics.length" class="panel__chips">
@@ -567,7 +566,6 @@ onBeforeUnmount(() => {
 
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
 
-          <p class="panel__note">{{ t('credits.projectLanguage') }}</p>
                 </div>
               </td>
             </tr>
@@ -877,11 +875,6 @@ onBeforeUnmount(() => {
   font-size: clamp(1.1rem, 3vw, 1.5rem) !important;
   color: var(--ink-dim);
 }
-.panel__money small {
-  font-size: 0.8rem;
-  color: var(--ink-dim);
-}
-
 /* The headline chips, as a wrapping row — the sheet shows them side by side. */
 /* Each chip carries its own border rather than the grid showing through a 1px
    gap: the chip count is whatever the sheet states, so the last row is usually
@@ -958,12 +951,6 @@ onBeforeUnmount(() => {
   border-radius: 0.6rem;
   font-size: 0.85rem;
   color: var(--ink-soft);
-}
-
-.panel__note {
-  margin-block: 2rem 0;
-  font-size: 0.75rem;
-  color: var(--ink-dim);
 }
 
 /* --------------------------------------------------- the desktop sheet */

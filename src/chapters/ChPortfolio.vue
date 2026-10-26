@@ -71,9 +71,6 @@ const totals = computed(() => {
     placed,
     nationwide: projects - placed,
     usd: (p?.totalUsd ?? 0) / 1e6,
-    statedUsd: p?.statedUsdCount ?? 0,
-    statedUzs: p?.statedUzsCount ?? 0,
-    open: p?.openCount ?? 0,
     regions: Object.keys(p?.regionCounts ?? {}).length,
   };
 });
@@ -425,10 +422,6 @@ useChapterTimeline(
           <span class="portfolio__caption">{{ t('portfolio.regionsLabel') }}</span>
         </li>
       </ul>
-      <p class="portfolio__footnote">
-        {{ t('portfolio.totalNote', { n: totals.statedUsd, uzs: totals.statedUzs, open: totals.open }) }}
-      </p>
-
       <div class="rule-rosette" aria-hidden="true"><span class="rule-rosette__mark" /></div>
 
       <!-- The map, which is also the navigation ---------------------------- -->
@@ -679,13 +672,6 @@ h2 {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 2rem;
   }
-}
-
-.portfolio__footnote {
-  margin-block-start: 1rem;
-  max-width: 44rem;
-  font-size: 0.8rem;
-  color: var(--ink-dim);
 }
 
 /* The map and the panel that answers it. Stacked until there is room for the
@@ -997,7 +983,6 @@ h2 {
   /* The chapter's own furniture, and everything the table does not need. */
   :root[data-print='portfolio'] .portfolio__lead,
   :root[data-print='portfolio'] .portfolio__totals,
-  :root[data-print='portfolio'] .portfolio__footnote,
   :root[data-print='portfolio'] .portfolio__controls,
   :root[data-print='portfolio'] .portfolio__status,
   :root[data-print='portfolio'] .portfolio__empty,

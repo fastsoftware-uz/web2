@@ -118,7 +118,6 @@ const outcomes = computed(() => forum.value?.outcomes);
             <ul>
               <li v-for="(item, i) in outcomes.quantitative" :key="i">{{ tr(item) }}</li>
             </ul>
-            <p class="outcomes__note">{{ tr(outcomes.quantitativeNote) }}</p>
           </div>
           <div>
             <p class="eyebrow">{{ t('epilogue.outcomesQualitative') }}</p>
@@ -131,12 +130,14 @@ const outcomes = computed(() => forum.value?.outcomes);
 
       <!-- Who is in the room ------------------------------------------------ -->
       <h3 class="epilogue__sub">{{ t('epilogue.participantsTitle') }}</h3>
-      <dl class="who">
-        <div v-for="role in roles" :key="role.id">
-          <dt>{{ tr(role.category) }}</dt>
-          <dd>{{ tr(role.who) }}</dd>
-        </div>
-      </dl>
+      <!-- The names alone. The line under each one, describing which
+           organisations fall into the category, came off on 26 October 2026
+           together with the rest of the site's explanatory asides; the text
+           is untouched in forum-2026.json. A list of names is a <ul>, not a
+           description list with nothing described. -->
+      <ul class="who">
+        <li v-for="role in roles" :key="role.id">{{ tr(role.category) }}</li>
+      </ul>
 
       <footer v-if="content && forum" class="footer">
         <!-- The footer used to carry official links, a numbered source list
@@ -326,14 +327,10 @@ h2 {
   gap: 0.5rem;
   font-size: 0.92rem;
 }
-.outcomes__note {
-  margin-block-start: 1rem;
-  font-size: 0.82rem;
-  color: var(--ink-dim);
-}
-
 .who {
   margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
   display: grid;
   gap: 0;
 }
@@ -343,18 +340,11 @@ h2 {
     column-gap: 3rem;
   }
 }
-.who > div {
-  padding-block: 1rem;
+.who > li {
+  padding-block: 0.85rem;
   border-block-end: 1px solid var(--hairline);
-}
-.who dt {
   color: var(--ink);
   font-size: 0.95rem;
-}
-.who dd {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-  color: var(--ink-dim);
 }
 
 .footer {
