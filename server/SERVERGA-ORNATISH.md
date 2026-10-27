@@ -1,7 +1,7 @@
 # Adminkani serverda ishga tushirish
 
 **Kimga:** serverga SSH orqali kira oladigan odamga.
-**Nima uchun:** sayt ishlayapti, lekin `домен/admin/` ochilmayapti — chunki
+**Nima uchun:** sayt ishlayapti, lekin `<domen>/admin/` ochilmayapti — chunki
 adminka hali ishga tushirilmagan. Quyida noldan oxirigacha, har bir buyruq va
 undan keyin **ekranda nima chiqishi** va **nima qilish kerakligi** yozilgan.
 
