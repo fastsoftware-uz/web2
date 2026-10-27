@@ -8,15 +8,22 @@
  * forum's timetable, which is the one thing in the document that answers no
  * investment question at all — so the agenda came out and this went in.
  *
- * Four pages, in the order the question is actually asked:
+ * Five pages, in the order the question is actually asked:
  *
  *   1. tourism — the market the forum is about: how many visitors arrive,
  *      which countries they arrive from, and what the state has set for 2030;
  *   2. the economy — what it is worth, how fast it moves, what it is made of;
  *   3. the people — who would run the project, and what an hour of their work
  *      costs, region by region;
- *   4. the climate — where the state says the country is going by 2030, and
- *      what a foreign investor is actually offered for coming.
+ *   4. 2030 — the distance between where the country is and where the state
+ *      has said it will be, drawn rather than described;
+ *   5. the offer — the zones, the reliefs and the five steps the agency walks
+ *      an investor through.
+ *
+ * Each page carries one sentence of prose and then stops talking. A reader who
+ * has four of these sheets on a desk does not read paragraphs, and a figure in
+ * a bar is a figure they can compare without reading at all — so wherever
+ * something could be a chart rather than a list, it is one.
  *
  * Every figure is read from `content.json`, the same file the site reads, and
  * none of it is typed here. That is not a tidiness point: it is the only way
@@ -144,24 +151,74 @@ const tourismFigures = computed(() => {
   ];
 });
 
-/** Where the year's visitors came from, largest market first. */
+/**
+ * Where the visitors came from, over both periods the Agency has published.
+ *
+ * Two bars to a country rather than one. They are not the same length of
+ * time — a full year against eight months — which is exactly why both are
+ * drawn: the shorter bar is already most of the longer one in every market,
+ * and that is the whole of the growth story told without a sentence. The
+ * periods are named in the key above the chart and again under it, and the
+ * two bars share one scale, because they count the same thing.
+ *
+ * The 2026 release names one country the 2025 one does not; a market with no
+ * counterpart simply has one bar.
+ */
 const markets = computed(() => {
   const data = tourism.value;
   if (!data) return [];
   const names = data.country_names;
+  const later = new Map(data.arrivals_2026_8m.markets.map((m) => [m.id, m.value]));
   return data.arrivals_2025.markets.map((row) => ({
     id: row.id,
     label: names[row.id] ? tr(names[row.id]) : row.id,
     value: row.value,
+    part: later.get(row.id) ?? null,
   }));
 });
-const marketMax = computed(() => Math.max(1, ...markets.value.map((m) => m.value)));
+const marketMax = computed(() =>
+  Math.max(1, ...markets.value.map((m) => Math.max(m.value, m.part ?? 0))),
+);
+
+/** "2025 · 12 oy" and "2026 · 8 oy" — the key, built from the data's periods. */
+const seriesFull = computed(() =>
+  t('pstats.series12', { year: tourism.value?.arrivals_2025.period ?? '' }),
+);
+const seriesPart = computed(() =>
+  t('pstats.series8', { year: (tourism.value?.arrivals_2026_8m.period ?? '').slice(0, 4) }),
+);
 
 /** The services export, in the words of the release that states it. */
 const servicesExport = computed(() => tourism.value?.services_export_2026_8m ?? null);
-const servicesMax = computed(() =>
-  Math.max(1, ...(servicesExport.value?.mix ?? []).map((m) => m.share)),
-);
+
+/**
+ * The services export as one strip, divided.
+ *
+ * Four bars against an axis answered "how big is travel" four times; one
+ * hundred-per-cent strip answers it once, in the shape of the thing itself,
+ * and gives the page back the room four rows were using.
+ *
+ * The release names four categories and leaves the remainder unnamed, so the
+ * remainder is drawn in grey and called what it is. Its share is the only
+ * arithmetic on this page — a hundred less the four that were published —
+ * and it exists so that the strip is a whole rather than a strip that stops.
+ */
+const servicesStack = computed(() => {
+  const data = servicesExport.value;
+  if (!data) return [];
+  const colors = ['#C18429', '#006FB9', '#00AA95', '#E87BA4'];
+  const named = data.mix.map((part, i) => ({
+    id: part.id,
+    label: tr(part.label),
+    share: part.share,
+    color: colors[i % colors.length] as string,
+  }));
+  const rest = Math.round((100 - named.reduce((sum, part) => sum + part.share, 0)) * 10) / 10;
+  if (rest >= 0.1) {
+    named.push({ id: 'rest', label: t('pstats.exportOther'), share: rest, color: '#c3c7d4' });
+  }
+  return named;
+});
 
 const exportLine = computed(() => {
   const data = servicesExport.value;
@@ -242,11 +299,10 @@ const gdpSlices = computed(() => {
  * The largest branches of the economy, whichever parent they belong to.
  *
  * The donut answers "what is this economy made of" at the level of four
- * words; this answers it at the level a project belongs to. Seven rows: the
- * eighth is three per cent, a bar that short says nothing the number beside
- * it does not already say, and in Russian it was the row that pushed the page
- * over. Each keeps its parent's colour, so the two charts are one chart read
- * twice.
+ * words; this answers it at the level a project belongs to. Eight rows: the
+ * ninth is under two per cent, and a bar that short says nothing the number
+ * beside it does not already say. Each keeps its parent's colour, so the two
+ * charts are one chart read twice.
  */
 const branches = computed(() => {
   const parts = economy.value?.gdp_structure ?? [];
@@ -258,7 +314,7 @@ const branches = computed(() => {
       parent: tr(part.label),
     })),
   );
-  return rows.sort((a, b) => b.share - a.share).slice(0, 7);
+  return rows.sort((a, b) => b.share - a.share).slice(0, 8);
 });
 
 const branchMax = computed(() => Math.max(1, ...branches.value.map((b) => b.share)));
@@ -352,6 +408,94 @@ const priorities = computed(() =>
   })),
 );
 
+/**
+ * Where the country is, and where the state has said it will be.
+ *
+ * The strategy's numbers used to sit on this page as bullets under the
+ * priority that carries them — "GDP to $240bn" — which is a sentence about a
+ * number, not a number. Here each is three columns: what it was, what it is,
+ * and what it is meant to be, on one scale, so the distance left is the
+ * length of the gap between the second column and the third.
+ *
+ * Both series are built out of figures this file already holds. The GDP's
+ * two ends come from the strategy block (`gdp_path`) and its middle from the
+ * economy block; the arrivals' first column is the year's own statement of
+ * its growth — 11.7 million, of which 3.7 million was the increase — and its
+ * last is the 2030 strategy's own target.
+ */
+interface TrajPoint {
+  key: string;
+  value: number;
+  text: string;
+  height: number;
+  target: boolean;
+}
+
+function trajPoints(raw: { key: string; value: number; target?: boolean }[]): TrajPoint[] {
+  const top = Math.max(1, ...raw.map((p) => p.value));
+  return raw.map((p) => ({
+    key: p.key,
+    value: p.value,
+    text: formatNumber(p.value, lang.value, { maximumFractionDigits: 1 }),
+    // Of the plot, less the band the figure above the bar occupies; and a
+    // floor, so the smallest column is still a column.
+    height: Math.max(7, (p.value / top) * 78),
+    target: p.target === true,
+  }));
+}
+
+/** "2025 → 2030 · +63%" — the climb the last column is asking for. */
+function climb(points: TrajPoint[]): string {
+  if (points.length < 2) return '';
+  const from = points[points.length - 2]!;
+  const to = points[points.length - 1]!;
+  if (!from.value) return '';
+  const rise = formatNumber((to.value / from.value - 1) * 100, lang.value, {
+    maximumFractionDigits: 0,
+  });
+  return `${from.key} → ${to.key} · +${rise}%`;
+}
+
+const trajectories = computed(() => {
+  const out: { id: string; title: string; unit: string; climb: string; points: TrajPoint[] }[] = [];
+  const econ = economy.value;
+  const path = strategy.value?.gdp_path;
+  const gdp = gdpKpi.value;
+  if (econ && path && gdp) {
+    const points = trajPoints([
+      { key: String(path.base.year), value: path.base.value },
+      { key: String(econ.as_of), value: gdp.value },
+      { key: String(path.target.year), value: path.target.value, target: true },
+    ]);
+    out.push({
+      id: 'gdp',
+      title: t('pstats.trajGdp'),
+      unit: `$ ${UNITS[lang.value].bn}`,
+      climb: climb(points),
+      points,
+    });
+  }
+  const tour = tourism.value;
+  const arrivals = tour?.arrivals_2025;
+  const goal = tour?.targets_2030.items.find((item) => item.id === 'foreign');
+  if (tour && arrivals?.growth_abs && goal) {
+    const year = Number(arrivals.period);
+    const points = trajPoints([
+      { key: String(year - 1), value: (arrivals.total - arrivals.growth_abs) / 1e6 },
+      { key: String(year), value: arrivals.total / 1e6 },
+      { key: String(tour.targets_2030.year), value: goal.value, target: true },
+    ]);
+    out.push({
+      id: 'tourists',
+      title: t('pstats.trajTourists'),
+      unit: UNITS[lang.value].m,
+      climb: climb(points),
+      points,
+    });
+  }
+  return out;
+});
+
 const adopted = computed(() => {
   const s = strategy.value;
   if (!s) return '';
@@ -366,6 +510,46 @@ const zoneTypes = computed(() => {
 
 /** The incentives, in the data file's own words. */
 const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)));
+
+/**
+ * The act the zones stand on, as its number and its date.
+ *
+ * `legal_basis.text` is one English string in a file that is otherwise
+ * translated — "Law “On Special Economic Zones” No. LRU-604 (17.02.2020)" —
+ * and the half of it that a reader checks is the half after "No.". The label
+ * beside it is translated; the citation is a citation in every language.
+ */
+const legalBasis = computed(() => {
+  const text = zones.value?.legal_basis?.text ?? '';
+  const match = /No\.\s*(.+)$/.exec(text);
+  return match ? match[1]!.trim() : text;
+});
+
+/**
+ * The ten branches the state itself names as priorities for investment.
+ *
+ * Not a tourism list, and that is why it is on this page rather than an
+ * earlier one: a reader who has come for a hotel is being told, in one line,
+ * what else the same door opens onto.
+ */
+const sectors = computed(() =>
+  (content.value?.sectors.items ?? []).map((item) => ({
+    id: item.id,
+    name: tr({ uz: item.uz, ru: item.ru, en: item.en }),
+  })),
+);
+
+/** The five steps the agency puts between an enquiry and a running project. */
+const journey = computed(() =>
+  (content.value?.investor_journey ?? []).map((step) => {
+    const row = step as unknown as Record<string, unknown>;
+    return {
+      n: step.step,
+      title: tr({ uz: step.uz, ru: step.ru, en: step.en }),
+      desc: trSuffixed<string>(row, 'desc'),
+    };
+  }),
+);
 
 </script>
 
@@ -388,16 +572,36 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
 
       <section class="pstat__block">
         <h3 class="pstat__sub">{{ t('pstats.marketsTitle') }}</h3>
-        <ol class="pstat__bars pstat__bars--counts">
+        <p class="pstat__keys">
+          <span class="pstat__key">
+            <span class="pstat__keyChip"></span>{{ seriesFull }}
+          </span>
+          <span class="pstat__key">
+            <span class="pstat__keyChip pstat__keyChip--part"></span>{{ seriesPart }}
+          </span>
+        </p>
+        <ol class="pstat__bars pstat__bars--pairs">
           <li v-for="row in markets" :key="row.id">
             <span class="pstat__barLabel">{{ row.label }}</span>
-            <span class="pstat__barTrack">
-              <span
-                class="pstat__barFill"
-                :style="{ inlineSize: (row.value / marketMax) * 100 + '%' }"
-              ></span>
+            <span class="pstat__pair">
+              <span class="pstat__barTrack">
+                <span
+                  class="pstat__barFill"
+                  :style="{ inlineSize: (row.value / marketMax) * 100 + '%' }"
+                ></span>
+              </span>
+              <span class="pstat__barTrack">
+                <span
+                  v-if="row.part"
+                  class="pstat__barFill pstat__barFill--part"
+                  :style="{ inlineSize: (row.part / marketMax) * 100 + '%' }"
+                ></span>
+              </span>
             </span>
-            <span class="pstat__barValue">{{ countText(row.value) }}</span>
+            <span class="pstat__pairValues">
+              <span>{{ countText(row.value) }}</span>
+              <span class="pstat__valuePart">{{ row.part ? countText(row.part) : '—' }}</span>
+            </span>
           </li>
         </ol>
       </section>
@@ -405,17 +609,21 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
       <section v-if="servicesExport" class="pstat__block pstat__keepWhole">
         <h3 class="pstat__sub">{{ t('pstats.exportTitle') }}</h3>
         <p class="pstat__caption">{{ exportLine }}</p>
-        <ol class="pstat__bars pstat__bars--rates">
-          <li v-for="row in servicesExport.mix" :key="row.id">
-            <span class="pstat__barLabel">{{ tr(row.label) }}</span>
-            <span class="pstat__barTrack">
-              <span
-                class="pstat__barFill"
-                :class="{ 'pstat__barFill--here': row.id === 'travel' }"
-                :style="{ inlineSize: (row.share / servicesMax) * 100 + '%' }"
-              ></span>
-            </span>
-            <span class="pstat__barValue">{{ pct(row.share) }}</span>
+        <div class="pstat__strip">
+          <span
+            v-for="part in servicesStack"
+            :key="part.id"
+            class="pstat__stripPart"
+            :style="{ inlineSize: part.share + '%', background: part.color }"
+          >
+            <span v-if="part.share >= 8" class="pstat__stripValue">{{ pct(part.share) }}</span>
+          </span>
+        </div>
+        <ol class="pstat__stripKeys">
+          <li v-for="part in servicesStack" :key="part.id">
+            <span class="pstat__chip" :style="{ background: part.color }"></span>
+            <span class="pstat__stripName">{{ part.label }}</span>
+            <span class="pstat__stripShare">{{ pct(part.share) }}</span>
           </li>
         </ol>
         <p class="pstat__note">{{ tr(servicesExport.note) }}</p>
@@ -581,7 +789,7 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
       </section>
     </section>
 
-    <!-- ======================================================= 4. the climate -->
+    <!-- ========================================================== 4. to 2030 -->
     <section v-if="strategy" class="pstat__page">
       <header class="pstat__head">
         <p class="pstat__eyebrow">{{ t('pstats.futureEyebrow') }}</p>
@@ -604,6 +812,37 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
         </li>
       </ul>
 
+      <section v-if="trajectories.length" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.trajTitle') }}</h3>
+        <div class="pstat__trajs">
+          <figure v-for="item in trajectories" :key="item.id" class="pstat__traj">
+            <figcaption class="pstat__trajHead">
+              <span class="pstat__trajTitle">{{ item.title }}</span>
+              <span class="pstat__trajUnit">{{ item.unit }}</span>
+            </figcaption>
+            <div class="pstat__cols">
+              <div v-for="point in item.points" :key="point.key" class="pstat__col">
+                <span class="pstat__colPlot">
+                  <span class="pstat__colValue" :class="{ 'pstat__colValue--target': point.target }">
+                    {{ point.text }}
+                  </span>
+                  <span
+                    class="pstat__colBar"
+                    :class="{ 'pstat__colBar--target': point.target }"
+                    :style="{ blockSize: point.height + '%' }"
+                  ></span>
+                </span>
+                <span class="pstat__colKey">
+                  {{ point.key }}
+                  <em v-if="point.target">{{ t('pstats.targetWord') }}</em>
+                </span>
+              </div>
+            </div>
+            <p class="pstat__trajClimb">{{ item.climb }}</p>
+          </figure>
+        </div>
+      </section>
+
       <section class="pstat__block">
         <h3 class="pstat__sub">{{ t('pstats.prioritiesTitle') }}</h3>
         <ol class="pstat__priorities">
@@ -611,23 +850,60 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
             <span class="pstat__roman">{{ priority.n }}</span>
             <div>
               <p class="pstat__priorityText">{{ priority.text }}</p>
-              <ul v-if="priority.targets.length" class="pstat__targets">
+              <ul v-if="priority.targets.length" class="pstat__targetChips">
                 <li v-for="(target, i) in priority.targets" :key="i">{{ target }}</li>
               </ul>
             </div>
           </li>
         </ol>
       </section>
+    </section>
 
-      <section v-if="zones" class="pstat__block pstat__keepWhole">
+    <!-- ========================================================= 5. the offer -->
+    <section v-if="zones" class="pstat__page">
+      <header class="pstat__head">
+        <p class="pstat__eyebrow">{{ t('pstats.offerEyebrow') }}</p>
+        <h2 class="pstat__title">{{ t('pstats.offerTitle') }}</h2>
+        <p class="pstat__lead">{{ t('pstats.offerLead') }}</p>
+      </header>
+
+      <section class="pstat__block pstat__keepWhole">
         <h3 class="pstat__sub">{{ t('pstats.zonesTitle') }}</h3>
         <ul class="pstat__zones">
           <li v-for="zone in zoneTypes" :key="zone">{{ zone }}</li>
         </ul>
-        <ul class="pstat__incentives">
-          <li v-for="(point, i) in incentives" :key="i">{{ point }}</li>
-        </ul>
+      </section>
+
+      <section class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.incentivesTitle') }}</h3>
+        <ol class="pstat__cards">
+          <li v-for="(point, i) in incentives" :key="i">
+            <span class="pstat__cardNo">{{ i + 1 }}</span>
+            <p>{{ point }}</p>
+          </li>
+        </ol>
+        <p v-if="legalBasis" class="pstat__caption pstat__caption--after">
+          {{ t('pstats.legalBasis') }} · {{ legalBasis }}
+        </p>
         <p class="pstat__note">{{ tr(zones.disclaimer) }}</p>
+      </section>
+
+      <section v-if="sectors.length" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.sectorsTitle') }}</h3>
+        <ul class="pstat__zones pstat__zones--quiet">
+          <li v-for="sector in sectors" :key="sector.id">{{ sector.name }}</li>
+        </ul>
+      </section>
+
+      <section v-if="journey.length" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.journeyTitle') }}</h3>
+        <ol class="pstat__journey">
+          <li v-for="step in journey" :key="step.n">
+            <span class="pstat__stepNo">{{ step.n }}</span>
+            <strong>{{ step.title }}</strong>
+            <span class="pstat__stepDesc">{{ step.desc }}</span>
+          </li>
+        </ol>
       </section>
     </section>
   </div>
@@ -713,6 +989,10 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     margin: 0 0 1.5mm;
     font-size: 7pt;
     color: #626b8b;
+  }
+
+  .pstat__caption--after {
+    margin: 2.5mm 0 0;
   }
 
   .pstat__note {
@@ -935,6 +1215,107 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     block-size: 2.8mm;
   }
 
+  /* ------------------------------------------- two periods, two bars a row */
+
+  .pstat__keys {
+    display: flex;
+    gap: 7mm;
+    margin: 0 0 2mm;
+    font-size: 7pt;
+    color: #4a5070;
+  }
+  .pstat__key {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.6mm;
+  }
+  .pstat__keyChip {
+    inline-size: 4mm;
+    block-size: 2mm;
+    border-radius: 0.4mm;
+    background: #006fb9;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pstat__keyChip--part {
+    background: #c18429;
+  }
+
+  .pstat__bars--pairs li {
+    grid-template-columns: 38mm 1fr 22mm;
+    padding-block: 0.7mm;
+  }
+  .pstat__pair {
+    display: grid;
+    gap: 0.7mm;
+  }
+  .pstat__bars--pairs .pstat__barTrack {
+    block-size: 2.1mm;
+  }
+  .pstat__barFill--part {
+    background: #c18429;
+  }
+  .pstat__pairValues {
+    display: grid;
+    gap: 0.7mm;
+    text-align: end;
+    font-size: 7pt;
+    line-height: 2.1mm;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: #15193a;
+  }
+  .pstat__valuePart {
+    color: #8a6219;
+  }
+
+  /* --------------------------------------------- one strip, divided by share */
+
+  .pstat__strip {
+    display: flex;
+    block-size: 7mm;
+    border-radius: 0.8mm;
+    overflow: hidden;
+  }
+  .pstat__stripPart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 0.8mm;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pstat__stripValue {
+    font-size: 7.5pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #ffffff;
+  }
+  .pstat__stripKeys {
+    margin: 2.5mm 0 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.6mm 6mm;
+  }
+  .pstat__stripKeys li {
+    display: grid;
+    grid-template-columns: 3mm 1fr auto;
+    gap: 2mm;
+    align-items: baseline;
+  }
+  .pstat__stripName {
+    font-size: 7.5pt;
+    line-height: 1.25;
+    color: #3c4467;
+  }
+  .pstat__stripShare {
+    font-size: 7.5pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
   /* ------------------------------------------------------ the salary chart */
 
   .pstat__axisNote {
@@ -1029,6 +1410,106 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     color: #4a5070;
   }
 
+  /* ------------------------------------------- today against the 2030 target */
+
+  .pstat__trajs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10mm;
+  }
+  .pstat__traj {
+    margin: 0;
+    break-inside: avoid;
+  }
+  .pstat__trajHead {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4mm;
+    padding-block-end: 1.6mm;
+    border-block-end: 0.3mm solid #c9ccd8;
+  }
+  .pstat__trajTitle {
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+  .pstat__trajUnit {
+    font-size: 7pt;
+    color: #626b8b;
+  }
+  .pstat__cols {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 5mm;
+    margin-block-start: 2.5mm;
+  }
+  .pstat__col {
+    text-align: center;
+  }
+  .pstat__colValue {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 11pt;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    padding-block-end: 1.2mm;
+  }
+  .pstat__colValue--target {
+    color: #8a6219;
+  }
+  /* The plot box the columns are a percentage of, so a bar is a share of the
+     chart rather than of whatever the browser thinks the row is. Filled from
+     the bottom, with the figure sitting on top of its own bar. */
+  .pstat__colPlot {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    block-size: 34mm;
+  }
+  .pstat__colBar {
+    display: block;
+    inline-size: 100%;
+    background: #006fb9;
+    border-radius: 0.6mm 0.6mm 0 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* The target is not a measurement, and is not drawn as one. */
+  .pstat__colBar--target {
+    background: repeating-linear-gradient(
+      -45deg,
+      #c18429 0,
+      #c18429 0.7mm,
+      #e5b974 0.7mm,
+      #e5b974 1.4mm
+    );
+  }
+  .pstat__colKey {
+    display: block;
+    margin-block-start: 1.4mm;
+    padding-block-start: 1.2mm;
+    border-block-start: 0.3mm solid #c9ccd8;
+    font-size: 7.5pt;
+    font-variant-numeric: tabular-nums;
+    color: #4a5070;
+  }
+  .pstat__colKey em {
+    display: block;
+    font-style: normal;
+    font-size: 6.5pt;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8a6219;
+  }
+  .pstat__trajClimb {
+    margin: 2mm 0 0;
+    font-family: var(--font-display);
+    font-size: 9pt;
+    font-weight: 600;
+    color: #8a6219;
+  }
+
   /* -------------------------------------------------------- the priorities */
 
   .pstat__priorities {
@@ -1058,15 +1539,26 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     font-size: 9.5pt;
     line-height: 1.35;
   }
-  .pstat__targets {
-    margin: 1.4mm 0 0;
-    padding-inline-start: 4.5mm;
-    font-size: 7.5pt;
-    line-height: 1.35;
-    color: #4a5070;
+  /* A target is a thing to be reached, not a sentence under a sentence: set
+     as chips, the five priorities read as a list of five rather than as a
+     page of bullets. */
+  .pstat__targetChips {
+    margin: 1.6mm 0 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4mm;
   }
-  .pstat__targets li {
-    margin-block-end: 0.5mm;
+  .pstat__targetChips li {
+    padding: 0.8mm 2.4mm;
+    border-radius: 5mm;
+    background: #f3f4f8;
+    font-size: 7pt;
+    line-height: 1.3;
+    color: #3c4467;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   /* ---------------------------------------------------- zones and the terms */
@@ -1086,15 +1578,85 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     font-size: 8pt;
     color: #15193a;
   }
-  .pstat__incentives {
-    margin: 3mm 0 0;
-    padding-inline-start: 5mm;
+  /* The state's own list, beside the forum's: named, not weighted. */
+  .pstat__zones--quiet li {
+    border-color: #e3e5ec;
+    color: #3c4467;
+    font-size: 7.5pt;
+  }
+
+  /* Four reliefs as four cards rather than four bullets: the same words, but
+     a reader can see how many there are before reading any of them. */
+  .pstat__cards {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm 8mm;
+  }
+  .pstat__cards li {
+    display: grid;
+    grid-template-columns: 6mm 1fr;
+    gap: 3mm;
+    padding-block-start: 1.6mm;
+    border-block-start: 0.35mm solid #c9ccd8;
+    break-inside: avoid;
+  }
+  .pstat__cardNo {
+    font-family: var(--font-display);
+    font-size: 11pt;
+    font-weight: 600;
+    line-height: 1.05;
+    color: #c18429;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pstat__cards p {
+    margin: 0;
     font-size: 8pt;
     line-height: 1.4;
+    color: #3c4467;
   }
-  .pstat__incentives li {
-    margin-block-end: 1mm;
+
+  /* --------------------------------------------------------- the five steps */
+
+  .pstat__journey {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4mm;
+  }
+  .pstat__journey li {
+    padding-block-start: 2mm;
+    border-block-start: 0.6mm solid #006fb9;
     break-inside: avoid;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .pstat__stepNo {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 10pt;
+    font-weight: 600;
+    line-height: 1.05;
+    color: #006fb9;
+  }
+  .pstat__journey strong {
+    display: block;
+    margin-block-start: 1.4mm;
+    font-size: 8.5pt;
+    font-weight: 600;
+    line-height: 1.25;
+  }
+  .pstat__stepDesc {
+    display: block;
+    margin-block-start: 1mm;
+    font-size: 7pt;
+    line-height: 1.35;
+    color: #4a5070;
   }
 }
 </style>

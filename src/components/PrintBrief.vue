@@ -42,8 +42,53 @@ const purpose = computed(() => {
   return intro ? tr(intro.purpose) : '';
 });
 
-/** Three of the goals. The fourth and fifth are the same ground in other words. */
-const goals = computed(() => (forum.value?.goals ?? []).slice(0, 3).map((g) => tr(g)));
+/**
+ * What the projects cost, counted into bands.
+ *
+ * Only the sheets that state a sum in dollars can be counted — the ten in
+ * soums and the seven left open are named under the chart rather than binned
+ * into it, because a project whose price is "by agreement" is not a small
+ * project, it is an unknown one.
+ *
+ * The bands are the chart's own, not the data's: they are round numbers an
+ * investor thinks in, and the note says how many sheets each one holds.
+ */
+const BAND_EDGES = [1, 5, 20, 50];
+const BAND_KEYS = ['0–1', '1–5', '5–20', '20–50', '50+'];
+
+const sizeBands = computed(() => {
+  const p = portfolio.value;
+  if (!p) return [];
+  const counts = new Array<number>(BAND_KEYS.length).fill(0);
+  for (const project of p.projects) {
+    if (project.currency !== 'USD' || !project.investment) continue;
+    const millions = project.investment / 1e6;
+    let band = BAND_EDGES.findIndex((edge) => millions < edge);
+    if (band === -1) band = BAND_EDGES.length;
+    counts[band] = (counts[band] ?? 0) + 1;
+  }
+  const top = Math.max(1, ...counts);
+  return counts.map((n, i) => ({
+    key: BAND_KEYS[i] as string,
+    n,
+    // Of the plot, less the band the figure above the bar occupies; and a
+    // floor, so the smallest band is still a column.
+    height: n ? Math.max(6, (n / top) * 78) : 0,
+  }));
+});
+
+/** "$ mln" — the band axis's unit, in the reader's own word for a million. */
+const sizeUnit = computed(() => `$ ${UNITS[lang.value]?.m ?? 'm'}`);
+
+const sizeNote = computed(() => {
+  const p = portfolio.value;
+  if (!p) return '';
+  return t('print.sizeNote', {
+    usd: p.statedUsdCount,
+    uzs: p.statedUzsCount,
+    open: p.openCount,
+  });
+});
 
 const facts = computed(() => {
   const e = event.value;
@@ -143,13 +188,23 @@ const numbers = computed(() => {
         <span>{{ item.label }}</span>
       </li>
     </ul>
-    <p class="brief__note">{{ t('print.totalNote') }}</p>
 
-    <div v-if="goals.length" class="brief__goalsBlock">
-      <h3 class="brief__sub">{{ t('print.goalsTitle') }}</h3>
-      <ul class="brief__goals">
-        <li v-for="(goal, i) in goals" :key="i">{{ goal }}</li>
-      </ul>
+    <div v-if="sizeBands.length" class="brief__sizeBlock">
+      <h3 class="brief__sub">{{ t('print.sizeTitle') }}</h3>
+      <p class="brief__axis">
+        <span>{{ t('print.sizeAxis') }}</span>
+        <span>{{ sizeUnit }}</span>
+      </p>
+      <div class="brief__cols">
+        <div v-for="band in sizeBands" :key="band.key" class="brief__col">
+          <span class="brief__colPlot">
+            <span class="brief__colValue">{{ band.n }}</span>
+            <span class="brief__colBar" :style="{ blockSize: band.height + '%' }"></span>
+          </span>
+          <span class="brief__colKey">{{ band.key }}</span>
+        </div>
+      </div>
+      <p class="brief__note">{{ sizeNote }}</p>
     </div>
 
     <div v-if="forumStats.length" class="brief__pastBlock">
@@ -295,30 +350,59 @@ const numbers = computed(() => {
     font-size: 7pt;
   }
 
-  /**
-   * The three aims, in two columns.
-   *
-   * They were a grid first, and Chrome does not fragment a grid container
-   * across pages: the whole block went to a page of its own. As a block they
-   * fragmented, which was worse — one bullet alone on the page after. Two
-   * columns make them short enough to sit under the numbers, and the block is
-   * kept whole so they cannot be split again.
-   */
-  .brief__goalsBlock {
-    margin-block-start: 1mm;
+  /* ------------------------------------------- what the projects cost */
+
+  .brief__sizeBlock {
+    margin-block-start: 5mm;
     break-inside: avoid;
   }
-  .brief__goals {
-    margin: 0;
-    padding-inline-start: 5mm;
-    columns: 2;
-    column-gap: 9mm;
-    font-size: 8pt;
-    line-height: 1.4;
+  .brief__axis {
+    display: flex;
+    justify-content: space-between;
+    gap: 6mm;
+    margin: -0.5mm 0 2mm;
+    font-size: 7pt;
+    color: #626b8b;
   }
-  .brief__goals li {
-    margin-block-end: 1.6mm;
-    break-inside: avoid;
+  .brief__cols {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6mm;
+  }
+  .brief__col {
+    text-align: center;
+  }
+  .brief__colValue {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 11pt;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    padding-block-end: 1.2mm;
+  }
+  .brief__colPlot {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    block-size: 24mm;
+  }
+  .brief__colBar {
+    display: block;
+    inline-size: 100%;
+    background: #006fb9;
+    border-radius: 0.6mm 0.6mm 0 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .brief__colKey {
+    display: block;
+    margin-block-start: 1.4mm;
+    padding-block-start: 1.2mm;
+    border-block-start: 0.3mm solid #c9ccd8;
+    font-size: 7.5pt;
+    font-variant-numeric: tabular-nums;
+    color: #4a5070;
   }
 }
 </style>

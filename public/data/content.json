@@ -942,6 +942,7 @@
     "targets_2030": {
       "source": "S14",
       "document": "PF-158, 11.09.2023",
+      "year": 2030,
       "goal": 58,
       "items": [
         {
@@ -1013,6 +1014,18 @@
     "source": "S5",
     "adopted": "September 2023 (presidential decree)",
     "goals_total": 100,
+    "gdp_path": {
+      "source": "S5",
+      "verify": true,
+      "base": {
+        "year": 2023,
+        "value": 107.5
+      },
+      "target": {
+        "year": 2030,
+        "value": 240
+      }
+    },
     "summary": {
       "uz": "“Oʻzbekiston — 2030” strategiyasi: 5 ta ustuvor yoʻnalish boʻyicha 100 ta maqsad, har biri oʻlchanadigan koʻrsatkich, masʼul tashkilot va moliyalashtirish manbasi bilan.",
       "en": "The “Uzbekistan — 2030” Strategy: 100 goals across 5 priority areas, each with measurable indicators, responsible institutions and funding sources.",

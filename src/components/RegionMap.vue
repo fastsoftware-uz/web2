@@ -13,13 +13,16 @@
  *
  * The outlines are projected at build time (scripts/build-region-map.mjs) and
  * arrive as flat SVG paths, so nothing here does geography — this component
- * draws, counts and handles input.
+ * draws, counts and handles input. The geometry it shares with the printed
+ * sheet's map lives in lib/region-map.ts.
  *
  * The drawing is a schematic of administrative boundaries from an open data
  * set, published under ODbL and credited in the footer. It is a diagram, not a
  * survey, and it asserts no boundary.
  */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+
+import { type MapFile, discAt, fetchRegionMap } from '../lib/region-map';
 
 export interface MapRegion {
   id: string;
@@ -39,18 +42,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{ pick: [id: string] }>();
-
-interface RegionPath {
-  id: string;
-  d: string;
-  label: [number, number];
-  clearance: number;
-  bounds: [number, number, number, number];
-}
-interface MapFile {
-  viewBox: string;
-  regions: RegionPath[];
-}
 
 const figure = ref<HTMLElement | null>(null);
 const map = ref<MapFile | null>(null);
@@ -77,9 +68,7 @@ const hovered = ref<string | null>(null);
  */
 async function load(): Promise<void> {
   try {
-    const res = await fetch(`${import.meta.env.BASE_URL}geo/uz-regions-paths.json`);
-    if (!res.ok) throw new Error(String(res.status));
-    map.value = (await res.json()) as MapFile;
+    map.value = await fetchRegionMap();
   } catch {
     failed.value = true;
   }
@@ -157,38 +146,6 @@ const DISC_RADIUS = 17;
  * apart, so at this radius they still do not take each other's area.
  */
 const HIT_RADIUS = 44;
-
-/**
- * Where a region's counter goes when it will not fit inside the region.
- *
- * Six of the fourteen are too narrow to hold a disc: the capital, which is a
- * few pixels across at this scale, Khorezm, Syrdarya, and the three that
- * share the Fergana valley. Tashkent region is moved for a different reason,
- * noted below. Their discs are placed by hand in the ground
- * around the country and joined back with a leader — outlines are projected
- * once at build time and never move, so these are fixed positions rather
- * than a layout problem to solve at runtime. Coordinates are in the viewBox of
- * scripts/build-region-map.mjs; change the projection there and these have to
- * be re-checked against it.
- */
-const CALLOUT: Record<string, [number, number]> = {
-  khorezm: [222, 362],
-  // Not for want of room, but because its own point sits on top of the
-  // capital's, and the capital is the smaller of the two.
-  tashkent_region: [772, 186],
-  tashkent_city: [636, 128],
-  syrdarya: [762, 402],
-  namangan: [898, 150],
-  andijan: [945, 243],
-  fergana: [874, 442],
-};
-
-function discAt(region: RegionPath): { x: number; y: number; leader: string | null } {
-  const callout = CALLOUT[region.id];
-  if (!callout) return { x: region.label[0], y: region.label[1], leader: null };
-  const [x, y] = callout;
-  return { x, y, leader: `M${region.label[0]} ${region.label[1]}L${x} ${y}` };
-}
 
 function describe(id: string): string {
   const region = byId.value.get(id);

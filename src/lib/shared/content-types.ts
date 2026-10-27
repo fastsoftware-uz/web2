@@ -85,6 +85,8 @@ export interface Tourism {
     source: string;
     /** The act the targets are written in, for anybody who wants to read it. */
     document: string;
+    /** The year they are set for, so a chart can label its last column. */
+    year: number;
     goal: number;
     items: Kpi[];
   };
@@ -237,6 +239,20 @@ export interface Content {
     adopted_ru: string;
     adopted_en: string;
     goals_total: number;
+    /**
+     * The GDP line of the strategy, as two numbers rather than two sentences.
+     *
+     * Both are stated in prose elsewhere in this block — the 2023 figure in
+     * `progress_since_adoption`, the 2030 target in priority II's targets —
+     * and a chart cannot read a sentence. `verify` travels with the target
+     * because the state's own pages disagree about it; see `verify_note`.
+     */
+    gdp_path: {
+      source: string;
+      verify: boolean;
+      base: { year: number; value: number };
+      target: { year: number; value: number };
+    };
     summary: I18nText;
     progress_since_adoption: I18nText[];
     priorities: Priority[];
