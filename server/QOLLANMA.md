@@ -3,7 +3,9 @@
 **I Xalqaro turizm investitsiya forumi — Toshkent, 25–27-noyabr 2026**
 
 Bu hujjat adminkadan foydalanadigan odam uchun yozilgan. Dasturchi uchun emas —
-oʻrnatish va server sozlamalari alohida faylda: [`README.md`](README.md).
+serverga oʻrnatish alohida faylda:
+[`SERVERGA-ORNATISH.md`](SERVERGA-ORNATISH.md) (qadam-baqadam, serverdagi odam
+uchun) va [`README.md`](README.md) (texnik tafsilotlar).
 
 ---
 

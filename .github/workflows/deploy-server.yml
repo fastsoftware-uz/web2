@@ -3,10 +3,13 @@ name: Deploy to the forum server
 # Fill these in once, at
 #   Settings -> Secrets and variables -> Actions
 #
-#   Variables:  SSH_HOST, SSH_USER, DEPLOY_PATH, SITE_URL, SSH_PORT (optional)
+#   Variables:  SSH_HOST, SSH_USER, SITE_PATH, SERVER_PATH,
+#               SITE_URL, SSH_PORT (optional)
 #   Secrets:    SSH_KEY (the private key), SSH_KNOWN_HOSTS (ssh-keyscan output)
 #
-# The server side is server/.env — see server/README.md.
+# SITE_PATH is the directory nginx serves the forum from; SERVER_PATH is where
+# this repository's server/ directory lives. The deploy writes inside those
+# two and nowhere else — see SERVERGA-ORNATISH.md.
 
 on:
   push:
@@ -27,6 +30,12 @@ jobs:
     runs-on: ubuntu-latest
     # No server configured yet, or a fork: nothing to deploy to.
     if: vars.SSH_HOST != '' && github.repository == 'fastsoftware-uz/web2'
+    env:
+      HOST: ${{ vars.SSH_HOST }}
+      USER: ${{ vars.SSH_USER }}
+      PORT: ${{ vars.SSH_PORT || '22' }}
+      SITE_PATH: ${{ vars.SITE_PATH }}
+      SERVER_PATH: ${{ vars.SERVER_PATH }}
     steps:
       - uses: actions/checkout@v4
 
@@ -52,56 +61,58 @@ jobs:
           printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
           printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          echo "SSH=ssh -i ~/.ssh/id_deploy -p $PORT -o StrictHostKeyChecking=yes" >> "$GITHUB_ENV"
+
+      # Both paths must carry the forum's own marker before anything is
+      # written. This is the whole of the promise that a deploy cannot reach
+      # the rest of that server: a mistyped path fails here, having copied
+      # nothing.
+      - name: These are our directories, and only ours
+        run: |
+          $SSH "$USER@$HOST" "
+            test -f '$SITE_PATH/.forum-site' || {
+              echo 'XATO: $SITE_PATH ichida .forum-site belgisi yoʻq — SITE_PATH notoʻgʻri'
+              exit 1
+            }
+            test -f '$SERVER_PATH/.env' || {
+              echo 'XATO: $SERVER_PATH ichida .env yoʻq — SERVER_PATH notoʻgʻri'
+              exit 1
+            }
+            echo 'ok'
+          "
 
       # The built site. --delete, because a renamed asset must not linger;
       # data/ is included on purpose — it is the base the admin's overlay is
       # re-applied to two steps below.
       #
-      # D2775 rather than D755: public/data is the one directory inside the
-      # web root that PHP-FPM has to write, it is group-writable and setgid
-      # for exactly that reason, and a deploy that resets it to 755 is a
+      # D2775 rather than D755: the site's data/ is the one directory inside
+      # the web root that PHP-FPM has to write, it is group-writable and
+      # setgid for exactly that reason, and a deploy that reset it to 755 is a
       # deploy after which the site editor can no longer save.
       - name: Upload the site
-        env:
-          HOST: ${{ vars.SSH_HOST }}
-          USER: ${{ vars.SSH_USER }}
-          PORT: ${{ vars.SSH_PORT || '22' }}
-          BASE: ${{ vars.DEPLOY_PATH }}
         run: |
           rsync -rlptz --delete --chmod=D2775,F664 \
-            -e "ssh -i ~/.ssh/id_deploy -p $PORT -o StrictHostKeyChecking=yes" \
-            dist/ "$USER@$HOST:$BASE/public/"
+            --exclude '.forum-site' --exclude '.well-known' \
+            -e "$SSH" dist/ "$USER@$HOST:$SITE_PATH/"
 
       # The backend. .env is the installation's own configuration and data/ is
       # the registrations: both are excluded, which also protects them from
       # --delete.
       - name: Upload the backend
-        env:
-          HOST: ${{ vars.SSH_HOST }}
-          USER: ${{ vars.SSH_USER }}
-          PORT: ${{ vars.SSH_PORT || '22' }}
-          BASE: ${{ vars.DEPLOY_PATH }}
         run: |
           rsync -rlptz --delete --chmod=D2775,F664 \
             --exclude '.env' --exclude 'data/' \
-            -e "ssh -i ~/.ssh/id_deploy -p $PORT -o StrictHostKeyChecking=yes" \
-            server/ "$USER@$HOST:$BASE/server/"
+            -e "$SSH" server/ "$USER@$HOST:$SERVER_PATH/"
 
       # Put the organiser's own edits back on top of the new build, and then
-      # say out loud whether this installation is actually in a state to run.
+      # say out loud whether this installation is still in a state to run.
       - name: Republish the admin's edits
-        env:
-          HOST: ${{ vars.SSH_HOST }}
-          USER: ${{ vars.SSH_USER }}
-          PORT: ${{ vars.SSH_PORT || '22' }}
-          BASE: ${{ vars.DEPLOY_PATH }}
         run: |
           # Alpine installs /usr/bin/php84 and often no plain `php` at all,
           # so the remote shell is asked which one it has rather than told.
-          ssh -i ~/.ssh/id_deploy -p "$PORT" -o StrictHostKeyChecking=yes \
-            "$USER@$HOST" \
+          $SSH "$USER@$HOST" \
             "PHP=\$(command -v php || command -v php84); \
-             \$PHP '$BASE/server/bin/publish.php' && \$PHP '$BASE/server/bin/doctor.php'"
+             \$PHP '$SERVER_PATH/bin/publish.php' && \$PHP '$SERVER_PATH/bin/doctor.php'"
 
       - name: Health check
         if: vars.SITE_URL != ''

@@ -169,6 +169,9 @@ install -d -o deploy -g forum -m 2775 /var/www/forum/public
 install -d -o deploy -g forum -m 2775 /var/www/forum/public/data
 install -d -o deploy -g forum -m 2775 /var/www/forum/server
 install -d -o php-dev -g forum -m 2770 /var/www/forum/server/data
+
+# The marker the deploy checks before it writes anything here.
+echo forum > /var/www/forum/public/.forum-site
 ```
 
 The group write bit and the setgid bit are both load-bearing: PHP-FPM writes
@@ -315,6 +318,13 @@ server {
         fastcgi_param REQUEST_METHOD GET;
     }
 
+    # Without the trailing slash the block below does not match at all and
+    # the reader gets the site's own 404 — which is exactly how an admin
+    # nobody can open usually looks.
+    location = /admin {
+        return 301 /admin/;
+    }
+
     # The admin. The password is the lock and the throttle is inside PHP;
     # this is the one in front of it. Add `allow`/`deny` here too if it
     # should only open from the office — or set ADMIN_IP_ALLOW in .env,
@@ -383,6 +393,11 @@ Every push to `main` in the repository that carries this directory builds the
 site, copies it and the backend to this server, and puts the admin's own
 edits back on top. `.github/workflows/deploy-server.yml`.
 
+Whoever has the server should work through
+**[`SERVERGA-ORNATISH.md`](SERVERGA-ORNATISH.md)** — the same thing as this
+section and the install above, in Uzbek, as a runbook: every command, what it
+prints, and what to do about each answer.
+
 **On the server, once:** a key for the deploy to log in with.
 
 ```sh
@@ -403,19 +418,28 @@ ssh-keyscan -p 22 forum.example.uz   # the host key — this goes in too
 | Variable | `SSH_HOST` | `forum.example.uz` |
 | Variable | `SSH_USER` | `deploy` |
 | Variable | `SSH_PORT` | `22` (omit for 22) |
-| Variable | `DEPLOY_PATH` | `/var/www/forum` |
+| Variable | `SITE_PATH` | the directory nginx serves, e.g. `/var/www/forum/public` |
+| Variable | `SERVER_PATH` | where this `server/` directory lives, e.g. `/var/www/forum/server` |
 | Variable | `SITE_URL` | `https://forum.example.uz` |
 | Variable | `REGISTER_ENDPOINT` | empty once the site is on this server |
 
 Until `SSH_HOST` is set the job is skipped rather than failed, so a push to a
 repository with no server yet is still a green push.
 
-**What a deploy does not touch:** `server/.env`, `server/data/`. They are
-excluded from the copy, which also protects them from `--delete`.
+**It touches those two directories and nothing else.** That server runs
+other things, so before anything is copied the job checks that each path
+carries the forum's own marker — `.forum-site` in the site directory, the
+installation's `.env` in the backend's. A mistyped path fails the deploy
+having copied nothing. Nothing is installed, no service is restarted, and
+nginx is never touched.
 
-**What it does touch:** everything else under `public/` and `server/`.
-`--delete` is on, so a file put into `public/` by hand will be removed by the
-next deploy — put it in the repository instead.
+**What a deploy does not touch:** `server/.env`, `server/data/`,
+`.well-known/` (certbot's) and the marker. They are excluded from the copy,
+which also protects them from `--delete`.
+
+**What it does touch:** everything else under the two paths. `--delete` is
+on, so a file put into the site directory by hand will be removed by the next
+deploy — put it in the repository instead.
 
 **The step that matters.** A deploy replaces `public/data/*.json` with the
 build output. Those are exactly the two files the admin publishes into, so
