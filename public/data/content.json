@@ -723,6 +723,292 @@
     ],
     "note": "Short sector descriptions are NOT included. Either link to the official sector page or write neutral 1-sentence descriptions without numbers."
   },
+  "tourism": {
+    "sources": [
+      "S11",
+      "S12",
+      "S13",
+      "S14"
+    ],
+    "as_of": "2026",
+    "country_names": {
+      "kgz": {
+        "uz": "Qirgʻiziston",
+        "en": "Kyrgyzstan",
+        "ru": "Кыргызстан"
+      },
+      "tjk": {
+        "uz": "Tojikiston",
+        "en": "Tajikistan",
+        "ru": "Таджикистан"
+      },
+      "kaz": {
+        "uz": "Qozogʻiston",
+        "en": "Kazakhstan",
+        "ru": "Казахстан"
+      },
+      "rus": {
+        "uz": "Rossiya",
+        "en": "Russia",
+        "ru": "Россия"
+      },
+      "afg": {
+        "uz": "Afgʻoniston",
+        "en": "Afghanistan",
+        "ru": "Афганистан"
+      },
+      "tkm": {
+        "uz": "Turkmaniston",
+        "en": "Turkmenistan",
+        "ru": "Туркменистан"
+      },
+      "chn": {
+        "uz": "Xitoy",
+        "en": "China",
+        "ru": "Китай"
+      },
+      "tur": {
+        "uz": "Turkiya",
+        "en": "Türkiye",
+        "ru": "Турция"
+      },
+      "ind": {
+        "uz": "Hindiston",
+        "en": "India",
+        "ru": "Индия"
+      },
+      "kor": {
+        "uz": "Koreya Respublikasi",
+        "en": "Republic of Korea",
+        "ru": "Республика Корея"
+      },
+      "deu": {
+        "uz": "Germaniya",
+        "en": "Germany",
+        "ru": "Германия"
+      }
+    },
+    "arrivals_2025": {
+      "source": "S11",
+      "published": "2026-01-16",
+      "period": "2025",
+      "total": 11700000,
+      "growth_abs": 3700000,
+      "growth_pct": 46.8,
+      "markets": [
+        {
+          "id": "kgz",
+          "value": 3300000
+        },
+        {
+          "id": "tjk",
+          "value": 2700000
+        },
+        {
+          "id": "kaz",
+          "value": 2700000
+        },
+        {
+          "id": "rus",
+          "value": 984400
+        },
+        {
+          "id": "afg",
+          "value": 476700
+        },
+        {
+          "id": "tkm",
+          "value": 370000
+        },
+        {
+          "id": "chn",
+          "value": 278900
+        },
+        {
+          "id": "tur",
+          "value": 174900
+        },
+        {
+          "id": "ind",
+          "value": 80800
+        },
+        {
+          "id": "kor",
+          "value": 46300
+        }
+      ]
+    },
+    "arrivals_2026_8m": {
+      "source": "S12",
+      "published": "2026-09-14",
+      "period": "2026-01/2026-08",
+      "total": 9102729,
+      "growth_pct": 21.1,
+      "markets": [
+        {
+          "id": "kgz",
+          "value": 2524378
+        },
+        {
+          "id": "kaz",
+          "value": 2171581
+        },
+        {
+          "id": "tjk",
+          "value": 2025400
+        },
+        {
+          "id": "rus",
+          "value": 867757
+        },
+        {
+          "id": "afg",
+          "value": 329620
+        },
+        {
+          "id": "chn",
+          "value": 318465
+        },
+        {
+          "id": "tkm",
+          "value": 224766
+        },
+        {
+          "id": "tur",
+          "value": 130155
+        },
+        {
+          "id": "ind",
+          "value": 39538
+        },
+        {
+          "id": "deu",
+          "value": 32249
+        }
+      ]
+    },
+    "services_export_2026_8m": {
+      "source": "S13",
+      "published": "2026-09-30",
+      "period": "2026-01/2026-08",
+      "preliminary": true,
+      "total_usd": 8500000000,
+      "share_of_exports_pct": 37.4,
+      "growth_pct": 33.8,
+      "mix": [
+        {
+          "id": "travel",
+          "share": 54.1,
+          "label": {
+            "uz": "Sayohat (turizm)",
+            "en": "Travel (tourism)",
+            "ru": "Поездки (туризм)"
+          }
+        },
+        {
+          "id": "transport",
+          "share": 30.5,
+          "label": {
+            "uz": "Transport xizmatlari",
+            "en": "Transport services",
+            "ru": "Транспортные услуги"
+          }
+        },
+        {
+          "id": "ict",
+          "share": 8.4,
+          "label": {
+            "uz": "Telekommunikatsiya va IT xizmatlari",
+            "en": "Telecom and IT services",
+            "ru": "Телекоммуникационные и ИТ-услуги"
+          }
+        },
+        {
+          "id": "business",
+          "share": 2.7,
+          "label": {
+            "uz": "Boshqa ishbilarmonlik xizmatlari",
+            "en": "Other business services",
+            "ru": "Прочие деловые услуги"
+          }
+        }
+      ],
+      "note": {
+        "uz": "Dastlabki maʼlumot. Qoʻmita turizmning ulushini eʼlon qiladi, alohida summani emas.",
+        "en": "Preliminary data. The agency publishes travel’s share, not a separate sum for it.",
+        "ru": "Предварительные данные. Агентство публикует долю поездок, а не отдельную сумму."
+      }
+    },
+    "targets_2030": {
+      "source": "S14",
+      "document": "PF-158, 11.09.2023",
+      "goal": 58,
+      "items": [
+        {
+          "id": "foreign",
+          "value": 15,
+          "suffix": " m",
+          "label": {
+            "uz": "xorijiy sayyoh",
+            "en": "foreign tourists",
+            "ru": "иностранных туристов"
+          }
+        },
+        {
+          "id": "domestic",
+          "value": 25,
+          "suffix": " m",
+          "label": {
+            "uz": "ichki sayyoh",
+            "en": "domestic tourists",
+            "ru": "внутренних туристов"
+          }
+        },
+        {
+          "id": "pilgrimage",
+          "value": 3,
+          "suffix": " m",
+          "label": {
+            "uz": "ziyorat turizmi sayyohi",
+            "en": "pilgrimage tourists",
+            "ru": "паломнических туристов"
+          }
+        },
+        {
+          "id": "export",
+          "value": 5,
+          "prefix": "$",
+          "suffix": " bn",
+          "label": {
+            "uz": "turizm xizmatlari eksporti",
+            "en": "tourism services export",
+            "ru": "экспорт туристических услуг"
+          }
+        },
+        {
+          "id": "med_edu_export",
+          "value": 1.5,
+          "prefix": "$",
+          "suffix": " bn",
+          "label": {
+            "uz": "tibbiyot va taʼlim turizmi eksporti, yiliga",
+            "en": "medical and education tourism export, a year",
+            "ru": "экспорт медицинского и образовательного туризма, в год"
+          }
+        },
+        {
+          "id": "beds",
+          "value": 2,
+          "suffix": "×",
+          "label": {
+            "uz": "mehmon oʻrinlari soni, kamida",
+            "en": "guest beds, at least",
+            "ru": "мест размещения, не менее"
+          }
+        }
+      ]
+    }
+  },
   "strategy_2030": {
     "source": "S5",
     "adopted": "September 2023 (presidential decree)",
@@ -1267,6 +1553,38 @@
       "url": "https://pivot.uz/uzbekistan-creates-two-financial-free-zones-with-english-law-and-tax-breaks-until-2100/",
       "accessed": "2026-09-21",
       "type": "media"
+    },
+    {
+      "id": "S11",
+      "title": "Statistics Agency — 11.7 million tourists visited Uzbekistan in 2025",
+      "url": "https://stat.uz/uz/matbuot-markazi/qo-mita-yangiliklar/66309-2025-jilda-zbekistonga-11-7-million-nafar-turist-kelgan-2",
+      "published": "2026-01-16",
+      "accessed": "2026-10-27",
+      "type": "official"
+    },
+    {
+      "id": "S12",
+      "title": "Statistics Agency — 9.1 million tourists visited Uzbekistan in 8 months of 2026",
+      "url": "https://stat.uz/en/press-center/news-of-committee/70182-8-ojda-zbekistonga-9-1-mln-nafar-turist-tashrif-buyurdi-4",
+      "published": "2026-09-14",
+      "accessed": "2026-10-27",
+      "type": "official"
+    },
+    {
+      "id": "S13",
+      "title": "Statistics Agency — Foreign trade press release, January–August 2026 (preliminary)",
+      "url": "https://stat.uz/img/news/press_release_uzb_p81244.pdf",
+      "published": "2026-09-30",
+      "accessed": "2026-10-27",
+      "type": "official"
+    },
+    {
+      "id": "S14",
+      "title": "lex.uz — PF-158 of 11.09.2023, “Uzbekistan — 2030” Strategy (goal 58)",
+      "url": "https://lex.uz/docs/-6600413",
+      "published": "2023-09-11",
+      "accessed": "2026-10-27",
+      "type": "official"
     }
   ]
 }

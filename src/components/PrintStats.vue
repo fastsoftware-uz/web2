@@ -8,12 +8,14 @@
  * forum's timetable, which is the one thing in the document that answers no
  * investment question at all — so the agenda came out and this went in.
  *
- * Three pages, in the order the question is actually asked:
+ * Four pages, in the order the question is actually asked:
  *
- *   1. the economy — what it is worth, how fast it moves, what it is made of;
- *   2. the people — who would run the project, and what an hour of their work
+ *   1. tourism — the market the forum is about: how many visitors arrive,
+ *      which countries they arrive from, and what the state has set for 2030;
+ *   2. the economy — what it is worth, how fast it moves, what it is made of;
+ *   3. the people — who would run the project, and what an hour of their work
  *      costs, region by region;
- *   3. the climate — where the state says the country is going by 2030, and
+ *   4. the climate — where the state says the country is going by 2030, and
  *      what a foreign investor is actually offered for coming.
  *
  * Every figure is read from `content.json`, the same file the site reads, and
@@ -51,6 +53,7 @@ const props = defineProps<{
 const { t } = useI18n();
 const { content, lang } = useStore();
 
+const tourism = computed(() => content.value?.tourism ?? null);
 const economy = computed(() => content.value?.economy_2025 ?? null);
 const people = computed(() => content.value?.human_capital ?? null);
 const regions = computed(() => content.value?.regions ?? null);
@@ -88,6 +91,29 @@ function kpiText(kpi: Kpi): string {
   return word ? `${prefix}${digits} ${word}${plus}` : `${prefix}${digits}${unit}${plus}`;
 }
 
+/**
+ * A count of people, in the same three words the money formatter uses.
+ *
+ * The arrivals are stated two ways in the source — the year rounded to a
+ * hundred thousand, the eight months to the person — and both are printed at
+ * one decimal of a million or a thousand, because a chart that sets
+ * "2 524 378" against "3 300 000" is comparing precision, not countries.
+ */
+const COUNTS: Record<Lang, { m: string; k: string }> = {
+  uz: { m: 'mln', k: 'ming' },
+  ru: { m: 'млн', k: 'тыс.' },
+  en: { m: 'm', k: 'k' },
+};
+
+function countText(value: number): string {
+  const words = COUNTS[lang.value];
+  const digits = (n: number, places: number) =>
+    formatNumber(n, lang.value, { maximumFractionDigits: places });
+  if (value >= 1e6) return `${digits(value / 1e6, 1)} ${words.m}`;
+  if (value >= 1e3) return `${digits(value / 1e3, 1)} ${words.k}`;
+  return digits(value, 0);
+}
+
 /** A share, as the chart labels write it: "48,7%". */
 const pct = (share: number) =>
   `${formatNumber(share, lang.value, { maximumFractionDigits: 1 })}%`;
@@ -98,7 +124,56 @@ function pickKpis(list: Kpi[] | undefined, ids: string[]): Kpi[] {
   return ids.map((id) => list.find((k) => k.id === id)).filter((k): k is Kpi => k !== undefined);
 }
 
-/* ------------------------------------------------------- page 1: the economy */
+/* ------------------------------------------------------- page 1: tourism */
+
+/**
+ * The four figures the forum's own subject is measured by.
+ *
+ * Two counts and their two growth rates, and the counts are kept apart rather
+ * than drawn as one line: a full year and eight months of the next are not
+ * points on the same series, and nothing here is going to pretend they are.
+ */
+const tourismFigures = computed(() => {
+  const data = tourism.value;
+  if (!data) return [];
+  return [
+    { id: 'a25', value: countText(data.arrivals_2025.total), label: t('pstats.kpiArrivals2025') },
+    { id: 'g25', value: `+${pct(data.arrivals_2025.growth_pct)}`, label: t('pstats.kpiGrowth2025') },
+    { id: 'a26', value: countText(data.arrivals_2026_8m.total), label: t('pstats.kpiArrivals2026') },
+    { id: 'g26', value: `+${pct(data.arrivals_2026_8m.growth_pct)}`, label: t('pstats.kpiGrowth2026') },
+  ];
+});
+
+/** Where the year's visitors came from, largest market first. */
+const markets = computed(() => {
+  const data = tourism.value;
+  if (!data) return [];
+  const names = data.country_names;
+  return data.arrivals_2025.markets.map((row) => ({
+    id: row.id,
+    label: names[row.id] ? tr(names[row.id]) : row.id,
+    value: row.value,
+  }));
+});
+const marketMax = computed(() => Math.max(1, ...markets.value.map((m) => m.value)));
+
+/** The services export, in the words of the release that states it. */
+const servicesExport = computed(() => tourism.value?.services_export_2026_8m ?? null);
+const servicesMax = computed(() =>
+  Math.max(1, ...(servicesExport.value?.mix ?? []).map((m) => m.share)),
+);
+
+const exportLine = computed(() => {
+  const data = servicesExport.value;
+  if (!data) return '';
+  return t('pstats.exportLine', {
+    total: `$${formatNumber(data.total_usd / 1e9, lang.value, { maximumFractionDigits: 1 })} ${UNITS[lang.value].bn}`,
+    share: pct(data.share_of_exports_pct),
+    growth: pct(data.growth_pct),
+  });
+});
+
+/* ------------------------------------------------------- page 2: the economy */
 
 /**
  * The eight the data file states, in the order an investor reads them: how
@@ -296,7 +371,71 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
 
 <template>
   <div v-if="content" class="pstat" aria-hidden="true">
-    <!-- ======================================================= 1. the economy -->
+    <!-- ========================================================== 1. tourism -->
+    <section v-if="tourism" class="pstat__page">
+      <header class="pstat__head">
+        <p class="pstat__eyebrow">{{ t('pstats.tourismEyebrow') }}</p>
+        <h2 class="pstat__title">{{ t('pstats.tourismTitle') }}</h2>
+        <p class="pstat__lead">{{ t('pstats.tourismLead') }}</p>
+      </header>
+
+      <ul class="pstat__kpis">
+        <li v-for="figure in tourismFigures" :key="figure.id">
+          <strong>{{ figure.value }}</strong>
+          <span>{{ figure.label }}</span>
+        </li>
+      </ul>
+
+      <section class="pstat__block">
+        <h3 class="pstat__sub">{{ t('pstats.marketsTitle') }}</h3>
+        <ol class="pstat__bars pstat__bars--counts">
+          <li v-for="row in markets" :key="row.id">
+            <span class="pstat__barLabel">{{ row.label }}</span>
+            <span class="pstat__barTrack">
+              <span
+                class="pstat__barFill"
+                :style="{ inlineSize: (row.value / marketMax) * 100 + '%' }"
+              ></span>
+            </span>
+            <span class="pstat__barValue">{{ countText(row.value) }}</span>
+          </li>
+        </ol>
+      </section>
+
+      <section v-if="servicesExport" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.exportTitle') }}</h3>
+        <p class="pstat__caption">{{ exportLine }}</p>
+        <ol class="pstat__bars pstat__bars--rates">
+          <li v-for="row in servicesExport.mix" :key="row.id">
+            <span class="pstat__barLabel">{{ tr(row.label) }}</span>
+            <span class="pstat__barTrack">
+              <span
+                class="pstat__barFill"
+                :class="{ 'pstat__barFill--here': row.id === 'travel' }"
+                :style="{ inlineSize: (row.share / servicesMax) * 100 + '%' }"
+              ></span>
+            </span>
+            <span class="pstat__barValue">{{ pct(row.share) }}</span>
+          </li>
+        </ol>
+        <p class="pstat__note">{{ tr(servicesExport.note) }}</p>
+      </section>
+
+      <section class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.tourismTargetsTitle') }}</h3>
+        <p class="pstat__caption">
+          {{ tourism.targets_2030.document }} · {{ t('pstats.goalNo') }} {{ tourism.targets_2030.goal }}
+        </p>
+        <ul class="pstat__kpis pstat__kpis--three pstat__kpis--small">
+          <li v-for="target in tourism.targets_2030.items" :key="target.id">
+            <strong>{{ kpiText(target) }}</strong>
+            <span>{{ tr(target.label) }}</span>
+          </li>
+        </ul>
+      </section>
+    </section>
+
+    <!-- ======================================================= 2. the economy -->
     <section v-if="economy" class="pstat__page">
       <header class="pstat__head">
         <p class="pstat__eyebrow">{{ t('pstats.economyEyebrow') }}</p>
@@ -377,7 +516,7 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
       </section>
     </section>
 
-    <!-- ======================================================== 2. the people -->
+    <!-- ======================================================== 3. the people -->
     <section v-if="people" class="pstat__page">
       <header class="pstat__head">
         <p class="pstat__eyebrow">{{ t('pstats.peopleEyebrow') }}</p>
@@ -442,7 +581,7 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
       </section>
     </section>
 
-    <!-- ======================================================= 3. the climate -->
+    <!-- ======================================================= 4. the climate -->
     <section v-if="strategy" class="pstat__page">
       <header class="pstat__head">
         <p class="pstat__eyebrow">{{ t('pstats.futureEyebrow') }}</p>
@@ -630,6 +769,20 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
     color: #4a5070;
   }
 
+  /* A field of targets rather than a page's headline figures: a size down,
+     and declared after the rules it narrows so it actually wins. */
+  .pstat__kpis--small {
+    gap: 2.5mm 6mm;
+  }
+  .pstat__kpis--small strong {
+    font-size: 13pt;
+  }
+  .pstat__kpis--small span {
+    margin-block-start: 1mm;
+    font-size: 7pt;
+  }
+
+
   /* -------------------------------------------------------------- the ring */
 
   .pstat__gdp {
@@ -762,6 +915,7 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
   }
   .pstat__barValue {
     text-align: end;
+    line-height: 1.2;
     font-size: 8.5pt;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -769,7 +923,16 @@ const incentives = computed(() => (zones.value?.points ?? []).map((p) => tr(p)))
   }
 
   .pstat__bars--rates li {
-    padding-block: 1.2mm;
+    padding-block: 1mm;
+  }
+
+  /* A count needs more room than a percentage, and a country name less. */
+  .pstat__bars--counts li {
+    grid-template-columns: 38mm 1fr 24mm;
+    padding-block: 0.8mm;
+  }
+  .pstat__bars--counts .pstat__barTrack {
+    block-size: 2.8mm;
   }
 
   /* ------------------------------------------------------ the salary chart */

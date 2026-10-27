@@ -24,7 +24,70 @@ export interface SourceRef {
   title: string;
   url: string;
   accessed: string;
+  /**
+   * When the issuing body published it, where that is knowable and different
+   * from when it was read. A statistics release is only as current as its own
+   * date, and a reader checking a figure needs to know which release it came
+   * out of, not only when somebody looked.
+   */
+  published?: string;
   type: 'official' | 'big4' | 'international' | 'media';
+}
+
+/** One country's arrivals, named through `Tourism.country_names`. */
+export interface TourismMarket {
+  id: string;
+  value: number;
+}
+
+/** One count of arrivals over a stated period, with its own source. */
+export interface TourismArrivals {
+  source: string;
+  published: string;
+  /** "2025", or "2026-01/2026-08" where the count is part of a year. */
+  period: string;
+  total: number;
+  growth_abs?: number;
+  growth_pct: number;
+  markets: TourismMarket[];
+}
+
+/**
+ * Tourism, as the Statistics Agency and the 2030 strategy state it.
+ *
+ * Two counts of arrivals rather than one: the last complete year, and the
+ * most recent eight months, which are not comparable with each other and are
+ * therefore kept apart instead of being spliced into a series.
+ *
+ * `services_export_2026_8m` carries shares and no sum for travel, because the
+ * release carries shares and no sum for travel. Multiplying one by the other
+ * would produce a number no official body has published.
+ */
+export interface Tourism {
+  sources: string[];
+  as_of: string;
+  country_names: Record<string, I18nText>;
+  arrivals_2025: TourismArrivals;
+  arrivals_2026_8m: TourismArrivals;
+  services_export_2026_8m: {
+    source: string;
+    published: string;
+    period: string;
+    preliminary: boolean;
+    total_usd: number;
+    share_of_exports_pct: number;
+    growth_pct: number;
+    mix: { id: string; share: number; label: I18nText }[];
+    /** The caveat the release carries, in the release's own terms. */
+    note: I18nText;
+  };
+  targets_2030: {
+    source: string;
+    /** The act the targets are written in, for anybody who wants to read it. */
+    document: string;
+    goal: number;
+    items: Kpi[];
+  };
 }
 
 export interface Kpi {
@@ -165,6 +228,7 @@ export interface Content {
     todo: string;
   };
   sectors: { source: string; items: Sector[]; note: string };
+  tourism: Tourism;
   strategy_2030: {
     source: string;
     /** Kept as the canonical value; the *_uz/_ru/_en family is what the UI shows. */

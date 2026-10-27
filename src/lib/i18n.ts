@@ -233,6 +233,20 @@ const en = {
    * content.json, so there is nothing here to keep in step with it.
    */
   pstats: {
+    tourismEyebrow: 'The market',
+    tourismTitle: 'The visitors Uzbekistan is already receiving',
+    tourismLead:
+      'The forum is about tourism, so the country’s figures start with that market: how many visitors arrive, which countries they arrive from, and what the state has set itself for 2030.',
+    kpiArrivals2025: 'foreign visitors in 2025',
+    kpiGrowth2025: 'against 2024',
+    kpiArrivals2026: 'January–August 2026',
+    kpiGrowth2026: 'against the same months of 2025',
+    marketsTitle: 'Where the 2025 visitors came from',
+    exportTitle: 'Where tourism sits in the export of services',
+    exportLine:
+      'Services exports: {total} — {share} of all exports, {growth} up on the same months a year earlier.',
+    tourismTargetsTitle: 'What the 2030 strategy sets for tourism',
+    goalNo: 'goal',
     economyEyebrow: 'The country',
     economyTitle: 'Uzbekistan’s economy in 2025',
     economyLead:
@@ -461,6 +475,20 @@ const uz: Messages = {
       'Tashkilotchining loyiha varaqalaridan sanab chiqildi. Qolganlarini yoki butun portfelni bitta hujjat holida tashkiliy qoʻmitadan soʻrang.',
   },
   pstats: {
+    tourismEyebrow: 'Bozor',
+    tourismTitle: 'Oʻzbekiston allaqachon qabul qilayotgan sayyohlar',
+    tourismLead:
+      'Forum turizmga bagʻishlangan, shuning uchun mamlakat raqamlari shu bozordan boshlanadi: qancha sayyoh kelyapti, qaysi davlatlardan kelyapti va davlat 2030-yilga oʻzi oldiga nima qoʻygan.',
+    kpiArrivals2025: '2025-yilda kelgan xorijiy sayyohlar',
+    kpiGrowth2025: '2024-yilga nisbatan',
+    kpiArrivals2026: '2026-yil yanvar–avgust',
+    kpiGrowth2026: '2025-yilning shu oylariga nisbatan',
+    marketsTitle: '2025-yilda sayyohlar qaysi davlatlardan kelgan',
+    exportTitle: 'Xizmatlar eksportida turizmning oʻrni',
+    exportLine:
+      'Xizmatlar eksporti: {total} — umumiy eksportning {share} i, bir yil avvalgi shu oylarga nisbatan {growth} koʻp.',
+    tourismTargetsTitle: '2030 strategiyasi turizm oldiga nima qoʻygan',
+    goalNo: 'maqsad',
     economyEyebrow: 'Mamlakat',
     economyTitle: 'Oʻzbekiston iqtisodiyoti — 2025',
     economyLead:
@@ -678,6 +706,20 @@ const ru: Messages = {
       'Подсчитано по проектным листам организатора. Остальные проекты или весь портфель одним документом запрашивайте в оргкомитете.',
   },
   pstats: {
+    tourismEyebrow: 'Рынок',
+    tourismTitle: 'Туристы, которых Узбекистан принимает уже сейчас',
+    tourismLead:
+      'Форум посвящён туризму, поэтому цифры страны начинаются с этого рынка: сколько туристов приезжает, откуда и что государство поставило себе на 2030 год.',
+    kpiArrivals2025: 'иностранных туристов в 2025 году',
+    kpiGrowth2025: 'к 2024 году',
+    kpiArrivals2026: 'январь–август 2026',
+    kpiGrowth2026: 'к тем же месяцам 2025 года',
+    marketsTitle: 'Из каких стран приехали туристы в 2025 году',
+    exportTitle: 'Место туризма в экспорте услуг',
+    exportLine:
+      'Экспорт услуг: {total} — {share} всего экспорта, на {growth} больше, чем за те же месяцы годом ранее.',
+    tourismTargetsTitle: 'Что стратегия-2030 ставит перед туризмом',
+    goalNo: 'цель',
     economyEyebrow: 'Страна',
     economyTitle: 'Экономика Узбекистана в 2025 году',
     economyLead:
