@@ -215,12 +215,8 @@ const en = {
     nTotal: 'stated in US dollars',
     totalNote:
       'The total adds the projects whose figure is stated in US dollars. Sheets that state a sum in Uzbek soums, or leave it open, are counted but not added.',
-    sessionsTitle: 'The three sessions',
-    dayEyebrow: 'The programme',
-    sessionsEyebrow: 'After lunch',
-    sessionsNote:
-      'The three run at the same time, in three halls. Presentations are in English with translation into Uzbek and Russian.',
     goalsTitle: 'What the forum sets out to do',
+    forumTitle: 'What an investment forum in this country draws',
     contextEyebrow: 'Where this project sits',
     contextTitle: 'The rest of the portfolio',
     contextLead:
@@ -229,6 +225,37 @@ const en = {
     byDirection: 'By direction',
     contextNote:
       'Counted from the organiser’s own project sheets. Ask the organising committee for any of the others, or for the whole portfolio as one document.',
+  },
+  /**
+   * The three statistics pages (PrintStats.vue).
+   *
+   * Headings and units only: every figure on those pages comes out of
+   * content.json, so there is nothing here to keep in step with it.
+   */
+  pstats: {
+    economyEyebrow: 'The country',
+    economyTitle: 'Uzbekistan’s economy in 2025',
+    economyLead:
+      'A project is worth what the economy around it is worth. These are the official indicators for the year the forum is held in, as the organiser’s own site publishes them.',
+    gdpTitle: 'What the economy is made of',
+    branchesTitle: 'The largest branches, by share of GDP',
+    driversTitle: 'What carries the growth',
+    peopleEyebrow: 'Human capital',
+    peopleTitle: 'The people who would run it',
+    peopleLead:
+      'After the money comes the question of who staffs the project and what that costs. The capital pays more than twice what the cheapest region does.',
+    ratesTitle: 'The labour market, in rates',
+    salaryTitle: 'Average monthly pay, by region',
+    salaryUnit: 'UZS thousand per month',
+    salaryAverage: 'National average',
+    salaryHere: 'The marked row is the region this project is in.',
+    futureEyebrow: 'The investment climate',
+    futureTitle: 'Where the country says it is going, and what it offers for coming',
+    goalsWord: 'goals',
+    prioritiesWord: 'priority areas',
+    adoptedWord: 'adopted',
+    prioritiesTitle: 'The five priorities, and the targets set under them',
+    zonesTitle: 'Special economic zones, and what a resident is granted',
   },
   path: {
     criteriaTitle: 'How projects are chosen',
@@ -422,12 +449,8 @@ const uz: Messages = {
     nTotal: 'AQSH dollarida koʻrsatilgan',
     totalNote:
       'Jami — summasi AQSH dollarida koʻrsatilgan loyihalar yigʻindisi. Soʻmda koʻrsatilgan yoki summasi ochiq qoldirilgan varaqalar sanaladi, lekin qoʻshilmaydi.',
-    sessionsTitle: 'Uchta sessiya',
-    dayEyebrow: 'Kun tartibi',
-    sessionsEyebrow: 'Tushlikdan soʻng',
-    sessionsNote:
-      'Uchalasi bir vaqtda, uchta zalda oʻtadi. Maʼruzalar ingliz tilida, oʻzbek va rus tillariga tarjima bilan.',
     goalsTitle: 'Forum nimaga qaratilgan',
+    forumTitle: 'Bu mamlakatdagi investitsiya forumi nimani yigʻadi',
     contextEyebrow: 'Bu loyiha qayerda turibdi',
     contextTitle: 'Portfelning qolgan qismi',
     contextLead:
@@ -436,6 +459,31 @@ const uz: Messages = {
     byDirection: 'Yoʻnalishlar boʻyicha',
     contextNote:
       'Tashkilotchining loyiha varaqalaridan sanab chiqildi. Qolganlarini yoki butun portfelni bitta hujjat holida tashkiliy qoʻmitadan soʻrang.',
+  },
+  pstats: {
+    economyEyebrow: 'Mamlakat',
+    economyTitle: 'Oʻzbekiston iqtisodiyoti — 2025',
+    economyLead:
+      'Loyihaning qiymati uni oʻrab turgan iqtisodiyot qiymatidan ortmaydi. Quyida — forum oʻtadigan yilning rasmiy koʻrsatkichlari, tashkilotchining oʻz saytida eʼlon qilingan holida.',
+    gdpTitle: 'Iqtisodiyot nimalardan tashkil topgan',
+    branchesTitle: 'Eng yirik tarmoqlar, YaIM dagi ulushi boʻyicha',
+    driversTitle: 'Oʻsishni nima koʻtarib turibdi',
+    peopleEyebrow: 'Inson kapitali',
+    peopleTitle: 'Loyihani yuritadigan odamlar',
+    peopleLead:
+      'Puldan keyingi savol — loyihada kim ishlaydi va bu qancha turadi. Poytaxt eng arzon hududdan ikki barobardan koʻproq toʻlaydi.',
+    ratesTitle: 'Mehnat bozori koʻrsatkichlari',
+    salaryTitle: 'Hududlar kesimida oʻrtacha oylik ish haqi',
+    salaryUnit: 'ming soʻm / oyiga',
+    salaryAverage: 'Respublika boʻyicha oʻrtacha',
+    salaryHere: 'Ajratib koʻrsatilgan qator — shu loyiha joylashgan hudud.',
+    futureEyebrow: 'Investitsiya muhiti',
+    futureTitle: 'Mamlakat qayerga boryapti va kelgan investorga nima beradi',
+    goalsWord: 'maqsad',
+    prioritiesWord: 'ustuvor yoʻnalish',
+    adoptedWord: 'qabul qilingan',
+    prioritiesTitle: 'Besh ustuvor yoʻnalish va ular ostidagi marralar',
+    zonesTitle: 'Maxsus iqtisodiy zonalar va rezidentga beriladigan imtiyozlar',
   },
   path: {
     criteriaTitle: 'Loyihalar qanday tanlanadi',
@@ -618,12 +666,8 @@ const ru: Messages = {
     nTotal: 'указано в долларах США',
     totalNote:
       'Итог — сумма проектов, стоимость которых указана в долларах США. Листы со стоимостью в сумах или без неё учтены, но не суммированы.',
-    sessionsTitle: 'Три сессии',
-    dayEyebrow: 'Программа',
-    sessionsEyebrow: 'После обеда',
-    sessionsNote:
-      'Все три идут одновременно, в трёх залах. Выступления на английском языке с переводом на узбекский и русский.',
     goalsTitle: 'На что направлен форум',
+    forumTitle: 'Что собирает инвестиционный форум в этой стране',
     contextEyebrow: 'Где находится этот проект',
     contextTitle: 'Остальная часть портфеля',
     contextLead:
@@ -632,6 +676,31 @@ const ru: Messages = {
     byDirection: 'По направлениям',
     contextNote:
       'Подсчитано по проектным листам организатора. Остальные проекты или весь портфель одним документом запрашивайте в оргкомитете.',
+  },
+  pstats: {
+    economyEyebrow: 'Страна',
+    economyTitle: 'Экономика Узбекистана в 2025 году',
+    economyLead:
+      'Проект стоит ровно столько, сколько стоит экономика вокруг него. Ниже — официальные показатели года, в котором проходит форум, в том виде, в каком их публикует сайт организатора.',
+    gdpTitle: 'Из чего состоит экономика',
+    branchesTitle: 'Крупнейшие отрасли, по доле в ВВП',
+    driversTitle: 'Что обеспечивает рост',
+    peopleEyebrow: 'Человеческий капитал',
+    peopleTitle: 'Люди, которые будут вести проект',
+    peopleLead:
+      'Следом за деньгами идёт вопрос, кто будет работать на проекте и сколько это стоит. Столица платит более чем вдвое против самого недорогого региона.',
+    ratesTitle: 'Рынок труда в показателях',
+    salaryTitle: 'Средняя месячная зарплата по регионам',
+    salaryUnit: 'тыс. сумов в месяц',
+    salaryAverage: 'В среднем по стране',
+    salaryHere: 'Выделенная строка — регион, в котором находится этот проект.',
+    futureEyebrow: 'Инвестиционный климат',
+    futureTitle: 'Куда идёт страна и что она предлагает пришедшему инвестору',
+    goalsWord: 'целей',
+    prioritiesWord: 'приоритетных направления',
+    adoptedWord: 'принята',
+    prioritiesTitle: 'Пять приоритетов и поставленные по ним цели',
+    zonesTitle: 'Специальные экономические зоны и льготы для резидента',
   },
   path: {
     criteriaTitle: 'Как отбираются проекты',

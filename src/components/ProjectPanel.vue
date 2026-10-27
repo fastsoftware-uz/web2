@@ -33,6 +33,7 @@ import { eventDates, tr, useStore } from '../lib/state';
 import ForumMark from './ForumMark.vue';
 import PrintBrief from './PrintBrief.vue';
 import PrintContext from './PrintContext.vue';
+import PrintStats from './PrintStats.vue';
 import PrintCover from './PrintCover.vue';
 import PrintClosing from './PrintClosing.vue';
 
@@ -51,6 +52,20 @@ const { forum, lang } = useStore();
 const eventLine = computed(() => {
   const event = forum.value?.event;
   return event ? `${eventDates()} · ${tr(event.city)}` : '';
+});
+
+/**
+ * The running foot: who to write to, on every page.
+ *
+ * The letterhead says which forum the sheet came from and the closing page
+ * says how to reach it, which is fine until somebody prints page six and puts
+ * that one page in front of a board. A document that is forwarded a page at a
+ * time carries its sender on each page.
+ */
+const footLine = computed(() => {
+  const contact = forum.value?.contact;
+  if (!contact) return '';
+  return [tr(contact.organisation), contact.email].filter(Boolean).join(' · ');
 });
 const closeButton = ref<HTMLButtonElement | null>(null);
 const sheet = ref<HTMLElement | null>(null);
@@ -451,6 +466,22 @@ onBeforeUnmount(() => {
               </td>
             </tr>
           </thead>
+          <!--
+            Declared before <tbody>, as the HTML parser requires, and printed
+            after it: a table footer group is the one element a browser
+            repeats at the foot of every fragment, which is what makes this a
+            running foot rather than a line at the end of the document.
+          -->
+          <tfoot>
+            <tr>
+              <td>
+                <div class="panel__runningFoot" aria-hidden="true">
+                  <p>{{ footLine }}</p>
+                  <p>{{ eventLine }}</p>
+                </div>
+              </td>
+            </tr>
+          </tfoot>
           <tbody>
             <tr>
               <td>
@@ -461,6 +492,10 @@ onBeforeUnmount(() => {
                      forwarded to somebody who has not seen the site, and
                      the project means more with the forum around it. -->
                 <PrintBrief />
+                <!-- Three pages of the country the project is in. They stand
+                     where the forum's timetable used to: an agenda answers no
+                     investment question, and these answer the first three. -->
+                <PrintStats :region="project.region" />
                 <PrintContext :region="project.region" :segment="project.segment" />
 
                 <div ref="body" class="panel__body" data-lenis-prevent>
@@ -988,9 +1023,10 @@ onBeforeUnmount(() => {
   }
 }
 
-/* Both exist only on paper. Declared before the print block so the print
-   rules, which match at the same specificity, come later and win. */
+/* All three exist only on paper. Declared before the print block so the
+   print rules, which match at the same specificity, come later and win. */
 .panel__letterhead,
+.panel__runningFoot,
 .panel__plates {
   display: none;
 }
@@ -1002,7 +1038,8 @@ onBeforeUnmount(() => {
 .panel__doc > tbody,
 .panel__doc > tbody > tr,
 .panel__doc > tbody > tr > td,
-.panel__doc > thead {
+.panel__doc > thead,
+.panel__doc > tfoot {
   display: contents;
 }
 
@@ -1067,12 +1104,17 @@ onBeforeUnmount(() => {
   .panel__doc > tbody {
     display: table-row-group;
   }
+  .panel__doc > tfoot {
+    display: table-footer-group;
+  }
   .panel__doc > thead > tr,
-  .panel__doc > tbody > tr {
+  .panel__doc > tbody > tr,
+  .panel__doc > tfoot > tr {
     display: table-row;
   }
   .panel__doc > thead > tr > td,
-  .panel__doc > tbody > tr > td {
+  .panel__doc > tbody > tr > td,
+  .panel__doc > tfoot > tr > td {
     display: table-cell;
     padding: 0;
   }
@@ -1108,6 +1150,24 @@ onBeforeUnmount(() => {
     margin: 0;
     font-size: 9pt;
     color: #4a5070;
+  }
+
+  /* The running foot. It pays for the bottom of every page the way the
+     letterhead pays for the top, so nothing in the reading has to. */
+  .panel__runningFoot {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8mm;
+    margin: 6mm 14mm 10mm;
+    padding-block-start: 2mm;
+    border-block-start: 1px solid #c9ccd8;
+  }
+  .panel__runningFoot p {
+    margin: 0;
+    font-size: 7pt;
+    letter-spacing: 0.04em;
+    color: #626b8b;
   }
 
   .panel__title {

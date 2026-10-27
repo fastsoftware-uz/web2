@@ -9,8 +9,14 @@
  * sense of how large the portfolio behind this one sheet is.
  *
  * So this page answers that before the reading starts: what the forum is for,
- * when and where it is, what the portfolio holds, which sessions run, and
- * what the organisers mean to come out of it.
+ * when and where it is, what the portfolio holds, and what the organisers mean
+ * to come out of it.
+ *
+ * The day's timetable used to follow, on two pages of its own. It is gone: an
+ * hour-by-hour agenda dates the moment the programme moves, and a reader
+ * deciding whether a project is worth an hour of their board's time is not
+ * reading the clock. What stands in its place is PrintStats — the country the
+ * project is in, in numbers.
  *
  * Every figure is read from the data file the site itself reads. Nothing here
  * is written by hand, which is why the page cannot drift from the page.
@@ -19,15 +25,16 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { formatMoney } from '../lib/money';
+import { formatDateRange, formatNumber } from '../lib/shared/content';
+import type { Kpi } from '../lib/shared/content-types';
 import { eventDates, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
-const { forum, lang } = useStore();
+const { content, forum, lang } = useStore();
 
 const event = computed(() => forum.value?.event ?? null);
 const contact = computed(() => forum.value?.contact ?? null);
 const portfolio = computed(() => forum.value?.portfolio ?? null);
-const sessions = computed(() => forum.value?.sessions ?? []);
 
 /** The forum's own statement of purpose, in the reader's language. */
 const purpose = computed(() => {
@@ -37,18 +44,6 @@ const purpose = computed(() => {
 
 /** Three of the goals. The fourth and fifth are the same ground in other words. */
 const goals = computed(() => (forum.value?.goals ?? []).slice(0, 3).map((g) => tr(g)));
-
-/**
- * The day, as the invitation sets it out.
- *
- * It is on a page of its own rather than squeezed under the sessions: a
- * reader deciding whether to come is reading the clock, and the three
- * sessions after lunch are the part of the day this sheet's project is most
- * likely to be presented in.
- */
-const programme = computed(() => forum.value?.programme ?? null);
-const kindLabel = (kind: string) =>
-  kind === 'plenary' ? t('programme.kinds.plenary', { n: 1 }) : t(`programme.kinds.${kind}`);
 
 const facts = computed(() => {
   const e = event.value;
@@ -69,6 +64,53 @@ const facts = computed(() => {
  * the projects whose figure is stated in dollars, and the sheets that state a
  * sum in soums or leave it open are counted but not added.
  */
+/**
+ * The last forum, in four numbers.
+ *
+ * A different event from this one — Tashkent's general investment forum, held
+ * in June — which is why it is named and dated on the page rather than folded
+ * into the figures above it. It is here because "will anybody actually come"
+ * is a question a first edition has to answer with somebody else's attendance
+ * before it can answer it with its own.
+ */
+const tiif = computed(() => content.value?.tiif_2026 ?? null);
+const TIIF_ORDER = ['agreements', 'countries', 'intl_participants', 'attendees'];
+const UNITS: Record<string, Record<string, string>> = {
+  uz: { bn: 'mlrd', m: 'mln', tn: 'trln' },
+  ru: { bn: 'млрд', m: 'млн', tn: 'трлн' },
+  en: { bn: 'bn', m: 'm', tn: 'tn' },
+};
+
+/** "$43,1 mlrd", "10 400+" — the same reading PrintStats gives a figure. */
+function statText(kpi: Kpi): string {
+  let unit = (kpi.suffix ?? '').trim();
+  let plus = '';
+  if (unit.endsWith('+')) {
+    plus = '+';
+    unit = unit.slice(0, -1).trim();
+  }
+  const word = UNITS[lang.value]?.[unit];
+  const digits = formatNumber(kpi.value, lang.value, { maximumFractionDigits: 1 });
+  const prefix = kpi.prefix ?? '';
+  return word ? `${prefix}${digits} ${word}${plus}` : `${prefix}${digits}${unit}${plus}`;
+}
+
+const forumStats = computed(() => {
+  const stats = tiif.value?.stats;
+  if (!stats) return [];
+  return TIIF_ORDER.map((id) => stats.find((k) => k.id === id)).filter(
+    (k): k is Kpi => k !== undefined,
+  );
+});
+
+const tiifLine = computed(() => {
+  const forumPast = tiif.value;
+  if (!forumPast) return '';
+  return [tr(forumPast.name), formatDateRange(forumPast.dates, lang.value)]
+    .filter(Boolean)
+    .join(' · ');
+});
+
 const numbers = computed(() => {
   const p = portfolio.value;
   if (!p) return [];
@@ -110,63 +152,16 @@ const numbers = computed(() => {
       </ul>
     </div>
 
-    <!-- The day itself, on its own page. -->
-    <section v-if="programme" class="brief__day">
-      <p class="brief__eyebrow">{{ t('print.dayEyebrow') }}</p>
-      <h3 class="brief__dayTitle">{{ tr(programme.day) }}</h3>
-      <p class="brief__dayNote">{{ tr(programme.note) }}</p>
-
-      <dl class="brief__hours">
-        <div v-for="item in programme.items" :key="`${item.start}-${item.kind}`">
-          <dt>
-            {{ item.start }}<template v-if="item.end">–{{ item.end }}</template>
-          </dt>
-          <dd>
-            <span class="brief__kind">{{ kindLabel(item.kind) }}</span>
-            <strong>{{ tr(item.title) }}</strong>
-            <span v-if="item.body" class="brief__hourBody">{{ tr(item.body) }}</span>
-          </dd>
-        </div>
-      </dl>
-</section>
-
-    <!--
-      The three sessions, hour by hour, on a page of their own.
-
-      They run at the same time in three halls, so a reader is choosing
-      between them: that choice is easier to make with what is said in each
-      one in front of you than with three titles. Two columns, because three
-      timetables in one would run off the foot of the page.
-    -->
-    <section v-if="sessions.length" class="brief__sessionsPage">
-      <p class="brief__eyebrow">{{ t('print.sessionsEyebrow') }}</p>
-      <h3 class="brief__dayTitle">{{ t('print.sessionsTitle') }}</h3>
-      <p class="brief__dayNote">{{ t('print.sessionsNote') }}</p>
-
-      <ol class="brief__sessions">
-        <li v-for="session in sessions" :key="session.id">
-          <p class="brief__sessionHead">
-            <span class="brief__sessionN">{{ String(session.number).padStart(2, '0') }}</span>
-            <span v-if="session.time" class="brief__sessionTime">{{ session.time }}</span>
-          </p>
-          <!-- The title and the hours. What the session is about is in the
-               hours themselves, line by line, so the summary that stands
-               under the title on the site is left out here: it cost the
-               third session its place on this page. -->
-          <strong>{{ tr(session.title) }}</strong>
-
-          <dl v-if="session.items?.length" class="brief__run">
-            <div v-for="(item, i) in session.items" :key="i">
-              <dt>{{ item.start }}<template v-if="item.end">–{{ item.end }}</template></dt>
-              <dd>
-                {{ tr(item.title) }}
-                <em v-if="item.speaker">{{ tr(item.speaker) }}</em>
-              </dd>
-            </div>
-          </dl>
+    <div v-if="forumStats.length" class="brief__pastBlock">
+      <h3 class="brief__sub">{{ t('print.forumTitle') }}</h3>
+      <p class="brief__pastLine">{{ tiifLine }}</p>
+      <ul class="brief__numbers brief__numbers--quiet">
+        <li v-for="stat in forumStats" :key="stat.id">
+          <strong>{{ statText(stat) }}</strong>
+          <span>{{ tr(stat.label) }}</span>
         </li>
-      </ol>
-    </section>
+      </ul>
+    </div>
   </section>
 </template>
 
@@ -181,8 +176,8 @@ const numbers = computed(() => {
     /* The reading supplies the page's side margins; this page sits in the
        same cell and keeps them. */
     padding-inline: 14mm;
-    /* No break after: the portfolio tables follow the sessions on whatever
-       is left of that page, and the project itself takes the next one. */
+    /* No break after: the statistics pages open their own, and the portfolio
+       tables follow them. */
     padding-block-end: 6mm;
     color: #15193a;
     font-size: 9pt;
@@ -205,18 +200,18 @@ const numbers = computed(() => {
     line-height: 1.15;
   }
   .brief__purpose {
-    margin: 3.5mm 0 0;
+    margin: 3mm 0 0;
     max-inline-size: 150mm;
     font-size: 10pt;
     line-height: 1.5;
   }
 
   .brief__facts {
-    margin: 6mm 0 0;
+    margin: 5mm 0 0;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 3.5mm 10mm;
-    padding-block: 4mm;
+    gap: 3mm 10mm;
+    padding-block: 3.5mm;
     border-block: 1px solid #c9ccd8;
   }
   .brief__facts div {
@@ -235,7 +230,7 @@ const numbers = computed(() => {
   }
 
   .brief__sub {
-    margin: 6.5mm 0 2.5mm;
+    margin: 5mm 0 2.5mm;
     font-size: 8pt;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -253,7 +248,7 @@ const numbers = computed(() => {
     gap: 4mm;
   }
   .brief__numbers li {
-    padding: 3.5mm 3mm;
+    padding: 3mm 3mm;
     border: 1px solid #c9ccd8;
     border-radius: 1mm;
     text-align: center;
@@ -278,145 +273,36 @@ const numbers = computed(() => {
     color: #4a5070;
   }
 
-  .brief__sessionsPage {
-    break-before: page;
-    padding-block-start: 2mm;
-  }
-  /* One column, the width of the page: two columns fitted two sessions and
-     sent the third to a page of its own, and the wider measure costs the
-     timetables a line each rather than a page. */
-  .brief__sessions {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .brief__sessions li {
-    margin-block-end: 3.5mm;
-    padding-block-end: 2.5mm;
-    border-block-end: 1px solid #c9ccd8;
+  /* Another event's numbers, so they are set a step quieter than the forum's
+     own — a reader should not have to check which four belong to this one. */
+  .brief__pastBlock {
+    margin-block-start: 5mm;
     break-inside: avoid;
   }
-  .brief__sessionHead {
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
-    gap: 6mm;
-    font-size: 7.5pt;
-    letter-spacing: 0.14em;
-    color: #4a5070;
-    font-variant-numeric: tabular-nums;
-  }
-  .brief__sessions strong {
-    display: block;
-    margin-block: 1mm 1.2mm;
-    font-family: var(--font-display);
-    font-size: 11pt;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-  .brief__sessions > li > span {
-    display: block;
-    font-size: 8pt;
-    line-height: 1.4;
-    color: #4a5070;
-  }
-
-  /* One session's own hours. */
-  .brief__run {
-    margin: 2mm 0 0;
-  }
-  .brief__run > div {
-    display: grid;
-    grid-template-columns: 21mm 1fr;
-    gap: 3mm;
-    padding-block: 1.05mm;
-    border-block-start: 1px solid #eef0f4;
-  }
-  .brief__run dt {
-    font-size: 7.5pt;
-    font-variant-numeric: tabular-nums;
-    color: #4a5070;
-    white-space: nowrap;
-  }
-  .brief__run dd {
-    margin: 0;
-    font-size: 8pt;
-    line-height: 1.35;
-  }
-  .brief__run em {
-    display: block;
-    margin-block-start: 0.6mm;
-    font-style: normal;
+  .brief__pastLine {
+    margin: -1mm 0 2.5mm;
     font-size: 7.5pt;
     color: #4a5070;
   }
-
-  /* The day, on the page after the forum's own description. */
-  .brief__day {
-    break-before: page;
-    padding-block-start: 2mm;
+  .brief__numbers--quiet li {
+    padding: 2.6mm 2.5mm;
+    border-color: #e3e5ec;
   }
-  .brief__dayTitle {
-    margin: 2mm 0 0;
-    font-family: var(--font-display);
-    font-size: 15pt;
-    font-weight: 600;
+  .brief__numbers--quiet strong {
+    font-size: 12.5pt;
   }
-  .brief__dayNote {
-    margin: 2mm 0 5mm;
-    max-inline-size: 150mm;
-    font-size: 8.5pt;
-    color: #4a5070;
-  }
-  .brief__hours {
-    margin: 0;
-    display: grid;
-    gap: 0;
-  }
-  .brief__hours > div {
-    display: grid;
-    grid-template-columns: 26mm 1fr;
-    gap: 5mm;
-    padding-block: 2.6mm;
-    border-block-start: 1px solid #e3e5ec;
-    break-inside: avoid;
-  }
-  .brief__hours dt {
-    font-variant-numeric: tabular-nums;
-    font-size: 9pt;
-    color: #15193a;
-    white-space: nowrap;
-  }
-  .brief__hours dd {
-    margin: 0;
-    display: grid;
-    gap: 0.8mm;
-  }
-  .brief__kind {
-    font-size: 6.5pt;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: #00566e;
-  }
-  .brief__hours strong {
-    font-weight: 600;
-    font-size: 9.5pt;
-    line-height: 1.35;
-  }
-  .brief__hourBody {
-    font-size: 8.5pt;
-    color: #4a5070;
+  .brief__numbers--quiet span {
+    font-size: 7pt;
   }
 
   /**
-   * The three aims, under the day, in two columns.
+   * The three aims, in two columns.
    *
    * They were a grid first, and Chrome does not fragment a grid container
    * across pages: the whole block went to a page of its own. As a block they
    * fragmented, which was worse — one bullet alone on the page after. Two
-   * columns make them short enough to sit under the last hour of the day,
-   * and the block is kept whole so they cannot be split again.
+   * columns make them short enough to sit under the numbers, and the block is
+   * kept whole so they cannot be split again.
    */
   .brief__goalsBlock {
     margin-block-start: 1mm;
@@ -427,7 +313,8 @@ const numbers = computed(() => {
     padding-inline-start: 5mm;
     columns: 2;
     column-gap: 9mm;
-    font-size: 8.5pt;
+    font-size: 8pt;
+    line-height: 1.4;
   }
   .brief__goals li {
     margin-block-end: 1.6mm;
