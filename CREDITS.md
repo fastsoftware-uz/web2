@@ -62,6 +62,23 @@ What remains includes site plans and concept boards the client assembled
 themselves. Those are published as supplied; if any turns out not to be the
 client's own, it should be added to that list.
 
+### Photographs sent beside the list
+
+From the submission of 29 October 2026 the regional working group sends pictures
+as files rather than inside a deck, named after the project code
+(`rasmlar/BUX-01_1.jpg`), and `scripts/import-intake.mjs` files them under that
+code. Fourteen arrived with the first submission, for nine projects.
+
+These need none of the sifting above: nothing was extracted from a slide, so
+there is no template furniture to drop and no question of which project a
+picture belongs to — the file name is the answer. The submission rules
+(`intake/QOLLANMA.md` §4) require the right to each picture to rest with the
+submitting organisation and refuse screenshots, map grabs, logos and drawings;
+each of the fourteen was looked at, and all fourteen are photographs or renders
+of the project they are filed under. Where a project also has a picture from its
+deck, both are kept and the submitted one leads, because it is the view the
+region chose.
+
 ## Map data
 
 The locator map in site 2's contacts block is **OpenStreetMap**'s standard embed
