@@ -75,11 +75,80 @@ export interface ProgrammeItem {
   bullets?: I18nText[];
 }
 
+/** A room in the venue, with the floor area and capacity the leaflet prints. */
+export interface ProgrammeHall {
+  id: string;
+  name: I18nText;
+  /** Square metres. */
+  area: number;
+  /** Absent for the hall that runs one all-day activity rather than seating. */
+  seats: number | null;
+}
+
+/** A named slot inside a long item — the media campus runs 3.1, a break, 3.3. */
+export interface ProgrammePart {
+  /** "3.1" — the leaflet's own numbering, which skips 3.2. */
+  n?: string;
+  kind?: 'break';
+  title: I18nText;
+}
+
+export interface DayItem {
+  start: string;
+  end?: string;
+  kind:
+    | 'break'
+    | 'opening'
+    | 'session'
+    | 'forum'
+    | 'commission'
+    | 'award'
+    | 'closing'
+    | 'hackathon'
+    | 'b2b';
+  /** The session's number within its hall, as the leaflet prints it. */
+  n?: number;
+  title: I18nText;
+  parts?: ProgrammePart[];
+}
+
+/** One hall's day. */
+export interface ProgrammeTrack {
+  hall: string;
+  items: DayItem[];
+}
+
+/** The signing zone, which is not a hall and opens on its own hours. */
+export interface SigningSlot {
+  start: string;
+  end?: string;
+  title: I18nText;
+  body: I18nText;
+}
+
+export interface ProgrammeDay {
+  /** 1, 2, 3 — what the leaflet calls «1-кун». */
+  n: number;
+  /** ISO, so the page can tell which day is today without parsing a label. */
+  date: string;
+  label: I18nText;
+  weekday: I18nText;
+  /** True on the day the investment forum itself is held. */
+  forumDay?: boolean;
+  headline: I18nText;
+  tracks: ProgrammeTrack[];
+  signings: SigningSlot[];
+}
+
 export interface ForumProgramme {
-  day: I18nText;
   note: I18nText;
-  items: ProgrammeItem[];
+  halls: ProgrammeHall[];
+  days: ProgrammeDay[];
   source: string;
+  /** The invitation's preliminary day one — see the generator for why it stays. */
+  day: I18nText;
+  items: ProgrammeItem[];
+  supersededSource?: string;
 }
 
 export interface StandardBlock {

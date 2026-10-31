@@ -27,12 +27,13 @@ import { useI18n } from 'vue-i18n';
 import type { Project } from '../lib/forum-types';
 import { lockPageScroll, unlockPageScroll } from '../lib/motion';
 import { formatMoney } from '../lib/money';
+import { sheetIcon } from '../lib/sheet-icons';
 import { sheetLabel } from '../lib/sheet-labels';
 import { sheetValue } from '../lib/sheet-values';
 import { eventDates, tr, useStore } from '../lib/state';
+import FactIcon from './FactIcon.vue';
 import ForumMark from './ForumMark.vue';
-import PrintBrief from './PrintBrief.vue';
-import PrintContext from './PrintContext.vue';
+import PrintMap from './PrintMap.vue';
 import PrintStats from './PrintStats.vue';
 import PrintCover from './PrintCover.vue';
 import PrintClosing from './PrintClosing.vue';
@@ -136,7 +137,13 @@ const shown = ref(0);
  * nothing; on paper there is no reason to show one picture of a building
  * when the sheet supplied four.
  */
-const otherShots = computed(() => shots.value.filter((_, i) => i !== shown.value));
+/* Three, which is one row of plates. A sheet that supplied six renders of
+   the same building was spending seventy millimetres of paper on the fourth,
+   fifth and sixth views of it — and the page that cost is the page the
+   portfolio counts were on. */
+const otherShots = computed(() =>
+  shots.value.filter((_, i) => i !== shown.value).slice(0, 3),
+);
 
 const money = computed(() => {
   const p = props.project;
@@ -200,6 +207,13 @@ const fieldTitle = (row: { value: string; amount?: number }) =>
 const metrics = computed(() =>
   (props.project?.metrics ?? []).filter((m) => !/^INVESTMENT$/i.test(m.label)),
 );
+
+/**
+ * The portfolio counted by region, for the small map the printed project page
+ * carries. It answers "where is this" and "what else is near it" in one
+ * figure-bearing picture, which is why the page after it no longer draws one.
+ */
+const regionCounts = computed(() => forum.value?.portfolio?.regionCounts ?? {});
 
 /**
  * The label/value blocks, in the order a sheet presents them.
@@ -488,16 +502,14 @@ onBeforeUnmount(() => {
                 <!-- data-lenis-prevent: this element scrolls itself, so the
                      smooth-scroll driver must leave its wheel and touch
                      events alone. -->
-                <!-- Only on paper, and before the reading: the sheet is
-                     forwarded to somebody who has not seen the site, and
-                     the project means more with the forum around it. -->
-                <PrintBrief />
-                <!-- Three pages of the country the project is in. They stand
-                     where the forum's timetable used to: an agenda answers no
-                     investment question, and these answer the first three. -->
-                <PrintStats :region="project.region" />
-                <PrintContext :region="project.region" :segment="project.segment" />
-
+                <!--
+                  On paper the project comes first, right behind its cover.
+                  It used to come ninth, after six pages about the country and
+                  the forum, which is the wrong way round for a document that
+                  is forwarded under the project's own name: the reader who
+                  opens it is asking about this building, and the country is
+                  the answer to their second question, not their first.
+                -->
                 <div ref="body" class="panel__body" data-lenis-prevent>
           <p class="panel__where">
             {{ regionName }}
@@ -506,6 +518,13 @@ onBeforeUnmount(() => {
           <h3 class="panel__title">{{ heading }}</h3>
           <p v-if="sub" class="panel__sub">{{ sub }}</p>
 
+          <!--
+            The band the page opens with: the picture on one side, the figures
+            on the other. `display: contents` on screen, so the sheet reads
+            exactly as it did; a two-column grid on paper, which is what makes
+            the project fit the page it is now given.
+          -->
+          <div class="panel__band">
           <!-- The sheet's own visuals. One image is the common case, so the
                thumbnail strip only appears when there is something to switch to. -->
           <figure v-if="shots.length" class="panel__gallery">
@@ -539,21 +558,7 @@ onBeforeUnmount(() => {
             </figcaption>
           </figure>
 
-          <!-- Only on paper: the sheet's other renders, which on screen are
-               the thumbnail strip above. -->
-          <div v-if="otherShots.length" class="panel__plates" aria-hidden="true">
-            <img
-              v-for="shot in otherShots"
-              :key="shot"
-              :src="`photos/${shot}-full.webp`"
-              alt=""
-              width="1000"
-              height="563"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-
+          <div class="panel__figures">
           <p class="panel__money">
             <span class="eyebrow">{{ t('portfolio.labels.investment') }}</span>
             <!-- The sheet's own wording, so a reader can check our arithmetic. -->
@@ -579,28 +584,70 @@ onBeforeUnmount(() => {
 
           <ul v-if="metrics.length" class="panel__chips">
             <li v-for="m in metrics" :key="m.label">
+              <FactIcon :name="sheetIcon(m.label)" class="panel__chipIcon" />
               <span>{{ fieldName(m.label) }}</span>
               <strong :title="fieldTitle(m)">{{ fieldText(m) }}</strong>
             </li>
           </ul>
 
-          <template v-if="story">
+          <!-- Only on paper: the country with this project's region picked
+               out, and every other region carrying its own count. One
+               picture answering both "where is it" and "what else is near
+               it" — the page that used to answer the second one on its own
+               is now three paragraphs under the reading. -->
+          <div class="panel__where2" aria-hidden="true">
+            <p class="panel__whereHead">{{ t('print.whereTitle') }}</p>
+            <PrintMap :counts="regionCounts" :here="project.region" />
+            <p class="panel__whereFoot">{{ t('print.mapCredit') }}</p>
+          </div>
+          </div>
+
+          <!-- Under the photograph on paper, where the ministry's own sheets
+               put the project description; in the ordinary flow on screen,
+               because `.panel__story` is `display: contents` there. -->
+          <div v-if="story" class="panel__story">
             <h4 class="panel__heading">{{ t('portfolio.labels.overview') }}</h4>
             <p class="panel__overview">{{ story }}</p>
-          </template>
+          </div>
+          </div>
 
           <template v-for="block in blocks" :key="block.key">
             <h4 class="panel__heading">{{ t(`portfolio.blocks.${block.key}`) }}</h4>
             <dl class="panel__rows">
               <div v-for="row in block.rows" :key="row.label">
-                <dt>{{ fieldName(row.label) }}</dt>
+                <dt>
+                  <FactIcon :name="sheetIcon(row.label)" class="panel__rowIcon" />
+                  <span>{{ fieldName(row.label) }}</span>
+                </dt>
                 <dd :title="fieldTitle(row)">{{ fieldText(row) }}</dd>
               </div>
             </dl>
           </template>
 
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
+
+          <!-- Only on paper: the sheet's other renders, which on screen are
+               the thumbnail strip above. They close the reading rather than
+               opening it — a page that leads with four renders of the same
+               building has said nothing by the time it ends. -->
+          <div v-if="otherShots.length" class="panel__plates" aria-hidden="true">
+            <img
+              v-for="shot in otherShots"
+              :key="shot"
+              :src="`photos/${shot}-full.webp`"
+              alt=""
+              width="1000"
+              height="563"
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
 </div>
+
+                <!-- Then the country the project is in, in three pages: the
+                     market, the economy and its people, and what an arriving
+                     investor is actually offered. -->
+                <PrintStats :region="project.region" />
               </td>
             </tr>
           </tbody>
@@ -611,6 +658,7 @@ onBeforeUnmount(() => {
         <PrintClosing
           :heading="t('portfolio.contactsTitle')"
           :lead="t('portfolio.contactsLead')"
+          :segment="project.segment"
         />
 
         <!-- What a reader can do with the project they have just read. -->
@@ -921,13 +969,33 @@ onBeforeUnmount(() => {
   grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.5rem;
 }
+/* The two halves of the opening band are paper furniture; on screen the
+   sheet is one column and they are not there at all. */
+.panel__band,
+.panel__figures,
+.panel__story {
+  display: contents;
+}
+.panel__where2 {
+  display: none;
+}
+
 .panel__chips li {
   display: grid;
-  gap: 0.15rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.15rem 0.5rem;
   align-content: start;
   padding: 0.7rem 0.85rem;
   border: 1px solid var(--hairline);
   border-radius: 0.6rem;
+}
+/* The glyph sits in the first column across both rows, so the label and the
+   value stay on one axis however long the label wraps. */
+.panel__chipIcon {
+  grid-row: span 2;
+  align-self: start;
+  margin-block-start: 0.1rem;
+  color: var(--accent-soft);
 }
 .panel__chips span {
   font-size: 0.72rem;
@@ -968,9 +1036,16 @@ onBeforeUnmount(() => {
   border-block-end: 1px solid var(--hairline);
 }
 .panel__rows dt {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
   font-size: 0.78rem;
   color: var(--ink-dim);
   text-wrap: balance;
+}
+.panel__rowIcon {
+  align-self: center;
+  color: var(--accent-soft);
 }
 .panel__rows dd {
   margin: 0;
@@ -1122,7 +1197,7 @@ onBeforeUnmount(() => {
   .panel__body {
     overflow: visible;
     max-block-size: none;
-    padding: 0 14mm 16mm;
+    padding: 0 14mm 2mm;
     font-size: 10pt;
     /* The general pages come first and run on into one another; the project
        itself always opens a page. */
@@ -1171,12 +1246,162 @@ onBeforeUnmount(() => {
   }
 
   .panel__title {
-    font-size: 20pt;
+    font-size: 18pt;
     line-height: 1.15;
   }
 
   /**
-   * The other renders, two to a row.
+   * The opening band: the building on the left, its numbers on the right.
+   *
+   * This is the one arrangement that makes a project fit one page. Stacked —
+   * picture, then sum, then a wrapping field of chips — the same content ran
+   * to a page and a half and pushed the reading onto a third; set side by
+   * side it ends above the fold with room under it for the overview.
+   *
+   * 66mm for the figures, which is the width at which "Qoplanish muddati"
+   * stops hyphenating and a sum in soums still fits on one line.
+   */
+  .panel__band {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 62mm;
+    gap: 3mm 6mm;
+    align-items: start;
+    margin-block-start: 4mm;
+  }
+  /* Placed rather than flowed: the DOM order is picture, figures, overview —
+     which is the order the sheet reads in on screen — and on paper the
+     overview belongs under the picture with the figures running down beside
+     both. */
+  .panel__gallery {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .panel__figures {
+    display: block;
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+  .panel__story {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* A photograph is most of what a project looks like; without this it prints
+     as text on white in every browser's default. */
+  .panel__gallery {
+    margin: 0;
+  }
+  .panel__gallery img {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    inline-size: 100%;
+    block-size: 62mm;
+    object-fit: cover;
+  }
+  .panel__heading {
+    margin-block-start: 0;
+  }
+  .panel__overview {
+    margin-block-start: 1.5mm;
+    font-size: 9.5pt;
+    line-height: 1.45;
+  }
+
+  /* The figures column, which is the page's answer to "is this worth an
+     hour": the sum first, then one glyphed row per thing the sheet states. */
+  .panel__money {
+    margin: 0 0 2mm;
+    padding-block-end: 2mm;
+    border-block-end: 0.4mm solid #15193a;
+  }
+  .panel__chips {
+    display: block;
+    margin: 0;
+  }
+  .panel__chips li {
+    display: grid;
+    grid-template-columns: 5mm minmax(0, 1fr);
+    gap: 0 2mm;
+    padding: 1.5mm 0;
+    border: 0;
+    border-block-end: 0.3mm solid #e3e5ec;
+    border-radius: 0;
+    break-inside: avoid;
+  }
+  .panel__chipIcon {
+    inline-size: 4.4mm;
+    block-size: 4.4mm;
+    margin-block-start: 0.4mm;
+    color: #995f00;
+  }
+  .panel__chips span {
+    font-size: 6.8pt;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #4a5070;
+  }
+  .panel__chips strong {
+    font-size: 9.5pt;
+    color: #15193a;
+  }
+
+  /* The map under the figures: 66mm wide, which is the column. */
+  .panel__where2 {
+    display: block;
+    margin-block-start: 4mm;
+    break-inside: avoid;
+  }
+  .panel__whereHead {
+    margin: 0 0 1.5mm;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #00566e;
+  }
+  .panel__whereFoot {
+    margin: 1.5mm 0 0;
+    font-size: 6.2pt;
+    line-height: 1.35;
+    color: #8e95ad;
+  }
+
+  /* The field blocks, two columns: a sheet with nineteen rows is otherwise
+     nineteen short lines down the left of an empty page. */
+  /* `display: block`, because the screen rule makes this a grid and a grid
+     container ignores `columns` — which is why a sheet with nineteen rows was
+     still printing nineteen full-width lines down an empty page. */
+  .panel__rows {
+    display: block;
+    columns: 2;
+    column-gap: 8mm;
+  }
+  .panel__rows > div {
+    break-inside: avoid;
+    padding-block: 1.2mm;
+  }
+  .panel__rows dt {
+    gap: 1.6mm;
+    font-size: 7pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #4a5070;
+  }
+  .panel__rows dd {
+    font-size: 8.8pt;
+    line-height: 1.35;
+  }
+  .panel__rowIcon {
+    inline-size: 3.6mm;
+    block-size: 3.6mm;
+    color: #995f00;
+  }
+
+  /**
+   * The other renders, two to a row, at the foot of the reading.
    *
    * They are let through `print-color-adjust` for the same reason the first
    * one is, and each is capped so that a sheet with six renders does not
@@ -1184,26 +1409,17 @@ onBeforeUnmount(() => {
    */
   .panel__plates {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3mm;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5mm;
     margin-block-start: 4mm;
   }
   .panel__plates img {
     inline-size: 100%;
-    block-size: 52mm;
+    block-size: 30mm;
     object-fit: cover;
     break-inside: avoid;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  /* A photograph is most of what a project looks like; without this it prints
-     as text on white in every browser's default. */
-  .panel__gallery img {
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-    max-block-size: 85mm;
-    object-fit: cover;
   }
 
   /* A heading keeps its table with it, and nothing breaks mid-row. */

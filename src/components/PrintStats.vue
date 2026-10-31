@@ -8,17 +8,24 @@
  * forum's timetable, which is the one thing in the document that answers no
  * investment question at all — so the agenda came out and this went in.
  *
- * Five pages, in the order the question is actually asked:
+ * Three pages, in the order the question is actually asked:
  *
  *   1. tourism — the market the forum is about: how many visitors arrive,
  *      which countries they arrive from, and what the state has set for 2030;
- *   2. the economy — what it is worth, how fast it moves, what it is made of;
- *   3. the people — who would run the project, and what an hour of their work
- *      costs, region by region;
- *   4. 2030 — the distance between where the country is and where the state
- *      has said it will be, drawn rather than described;
- *   5. the offer — the zones, the reliefs and the five steps the agency walks
- *      an investor through.
+ *   2. the country — what the economy is worth and what it is made of, then
+ *      who would run the project and what an hour of their work costs,
+ *      region by region;
+ *   3. the offer — the zones, the reliefs and the five steps the agency
+ *      walks an investor through.
+ *
+ * It was five until the sheet was cut to seven pages against the ministry's
+ * own one-pagers. What came out: the growth-driver tiles and the eight
+ * largest branches of GDP (the donut above them says the same thing at the
+ * level this document needs), the four labour-market rates, and the whole
+ * 2030 page — its two trajectory charts, its five national priorities and
+ * its three counting tiles. The strategy's tourism targets, which are the
+ * half of it this document is about, are on page one where the market is.
+ * What stayed is every figure a reader would put a pencil to.
  *
  * Each page carries one sentence of prose and then stops talking. A reader who
  * has four of these sheets on a desk does not read paragraphs, and a figure in
@@ -51,6 +58,7 @@ import { formatNumber } from '../lib/shared/content';
 import type { Kpi, Lang } from '../lib/shared/content-types';
 import { VIZ } from '../lib/shared/viz-palette';
 import { tr, trSuffixed, useStore } from '../lib/state';
+import FactIcon from './FactIcon.vue';
 
 const props = defineProps<{
   /** The project's region, so its row in the salary chart can be marked. */
@@ -64,7 +72,6 @@ const tourism = computed(() => content.value?.tourism ?? null);
 const economy = computed(() => content.value?.economy_2025 ?? null);
 const people = computed(() => content.value?.human_capital ?? null);
 const regions = computed(() => content.value?.regions ?? null);
-const strategy = computed(() => content.value?.strategy_2030 ?? null);
 const zones = computed(() => content.value?.sez_and_incentives ?? null);
 
 /* ------------------------------------------------------------ the figures */
@@ -144,10 +151,10 @@ const tourismFigures = computed(() => {
   const data = tourism.value;
   if (!data) return [];
   return [
-    { id: 'a25', value: countText(data.arrivals_2025.total), label: t('pstats.kpiArrivals2025') },
-    { id: 'g25', value: `+${pct(data.arrivals_2025.growth_pct)}`, label: t('pstats.kpiGrowth2025') },
-    { id: 'a26', value: countText(data.arrivals_2026_8m.total), label: t('pstats.kpiArrivals2026') },
-    { id: 'g26', value: `+${pct(data.arrivals_2026_8m.growth_pct)}`, label: t('pstats.kpiGrowth2026') },
+    { id: 'a25', icon: 'capacity', value: countText(data.arrivals_2025.total), label: t('pstats.kpiArrivals2025') },
+    { id: 'g25', icon: 'growth', value: `+${pct(data.arrivals_2025.growth_pct)}`, label: t('pstats.kpiGrowth2025') },
+    { id: 'a26', icon: 'calendar', value: countText(data.arrivals_2026_8m.total), label: t('pstats.kpiArrivals2026') },
+    { id: 'g26', icon: 'growth', value: `+${pct(data.arrivals_2026_8m.growth_pct)}`, label: t('pstats.kpiGrowth2026') },
   ];
 });
 
@@ -241,9 +248,7 @@ const ECONOMY_ORDER = [
   'gdp_growth',
   'foreign_investment',
   'trade',
-  'industry_growth',
   'inflation',
-  'population_eoy',
   'foreign_enterprises',
 ];
 const economyKpis = computed(() => pickKpis(economy.value?.kpis, ECONOMY_ORDER));
@@ -295,73 +300,10 @@ const gdpSlices = computed(() => {
   });
 });
 
-/**
- * The largest branches of the economy, whichever parent they belong to.
- *
- * The donut answers "what is this economy made of" at the level of four
- * words; this answers it at the level a project belongs to. Eight rows: the
- * ninth is under two per cent, and a bar that short says nothing the number
- * beside it does not already say. Each keeps its parent's colour, so the two
- * charts are one chart read twice.
- */
-const branches = computed(() => {
-  const parts = economy.value?.gdp_structure ?? [];
-  const rows = parts.flatMap((part, i) =>
-    (part.children ?? []).map((child) => ({
-      label: tr(child.label),
-      share: child.share,
-      color: VIZ.light.categorical[i % VIZ.light.categorical.length] as string,
-      parent: tr(part.label),
-    })),
-  );
-  return rows.sort((a, b) => b.share - a.share).slice(0, 8);
-});
-
-const branchMax = computed(() => Math.max(1, ...branches.value.map((b) => b.share)));
-
-/**
- * A growth driver states its figure as written text — "$89 bn" — rather than
- * as a number and a unit, so `kpiText` cannot reach it. Left alone it is the
- * one piece of English on an Uzbek page, standing beside "~$147 mlrd" and
- * contradicting it, so the magnitude word is swapped for the same three words
- * the rest of the document uses.
- */
-function localiseUnits(value: string): string {
-  const words = UNITS[lang.value];
-  return value.replace(/(\d)\s*(bn|tn|m)\b/gi, (whole, digit: string, unit: string) => {
-    const word = words[unit.toLowerCase()];
-    return word ? `${digit} ${word}` : whole;
-  });
-}
-
-const drivers = computed(() =>
-  (economy.value?.growth_drivers ?? []).map((d) => ({
-    id: d.id,
-    value: localiseUnits(d.value),
-    label: tr(d.label),
-  })),
-);
-
 /* --------------------------------------------------------- page 2: the people */
 
-const PEOPLE_ORDER = ['population', 'under30', 'median_age', 'labor_force', 'new_entrants', 'students'];
+const PEOPLE_ORDER = ['population', 'labor_force', 'under30'];
 const peopleKpis = computed(() => pickKpis(people.value?.kpis, PEOPLE_ORDER));
-
-/**
- * The four rates, as bars against the same 0–100 axis.
- *
- * They are percentages of different things and that is the point of putting
- * them on one axis: an employment rate of 70,5 and an unemployment rate of
- * 4,8 are only informative beside each other.
- */
-const RATE_ORDER = ['employment', 'unemployment', 'literacy', 'higher_ed'];
-const rates = computed(() =>
-  pickKpis(people.value?.kpis, RATE_ORDER).map((k) => ({
-    id: k.id,
-    label: tr(k.label),
-    value: k.value,
-  })),
-);
 
 /**
  * Average monthly pay, region by region, largest first.
@@ -395,112 +337,6 @@ const salaryText = (value: number) =>
   formatNumber(value, lang.value, { maximumFractionDigits: 0 });
 
 /* -------------------------------------------------------- page 3: the climate */
-
-/** The five priorities, with whatever targets the data file states for each. */
-const priorities = computed(() =>
-  (strategy.value?.priorities ?? []).map((p) => ({
-    n: p.n,
-    text: tr({ uz: p.uz, ru: p.ru, en: p.en }),
-    targets: (trSuffixed<string[] | undefined>(
-      p as unknown as Record<string, unknown>,
-      'targets',
-    ) ?? []) as string[],
-  })),
-);
-
-/**
- * Where the country is, and where the state has said it will be.
- *
- * The strategy's numbers used to sit on this page as bullets under the
- * priority that carries them — "GDP to $240bn" — which is a sentence about a
- * number, not a number. Here each is three columns: what it was, what it is,
- * and what it is meant to be, on one scale, so the distance left is the
- * length of the gap between the second column and the third.
- *
- * Both series are built out of figures this file already holds. The GDP's
- * two ends come from the strategy block (`gdp_path`) and its middle from the
- * economy block; the arrivals' first column is the year's own statement of
- * its growth — 11.7 million, of which 3.7 million was the increase — and its
- * last is the 2030 strategy's own target.
- */
-interface TrajPoint {
-  key: string;
-  value: number;
-  text: string;
-  height: number;
-  target: boolean;
-}
-
-function trajPoints(raw: { key: string; value: number; target?: boolean }[]): TrajPoint[] {
-  const top = Math.max(1, ...raw.map((p) => p.value));
-  return raw.map((p) => ({
-    key: p.key,
-    value: p.value,
-    text: formatNumber(p.value, lang.value, { maximumFractionDigits: 1 }),
-    // Of the plot, less the band the figure above the bar occupies; and a
-    // floor, so the smallest column is still a column.
-    height: Math.max(7, (p.value / top) * 78),
-    target: p.target === true,
-  }));
-}
-
-/** "2025 → 2030 · +63%" — the climb the last column is asking for. */
-function climb(points: TrajPoint[]): string {
-  if (points.length < 2) return '';
-  const from = points[points.length - 2]!;
-  const to = points[points.length - 1]!;
-  if (!from.value) return '';
-  const rise = formatNumber((to.value / from.value - 1) * 100, lang.value, {
-    maximumFractionDigits: 0,
-  });
-  return `${from.key} → ${to.key} · +${rise}%`;
-}
-
-const trajectories = computed(() => {
-  const out: { id: string; title: string; unit: string; climb: string; points: TrajPoint[] }[] = [];
-  const econ = economy.value;
-  const path = strategy.value?.gdp_path;
-  const gdp = gdpKpi.value;
-  if (econ && path && gdp) {
-    const points = trajPoints([
-      { key: String(path.base.year), value: path.base.value },
-      { key: String(econ.as_of), value: gdp.value },
-      { key: String(path.target.year), value: path.target.value, target: true },
-    ]);
-    out.push({
-      id: 'gdp',
-      title: t('pstats.trajGdp'),
-      unit: `$ ${UNITS[lang.value].bn}`,
-      climb: climb(points),
-      points,
-    });
-  }
-  const tour = tourism.value;
-  const arrivals = tour?.arrivals_2025;
-  const goal = tour?.targets_2030.items.find((item) => item.id === 'foreign');
-  if (tour && arrivals?.growth_abs && goal) {
-    const year = Number(arrivals.period);
-    const points = trajPoints([
-      { key: String(year - 1), value: (arrivals.total - arrivals.growth_abs) / 1e6 },
-      { key: String(year), value: arrivals.total / 1e6 },
-      { key: String(tour.targets_2030.year), value: goal.value, target: true },
-    ]);
-    out.push({
-      id: 'tourists',
-      title: t('pstats.trajTourists'),
-      unit: UNITS[lang.value].m,
-      climb: climb(points),
-      points,
-    });
-  }
-  return out;
-});
-
-const adopted = computed(() => {
-  const s = strategy.value;
-  if (!s) return '';
-  return trSuffixed<string>(s as unknown as Record<string, unknown>, 'adopted') ?? s.adopted;
-});
 
 const zoneTypes = computed(() => {
   const z = zones.value;
@@ -558,13 +394,17 @@ const journey = computed(() =>
     <!-- ========================================================== 1. tourism -->
     <section v-if="tourism" class="pstat__page">
       <header class="pstat__head">
-        <p class="pstat__eyebrow">{{ t('pstats.tourismEyebrow') }}</p>
-        <h2 class="pstat__title">{{ t('pstats.tourismTitle') }}</h2>
-        <p class="pstat__lead">{{ t('pstats.tourismLead') }}</p>
+        <FactIcon name="globe" class="pstat__headIcon" />
+        <div>
+          <p class="pstat__eyebrow">{{ t('pstats.tourismEyebrow') }}</p>
+          <h2 class="pstat__title">{{ t('pstats.tourismTitle') }}</h2>
+          <p class="pstat__lead">{{ t('pstats.tourismLead') }}</p>
+        </div>
       </header>
 
       <ul class="pstat__kpis">
         <li v-for="figure in tourismFigures" :key="figure.id">
+          <FactIcon :name="figure.icon" class="pstat__kpiIcon" />
           <strong>{{ figure.value }}</strong>
           <span>{{ figure.label }}</span>
         </li>
@@ -646,9 +486,12 @@ const journey = computed(() =>
     <!-- ======================================================= 2. the economy -->
     <section v-if="economy" class="pstat__page">
       <header class="pstat__head">
-        <p class="pstat__eyebrow">{{ t('pstats.economyEyebrow') }}</p>
-        <h2 class="pstat__title">{{ t('pstats.economyTitle') }}</h2>
-        <p class="pstat__lead">{{ t('pstats.economyLead') }}</p>
+        <FactIcon name="growth" class="pstat__headIcon" />
+        <div>
+          <p class="pstat__eyebrow">{{ t('pstats.economyEyebrow') }}</p>
+          <h2 class="pstat__title">{{ t('pstats.countryTitle') }}</h2>
+          <p class="pstat__lead">{{ t('pstats.countryLead') }}</p>
+        </div>
       </header>
 
       <ul class="pstat__kpis">
@@ -657,16 +500,6 @@ const journey = computed(() =>
           <span>{{ tr(kpi.label) }}</span>
         </li>
       </ul>
-
-      <section v-if="drivers.length" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.driversTitle') }}</h3>
-        <ul class="pstat__drivers">
-          <li v-for="driver in drivers" :key="driver.id">
-            <strong>{{ driver.value }}</strong>
-            <span>{{ driver.label }}</span>
-          </li>
-        </ul>
-      </section>
 
       <section class="pstat__block pstat__gdp">
         <h3 class="pstat__sub">{{ t('pstats.gdpTitle') }}</h3>
@@ -707,49 +540,17 @@ const journey = computed(() =>
         </div>
       </section>
 
-      <section class="pstat__block">
-        <h3 class="pstat__sub">{{ t('pstats.branchesTitle') }}</h3>
-        <ol class="pstat__bars">
-          <li v-for="row in branches" :key="row.label">
-            <span class="pstat__barLabel">{{ row.label }}</span>
-            <span class="pstat__barTrack">
-              <span
-                class="pstat__barFill"
-                :style="{ inlineSize: (row.share / branchMax) * 100 + '%', background: row.color }"
-              ></span>
-            </span>
-            <span class="pstat__barValue">{{ pct(row.share) }}</span>
+      <!-- The people, on the same page: the economy is what a project earns
+           in, this is what it pays for, and a reader weighing two regions
+           wants both in one eyeful. -->
+      <section v-if="people" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.peopleEyebrow') }}</h3>
+        <ul class="pstat__kpis pstat__kpis--three pstat__kpis--small">
+          <li v-for="kpi in peopleKpis" :key="kpi.id">
+            <strong>{{ kpiText(kpi) }}</strong>
+            <span>{{ tr(kpi.label) }}</span>
           </li>
-        </ol>
-      </section>
-    </section>
-
-    <!-- ======================================================== 3. the people -->
-    <section v-if="people" class="pstat__page">
-      <header class="pstat__head">
-        <p class="pstat__eyebrow">{{ t('pstats.peopleEyebrow') }}</p>
-        <h2 class="pstat__title">{{ t('pstats.peopleTitle') }}</h2>
-        <p class="pstat__lead">{{ t('pstats.peopleLead') }}</p>
-      </header>
-
-      <ul class="pstat__kpis pstat__kpis--three">
-        <li v-for="kpi in peopleKpis" :key="kpi.id">
-          <strong>{{ kpiText(kpi) }}</strong>
-          <span>{{ tr(kpi.label) }}</span>
-        </li>
-      </ul>
-
-      <section v-if="rates.length" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.ratesTitle') }}</h3>
-        <ol class="pstat__bars pstat__bars--rates">
-          <li v-for="rate in rates" :key="rate.id">
-            <span class="pstat__barLabel">{{ rate.label }}</span>
-            <span class="pstat__barTrack">
-              <span class="pstat__barFill" :style="{ inlineSize: rate.value + '%' }"></span>
-            </span>
-            <span class="pstat__barValue">{{ pct(rate.value) }}</span>
-          </li>
-        </ol>
+        </ul>
       </section>
 
       <section v-if="salaries.length" class="pstat__block">
@@ -789,82 +590,15 @@ const journey = computed(() =>
       </section>
     </section>
 
-    <!-- ========================================================== 4. to 2030 -->
-    <section v-if="strategy" class="pstat__page">
-      <header class="pstat__head">
-        <p class="pstat__eyebrow">{{ t('pstats.futureEyebrow') }}</p>
-        <h2 class="pstat__title">{{ t('pstats.futureTitle') }}</h2>
-        <p class="pstat__lead">{{ tr(strategy.summary) }}</p>
-      </header>
-
-      <ul class="pstat__kpis pstat__kpis--three pstat__keepWhole">
-        <li>
-          <strong>{{ formatNumber(strategy.goals_total, lang) }}</strong>
-          <span>{{ t('pstats.goalsWord') }}</span>
-        </li>
-        <li>
-          <strong>{{ formatNumber(priorities.length, lang) }}</strong>
-          <span>{{ t('pstats.prioritiesWord') }}</span>
-        </li>
-        <li>
-          <strong class="pstat__kpiWord">{{ adopted }}</strong>
-          <span>{{ t('pstats.adoptedWord') }}</span>
-        </li>
-      </ul>
-
-      <section v-if="trajectories.length" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.trajTitle') }}</h3>
-        <div class="pstat__trajs">
-          <figure v-for="item in trajectories" :key="item.id" class="pstat__traj">
-            <figcaption class="pstat__trajHead">
-              <span class="pstat__trajTitle">{{ item.title }}</span>
-              <span class="pstat__trajUnit">{{ item.unit }}</span>
-            </figcaption>
-            <div class="pstat__cols">
-              <div v-for="point in item.points" :key="point.key" class="pstat__col">
-                <span class="pstat__colPlot">
-                  <span class="pstat__colValue" :class="{ 'pstat__colValue--target': point.target }">
-                    {{ point.text }}
-                  </span>
-                  <span
-                    class="pstat__colBar"
-                    :class="{ 'pstat__colBar--target': point.target }"
-                    :style="{ blockSize: point.height + '%' }"
-                  ></span>
-                </span>
-                <span class="pstat__colKey">
-                  {{ point.key }}
-                  <em v-if="point.target">{{ t('pstats.targetWord') }}</em>
-                </span>
-              </div>
-            </div>
-            <p class="pstat__trajClimb">{{ item.climb }}</p>
-          </figure>
-        </div>
-      </section>
-
-      <section class="pstat__block">
-        <h3 class="pstat__sub">{{ t('pstats.prioritiesTitle') }}</h3>
-        <ol class="pstat__priorities">
-          <li v-for="priority in priorities" :key="priority.n">
-            <span class="pstat__roman">{{ priority.n }}</span>
-            <div>
-              <p class="pstat__priorityText">{{ priority.text }}</p>
-              <ul v-if="priority.targets.length" class="pstat__targetChips">
-                <li v-for="(target, i) in priority.targets" :key="i">{{ target }}</li>
-              </ul>
-            </div>
-          </li>
-        </ol>
-      </section>
-    </section>
-
-    <!-- ========================================================= 5. the offer -->
+    <!-- ========================================================= 3. the offer -->
     <section v-if="zones" class="pstat__page">
       <header class="pstat__head">
-        <p class="pstat__eyebrow">{{ t('pstats.offerEyebrow') }}</p>
-        <h2 class="pstat__title">{{ t('pstats.offerTitle') }}</h2>
-        <p class="pstat__lead">{{ t('pstats.offerLead') }}</p>
+        <FactIcon name="gate" class="pstat__headIcon" />
+        <div>
+          <p class="pstat__eyebrow">{{ t('pstats.offerEyebrow') }}</p>
+          <h2 class="pstat__title">{{ t('pstats.offerTitle') }}</h2>
+          <p class="pstat__lead">{{ t('pstats.offerLead') }}</p>
+        </div>
       </header>
 
       <section class="pstat__block pstat__keepWhole">
@@ -905,8 +639,8 @@ const journey = computed(() =>
           </li>
         </ol>
       </section>
-    </section>
-  </div>
+</section>
+</div>
 </template>
 
 <style scoped>
@@ -938,9 +672,24 @@ const journey = computed(() =>
 
   /* ------------------------------------------------------------- the head */
 
+  /* The glyph beside the title, the way the ministry's own one-pagers set
+     a page head: it is what the eye finds first when four of these sheets
+     are spread on a desk, before a word of any of them is read. */
   .pstat__head {
-    padding-block-end: 3mm;
+    display: grid;
+    grid-template-columns: 10mm minmax(0, 1fr);
+    gap: 3.5mm;
+    align-items: start;
+    padding-block-end: 2.2mm;
     border-block-end: 0.4mm solid #15193a;
+  }
+  .pstat__headIcon {
+    inline-size: 9mm;
+    block-size: 9mm;
+    margin-block-start: 0.5mm;
+    color: #c18429;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .pstat__eyebrow {
     margin: 0;
@@ -951,22 +700,22 @@ const journey = computed(() =>
     color: #995f00;
   }
   .pstat__title {
-    margin: 2mm 0 0;
+    margin: 1.5mm 0 0;
     font-family: var(--font-display);
-    font-size: 17pt;
+    font-size: 15pt;
     font-weight: 600;
     line-height: 1.16;
   }
   .pstat__lead {
-    margin: 2mm 0 0;
+    margin: 1.5mm 0 0;
     max-inline-size: 155mm;
-    font-size: 9pt;
-    line-height: 1.5;
+    font-size: 8.5pt;
+    line-height: 1.45;
     color: #3c4467;
   }
 
   .pstat__sub {
-    margin: 0 0 2.5mm;
+    margin: 0 0 1.8mm;
     font-size: 8pt;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -976,7 +725,7 @@ const journey = computed(() =>
   }
 
   .pstat__block {
-    margin-block-start: 5mm;
+    margin-block-start: 3.5mm;
   }
   /* Blocks small enough to be worth keeping whole rather than fragmenting. */
   .pstat__keepWhole {
@@ -1012,7 +761,7 @@ const journey = computed(() =>
    * leave the page quiet.
    */
   .pstat__kpis {
-    margin: 4mm 0 0;
+    margin: 3mm 0 0;
     padding: 0;
     list-style: none;
     display: grid;
@@ -1023,7 +772,7 @@ const journey = computed(() =>
     grid-template-columns: repeat(3, 1fr);
   }
   .pstat__kpis li {
-    padding-block-start: 1.4mm;
+    padding-block-start: 1.1mm;
     border-block-start: 0.35mm solid #c9ccd8;
     break-inside: avoid;
   }
@@ -1166,7 +915,7 @@ const journey = computed(() =>
     grid-template-columns: 52mm 1fr 16mm;
     gap: 3mm;
     align-items: center;
-    padding-block: 1.1mm;
+    padding-block: 0.8mm;
     break-inside: avoid;
   }
   .pstat__barLabel {
@@ -1200,10 +949,6 @@ const journey = computed(() =>
     font-weight: 600;
     font-variant-numeric: tabular-nums;
     color: #15193a;
-  }
-
-  .pstat__bars--rates li {
-    padding-block: 1mm;
   }
 
   /* A count needs more room than a percentage, and a country name less. */
@@ -1363,7 +1108,7 @@ const journey = computed(() =>
     print-color-adjust: exact;
   }
   .pstat__bars--salary li {
-    padding-block: 0.7mm;
+    padding-block: 0.45mm;
   }
   .pstat__bars--salary .pstat__barTrack {
     block-size: 3mm;
@@ -1378,188 +1123,15 @@ const journey = computed(() =>
     background: #c18429;
   }
 
-  /* ----------------------------------------------------------- the drivers */
-
-  .pstat__drivers {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 6mm;
-  }
-  .pstat__drivers li {
-    padding-inline-start: 3.5mm;
-    border-inline-start: 0.6mm solid #c18429;
-    break-inside: avoid;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .pstat__drivers strong {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 13pt;
-    font-weight: 600;
-    line-height: 1.1;
-  }
-  .pstat__drivers span {
-    display: block;
-    margin-block-start: 1.4mm;
-    font-size: 8pt;
-    line-height: 1.35;
-    color: #4a5070;
+  /* The tile glyph, which is set quiet: the figure is the thing on a tile,
+     and a tile with a loud icon is a tile read second. */
+  .pstat__kpiIcon {
+    inline-size: 4.2mm;
+    block-size: 4.2mm;
+    margin-block-end: 1.2mm;
+    color: #995f00;
   }
 
-  /* ------------------------------------------- today against the 2030 target */
-
-  .pstat__trajs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10mm;
-  }
-  .pstat__traj {
-    margin: 0;
-    break-inside: avoid;
-  }
-  .pstat__trajHead {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 4mm;
-    padding-block-end: 1.6mm;
-    border-block-end: 0.3mm solid #c9ccd8;
-  }
-  .pstat__trajTitle {
-    font-size: 8.5pt;
-    font-weight: 600;
-  }
-  .pstat__trajUnit {
-    font-size: 7pt;
-    color: #626b8b;
-  }
-  .pstat__cols {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 5mm;
-    margin-block-start: 2.5mm;
-  }
-  .pstat__col {
-    text-align: center;
-  }
-  .pstat__colValue {
-    display: block;
-    font-family: var(--font-display);
-    font-size: 11pt;
-    font-weight: 600;
-    line-height: 1.1;
-    font-variant-numeric: tabular-nums;
-    padding-block-end: 1.2mm;
-  }
-  .pstat__colValue--target {
-    color: #8a6219;
-  }
-  /* The plot box the columns are a percentage of, so a bar is a share of the
-     chart rather than of whatever the browser thinks the row is. Filled from
-     the bottom, with the figure sitting on top of its own bar. */
-  .pstat__colPlot {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    block-size: 34mm;
-  }
-  .pstat__colBar {
-    display: block;
-    inline-size: 100%;
-    background: #006fb9;
-    border-radius: 0.6mm 0.6mm 0 0;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  /* The target is not a measurement, and is not drawn as one. */
-  .pstat__colBar--target {
-    background: repeating-linear-gradient(
-      -45deg,
-      #c18429 0,
-      #c18429 0.7mm,
-      #e5b974 0.7mm,
-      #e5b974 1.4mm
-    );
-  }
-  .pstat__colKey {
-    display: block;
-    margin-block-start: 1.4mm;
-    padding-block-start: 1.2mm;
-    border-block-start: 0.3mm solid #c9ccd8;
-    font-size: 7.5pt;
-    font-variant-numeric: tabular-nums;
-    color: #4a5070;
-  }
-  .pstat__colKey em {
-    display: block;
-    font-style: normal;
-    font-size: 6.5pt;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #8a6219;
-  }
-  .pstat__trajClimb {
-    margin: 2mm 0 0;
-    font-family: var(--font-display);
-    font-size: 9pt;
-    font-weight: 600;
-    color: #8a6219;
-  }
-
-  /* -------------------------------------------------------- the priorities */
-
-  .pstat__priorities {
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .pstat__priorities > li {
-    display: grid;
-    grid-template-columns: 11mm 1fr;
-    gap: 4mm;
-    padding-block: 2.1mm;
-    border-block-start: 0.3mm solid #e3e5ec;
-    break-inside: avoid;
-  }
-  .pstat__roman {
-    font-family: var(--font-display);
-    font-size: 13pt;
-    font-weight: 600;
-    line-height: 1.05;
-    color: #c18429;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-  .pstat__priorityText {
-    margin: 0;
-    font-size: 9.5pt;
-    line-height: 1.35;
-  }
-  /* A target is a thing to be reached, not a sentence under a sentence: set
-     as chips, the five priorities read as a list of five rather than as a
-     page of bullets. */
-  .pstat__targetChips {
-    margin: 1.6mm 0 0;
-    padding: 0;
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1.4mm;
-  }
-  .pstat__targetChips li {
-    padding: 0.8mm 2.4mm;
-    border-radius: 5mm;
-    background: #f3f4f8;
-    font-size: 7pt;
-    line-height: 1.3;
-    color: #3c4467;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
 
   /* ---------------------------------------------------- zones and the terms */
 
@@ -1572,7 +1144,7 @@ const journey = computed(() =>
     gap: 1.6mm;
   }
   .pstat__zones li {
-    padding: 1mm 2.8mm;
+    padding: 0.8mm 2.6mm;
     border: 0.3mm solid #c9ccd8;
     border-radius: 6mm;
     font-size: 8pt;
@@ -1593,7 +1165,7 @@ const journey = computed(() =>
     list-style: none;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4mm 8mm;
+    gap: 3mm 8mm;
   }
   .pstat__cards li {
     display: grid;
