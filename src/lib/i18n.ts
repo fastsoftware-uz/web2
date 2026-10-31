@@ -215,6 +215,13 @@ const en = {
     nDirections: 'directions',
     nTotal: 'stated in US dollars',
     whereTitle: 'Where it is',
+    sizeTitle: 'What this project costs, against the rest',
+    sizeAxis: 'projects',
+    sizeNote:
+      '{usd} of the sheets state a sum in US dollars and are counted here; {uzs} state one in soums and {open} leave it to be agreed.',
+    regionWhere: 'Region',
+    regionSalary: 'Average pay, thousand soums',
+    regionProjects: 'Projects at the forum',
     byDirection: 'By direction',
     mapCredit:
       'Region outlines: geoBoundaries (ODbL 1.0). A diagram of administrative areas, not a survey.',
@@ -456,6 +463,13 @@ const uz: Messages = {
     nDirections: 'yoʻnalish',
     nTotal: 'AQSH dollarida koʻrsatilgan',
     whereTitle: 'Qayerda joylashgan',
+    sizeTitle: 'Bu loyiha qolganlarga nisbatan qanchaga turadi',
+    sizeAxis: 'loyiha',
+    sizeNote:
+      'Varaqalarning {usd} tasida summa AQSH dollarida koʻrsatilgan — diagrammada shular; {uzs} tasida soʻmda, {open} tasida kelishuv asosida.',
+    regionWhere: 'Hudud',
+    regionSalary: 'Oʻrtacha ish haqi, ming soʻm',
+    regionProjects: 'Forumdagi loyihalar',
     byDirection: 'Yoʻnalishlar boʻyicha',
     mapCredit:
       'Hudud konturlari: geoBoundaries (ODbL 1.0). Bu — maʼmuriy hududlar sxemasi, oʻlchov xaritasi emas.',
@@ -680,6 +694,13 @@ const ru: Messages = {
     nDirections: 'направлений',
     nTotal: 'указано в долларах США',
     whereTitle: 'Где находится',
+    sizeTitle: 'Сколько стоит этот проект по сравнению с остальными',
+    sizeAxis: 'проектов',
+    sizeNote:
+      'В {usd} листах сумма указана в долларах США — они и на диаграмме; в {uzs} — в сумах, в {open} — по договорённости.',
+    regionWhere: 'Регион',
+    regionSalary: 'Средняя зарплата, тыс. сумов',
+    regionProjects: 'Проектов на форуме',
     byDirection: 'По направлениям',
     mapCredit:
       'Контуры регионов: geoBoundaries (ODbL 1.0). Это схема административных границ, а не съёмка.',

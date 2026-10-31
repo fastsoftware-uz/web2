@@ -35,7 +35,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { formatMoney } from '../lib/money';
-import { eventDates, tr, useStore } from '../lib/state';
+import { eventDates, tr, trSuffixed, useStore } from '../lib/state';
 import FactIcon from './FactIcon.vue';
 import ForumMark from './ForumMark.vue';
 import ground from '../assets/print-closing.svg?url';
@@ -45,12 +45,10 @@ defineProps<{
   heading: string;
   /** One line on what to do next. */
   lead: string;
-  /** The project's own direction, so its row in the counts is marked. */
-  segment?: string | null;
 }>();
 
 const { t } = useI18n();
-const { forum, lang } = useStore();
+const { content, forum, lang } = useStore();
 
 const contact = computed(() => forum.value?.contact ?? null);
 const event = computed(() => forum.value?.event ?? null);
@@ -93,23 +91,23 @@ const numbers = computed(() => {
 });
 
 /**
- * The portfolio by direction, the project's own marked.
+ * The five steps between an enquiry and a running project.
  *
- * Six numbers that share a total, so they are a shape — but printed here as
- * counts rather than as bars: this is the foot of the contact page, not a
- * chart page, and the question it answers is "what else could I ask for".
+ * They used to close the statistics pages, where they were the one thing on
+ * them that is not a statistic. They belong here: this is the page a reader
+ * is on when they have decided to do something, and the answer to "what
+ * happens after I write" should be beside the address they would write to.
  */
-const directions = computed(() => {
-  const p = portfolio.value;
-  if (!p) return [];
-  const themes = forum.value?.themes ?? [];
-  return Object.entries(p.segmentCounts)
-    .map(([id, n]) => {
-      const theme = themes.find((x) => x.id === id);
-      return { id, n, name: theme ? tr(theme.title) : id };
-    })
-    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
-});
+const journey = computed(() =>
+  (content.value?.investor_journey ?? []).map((step) => {
+    const row = step as unknown as Record<string, unknown>;
+    return {
+      n: step.step,
+      title: tr({ uz: step.uz, ru: step.ru, en: step.en }),
+      desc: trSuffixed<string>(row, 'desc'),
+    };
+  }),
+);
 
 /** "41,3041 · 69,27863" — a position that survives being read off paper. */
 const coords = computed(() => {
@@ -175,14 +173,16 @@ const coords = computed(() => {
             </li>
           </ul>
 
-          <p class="closing__sub closing__sub--tight">{{ t('print.byDirection') }}</p>
-          <ul v-if="directions.length" class="closing__dirs">
-            <li v-for="row in directions" :key="row.id" :class="{ 'closing__dir--here': row.id === segment }">
-              <span>{{ row.name }}</span>
-              <strong>{{ row.n }}</strong>
-            </li>
-          </ul>
           <p class="closing__note">{{ t('print.contextNote') }}</p>
+
+          <p class="closing__sub closing__sub--tight">{{ t('pstats.journeyTitle') }}</p>
+          <ol v-if="journey.length" class="closing__journey">
+            <li v-for="step in journey" :key="step.n">
+              <span class="closing__stepNo">{{ step.n }}</span>
+              <strong>{{ step.title }}</strong>
+              <span>{{ step.desc }}</span>
+            </li>
+          </ol>
         </div>
       </div>
 
@@ -395,37 +395,42 @@ const coords = computed(() => {
     color: #a7b6dd;
   }
 
-  /* The six directions, as counts. */
-  .closing__dirs {
+  /* The five steps, as a strip of columns under a gold rule each. */
+  .closing__journey {
     margin: 0;
     padding: 0;
     list-style: none;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.2mm 8mm;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4mm;
   }
-  .closing__dirs li {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 3mm;
-    padding-block-end: 1mm;
-    border-block-end: 0.25mm solid rgb(255 255 255 / 0.18);
-    font-size: 7.5pt;
-    line-height: 1.25;
-    color: #d6dcef;
+  .closing__journey li {
+    padding-block-start: 1.8mm;
+    border-block-start: 0.5mm solid #c18429;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .closing__dirs strong {
-    font-variant-numeric: tabular-nums;
+  .closing__stepNo {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 9pt;
     font-weight: 600;
+    color: #e4bb7d;
+  }
+  .closing__journey strong {
+    display: block;
+    margin-block-start: 0.8mm;
+    font-size: 8pt;
+    font-weight: 600;
+    line-height: 1.25;
     color: #fff;
   }
-  /* The row this sheet belongs to, so the reader can place it. */
-  .closing__dir--here {
-    color: #e4bb7d;
-  }
-  .closing__dir--here strong {
-    color: #e4bb7d;
+  .closing__journey span {
+    display: block;
+    margin-block-start: 0.8mm;
+    font-size: 6.8pt;
+    line-height: 1.3;
+    color: #a7b6dd;
   }
   .closing__note {
     margin: 2.5mm 0 0;

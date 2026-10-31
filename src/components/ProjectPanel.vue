@@ -27,12 +27,14 @@ import { useI18n } from 'vue-i18n';
 import type { Project } from '../lib/forum-types';
 import { lockPageScroll, unlockPageScroll } from '../lib/motion';
 import { formatMoney } from '../lib/money';
+import { formatNumber } from '../lib/shared/content';
 import { sheetIcon } from '../lib/sheet-icons';
 import { sheetLabel } from '../lib/sheet-labels';
 import { sheetValue } from '../lib/sheet-values';
 import { eventDates, tr, useStore } from '../lib/state';
 import FactIcon from './FactIcon.vue';
 import ForumMark from './ForumMark.vue';
+import ThemeIcon from './ThemeIcon.vue';
 import PrintMap from './PrintMap.vue';
 import PrintStats from './PrintStats.vue';
 import PrintCover from './PrintCover.vue';
@@ -47,7 +49,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: []; step: [delta: number]; enquire: [] }>();
 
 const { t } = useI18n();
-const { forum, lang } = useStore();
+const { content, forum, lang } = useStore();
 
 /** The forum's own line, for the printed letterhead. */
 const eventLine = computed(() => {
@@ -214,6 +216,90 @@ const metrics = computed(() =>
  * figure-bearing picture, which is why the page after it no longer draws one.
  */
 const regionCounts = computed(() => forum.value?.portfolio?.regionCounts ?? {});
+
+/** The direction this project was filed under, named and with its glyph. */
+const theme = computed(() => {
+  const id = props.project?.segment;
+  return forum.value?.themes.find((x) => x.id === id) ?? null;
+});
+
+/**
+ * One line about the region, from the facts the data file actually holds.
+ *
+ * It was meant to be a card — population, employment, universities, the
+ * branches the region specialises in, the way the ministry's own sheets set
+ * one beside their map. `content.json` carries that profile for exactly one
+ * region of fourteen, so the card would have been blank on thirteen sheets
+ * in fourteen and inventing the rest is not available. What is here is what
+ * is there for every region: its name, what an hour of work costs in it, and
+ * how many of the forum's projects are in it.
+ */
+const regionLine = computed(() => {
+  const id = props.project?.region;
+  if (!id) return null;
+  const row = content.value?.regions.items.find((r) => r.id === id);
+  if (!row) return null;
+  return {
+    name: tr({ uz: row.uz, ru: row.ru, en: row.en }),
+    salary: formatNumber(row.avg_salary, lang.value, { maximumFractionDigits: 0 }),
+    projects: regionCounts.value[id] ?? 0,
+  };
+});
+
+/**
+ * Where this project's price sits among the hundred and eleven others.
+ *
+ * The bands are round numbers an investor thinks in, not quantiles of the
+ * data, and only the sheets that state a sum in dollars can be binned — one
+ * whose price is "by agreement" is not a cheap project, it is an unknown one,
+ * so those are named under the chart rather than counted into it.
+ *
+ * It is here because it is the one thing on the page that is about this
+ * project *and* about the portfolio: a reader holding four sheets learns
+ * from it which of the four is the unusual one.
+ */
+const BAND_EDGES = [1, 5, 20, 50];
+const BAND_KEYS = ['0–1', '1–5', '5–20', '20–50', '50+'];
+
+/** The band a sum in millions of dollars falls into. */
+const bandOf = (millions: number) => {
+  const i = BAND_EDGES.findIndex((edge) => millions < edge);
+  return i === -1 ? BAND_EDGES.length : i;
+};
+
+const sizeBands = computed(() => {
+  const portfolio = forum.value?.portfolio;
+  if (!portfolio) return [];
+  const counts = new Array<number>(BAND_KEYS.length).fill(0);
+  for (const row of portfolio.projects) {
+    if (row.currency !== 'USD' || !row.investment) continue;
+    const band = bandOf(row.investment / 1e6);
+    counts[band] = (counts[band] ?? 0) + 1;
+  }
+  const own =
+    props.project?.currency === 'USD' && props.project.investment
+      ? bandOf(props.project.investment / 1e6)
+      : -1;
+  const top = Math.max(1, ...counts);
+  return counts.map((n, i) => ({
+    key: BAND_KEYS[i] as string,
+    n,
+    here: i === own,
+    // Of the plot, less the band the figure above the bar occupies; and a
+    // floor, so the smallest band is still a column.
+    height: n ? Math.max(8, (n / top) * 76) : 0,
+  }));
+});
+
+const sizeNote = computed(() => {
+  const portfolio = forum.value?.portfolio;
+  if (!portfolio) return '';
+  return t('print.sizeNote', {
+    usd: portfolio.statedUsdCount,
+    uzs: portfolio.statedUzsCount,
+    open: portfolio.openCount,
+  });
+});
 
 /**
  * The label/value blocks, in the order a sheet presents them.
@@ -503,13 +589,15 @@ onBeforeUnmount(() => {
                      smooth-scroll driver must leave its wheel and touch
                      events alone. -->
                 <!--
-                  On paper the project comes first, right behind its cover.
-                  It used to come ninth, after six pages about the country and
-                  the forum, which is the wrong way round for a document that
-                  is forwarded under the project's own name: the reader who
-                  opens it is asking about this building, and the country is
-                  the answer to their second question, not their first.
+                  Two pages about the country, and the same two on every
+                  sheet: the market the forum is about, then the economy and
+                  what an arriving investor is given. They open the document
+                  because that is the order the client set and the order the
+                  ministry's own one-pagers follow — the country is the first
+                  question, the building is the second.
                 -->
+                <PrintStats :region="project.region" />
+
                 <div ref="body" class="panel__body" data-lenis-prevent>
           <p class="panel__where">
             {{ regionName }}
@@ -525,6 +613,21 @@ onBeforeUnmount(() => {
             the project fit the page it is now given.
           -->
           <div class="panel__band">
+          <!--
+            Thirty-three of the hundred and twelve sheets arrived with no
+            picture at all, and on paper that left the page's whole left
+            column white — the single most visible fault in the document.
+            This stands in its place: the direction's own glyph over the
+            region's name, drawn rather than apologised for. It is not a
+            placeholder for a missing photograph, it is what the page shows
+            when a project has none, and it goes the day one arrives.
+          -->
+          <div v-if="!shots.length" class="panel__plate" aria-hidden="true">
+            <ThemeIcon v-if="theme" :name="theme.icon" class="panel__plateIcon" />
+            <p v-if="theme" class="panel__plateName">{{ tr(theme.title) }}</p>
+            <p v-if="regionName" class="panel__plateWhere">{{ regionName }}</p>
+          </div>
+
           <!-- The sheet's own visuals. One image is the common case, so the
                thumbnail strip only appears when there is something to switch to. -->
           <figure v-if="shots.length" class="panel__gallery">
@@ -609,6 +712,7 @@ onBeforeUnmount(() => {
             <h4 class="panel__heading">{{ t('portfolio.labels.overview') }}</h4>
             <p class="panel__overview">{{ story }}</p>
           </div>
+
           </div>
 
           <template v-for="block in blocks" :key="block.key">
@@ -625,6 +729,61 @@ onBeforeUnmount(() => {
           </template>
 
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
+
+          <!--
+            Only on paper, and at the end of the reading: what this project
+            costs set against what the other hundred and eleven cost, with
+            its own column marked. It is the one block on the page that is
+            about the project and the portfolio at once — a reader with four
+            sheets on the desk learns from it which of the four is the
+            unusual one — and it is what fills the foot of a sheet that
+            states six fields where another states twenty-four.
+
+            It was tried inside the opening band, in the gap the picture and
+            the overview leave beside the figures. Measured, that was worse:
+            the band grew by the block's own height and pushed the field
+            rows onto the next page, so the thin page stayed and lost its
+            chart as well.
+          -->
+          <div v-if="sizeBands.length" class="panel__pos" aria-hidden="true">
+            <p class="panel__posHead">{{ t('print.sizeTitle') }}</p>
+            <div class="panel__posBody">
+              <div class="panel__cols">
+                <div v-for="band in sizeBands" :key="band.key" class="panel__col">
+                  <span class="panel__colPlot">
+                    <span class="panel__colValue" :class="{ 'panel__colValue--here': band.here }">
+                      {{ band.n }}
+                    </span>
+                    <span
+                      class="panel__colBar"
+                      :class="{ 'panel__colBar--here': band.here }"
+                      :style="{ blockSize: band.height + '%' }"
+                    ></span>
+                  </span>
+                  <span class="panel__colKey" :class="{ 'panel__colKey--here': band.here }">
+                    {{ band.key }}
+                  </span>
+                </div>
+              </div>
+
+              <dl v-if="regionLine" class="panel__region">
+                <div>
+                  <dt>{{ t('print.regionWhere') }}</dt>
+                  <dd>{{ regionLine.name }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('print.regionSalary') }}</dt>
+                  <dd>{{ regionLine.salary }}</dd>
+                </div>
+                <div>
+                  <dt>{{ t('print.regionProjects') }}</dt>
+                  <dd>{{ regionLine.projects }}</dd>
+                </div>
+              </dl>
+            </div>
+            <p class="panel__posNote">{{ t('print.sizeAxis') }} · {{ sizeNote }}</p>
+          </div>
+
 
           <!-- Only on paper: the sheet's other renders, which on screen are
                the thumbnail strip above. They close the reading rather than
@@ -643,12 +802,7 @@ onBeforeUnmount(() => {
             />
           </div>
 </div>
-
-                <!-- Then the country the project is in, in three pages: the
-                     market, the economy and its people, and what an arriving
-                     investor is actually offered. -->
-                <PrintStats :region="project.region" />
-              </td>
+</td>
             </tr>
           </tbody>
         </table>
@@ -658,7 +812,6 @@ onBeforeUnmount(() => {
         <PrintClosing
           :heading="t('portfolio.contactsTitle')"
           :lead="t('portfolio.contactsLead')"
-          :segment="project.segment"
         />
 
         <!-- What a reader can do with the project they have just read. -->
@@ -976,7 +1129,9 @@ onBeforeUnmount(() => {
 .panel__story {
   display: contents;
 }
-.panel__where2 {
+.panel__where2,
+.panel__plate,
+.panel__pos {
   display: none;
 }
 
@@ -1347,6 +1502,151 @@ onBeforeUnmount(() => {
     color: #15193a;
   }
 
+  /* Where a sheet sent no photograph. Same height as the gallery and in the
+     same cell, so a page with a picture and a page without are one page. */
+  .panel__plate {
+    grid-column: 1;
+    grid-row: 1;
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: 2mm;
+    block-size: 62mm;
+    padding: 4mm;
+    border: 0.4mm solid #c9ccd8;
+    background: #f3f4f8;
+    text-align: center;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .panel__plateIcon {
+    inline-size: 20mm;
+    block-size: 20mm;
+    color: #c18429;
+  }
+  .panel__plateName {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 11pt;
+    line-height: 1.2;
+    color: #15193a;
+  }
+  .panel__plateWhere {
+    margin: 0;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #4a5070;
+  }
+
+  /* ------------------------------ this project against the other hundred */
+
+  .panel__pos {
+    display: block;
+    margin-block-start: 4mm;
+    padding-block-start: 2.5mm;
+    border-block-start: 0.4mm solid #15193a;
+    break-inside: avoid;
+  }
+  .panel__posHead {
+    margin: 0 0 2mm;
+    font-size: 7.5pt;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: #00566e;
+  }
+  .panel__posBody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 62mm;
+    gap: 8mm;
+    align-items: end;
+  }
+  .panel__cols {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5mm;
+  }
+  .panel__col {
+    text-align: center;
+  }
+  .panel__colPlot {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    block-size: 16mm;
+  }
+  .panel__colValue {
+    display: block;
+    padding-block-end: 1mm;
+    font-family: var(--font-display);
+    font-size: 10.5pt;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    color: #4a5070;
+  }
+  .panel__colBar {
+    display: block;
+    inline-size: 100%;
+    background: #cdd3e2;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* The band this project falls in, which is the whole point of the chart. */
+  .panel__colValue--here {
+    color: #15193a;
+  }
+  .panel__colBar--here {
+    background: #c18429;
+  }
+  .panel__colKey {
+    display: block;
+    margin-block-start: 1.2mm;
+    padding-block-start: 1mm;
+    border-block-start: 0.3mm solid #c9ccd8;
+    font-size: 7pt;
+    font-variant-numeric: tabular-nums;
+    color: #4a5070;
+  }
+  .panel__colKey--here {
+    font-weight: 700;
+    color: #15193a;
+  }
+  .panel__region {
+    margin: 0;
+    display: grid;
+    gap: 1.6mm;
+  }
+  .panel__region div {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 3mm;
+    padding-block-end: 1.2mm;
+    border-block-end: 0.3mm solid #e3e5ec;
+  }
+  .panel__region dt {
+    font-size: 6.8pt;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #4a5070;
+  }
+  .panel__region dd {
+    margin: 0;
+    font-size: 8.5pt;
+    text-align: end;
+    color: #15193a;
+  }
+  .panel__posNote {
+    margin: 2.5mm 0 0;
+    font-size: 6.8pt;
+    line-height: 1.35;
+    color: #626b8b;
+  }
+
   /* The map under the figures: 66mm wide, which is the column. */
   .panel__where2 {
     display: block;
@@ -1407,15 +1707,19 @@ onBeforeUnmount(() => {
    * one is, and each is capped so that a sheet with six renders does not
    * become a sheet that is mostly renders.
    */
+  /* The strip moves as one. Left to break where it liked, a single 30mm
+     render placed two millimetres past the foot rule — `break-inside` on the
+     image alone is a hint about the image, not about the row it sits in. */
   .panel__plates {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 2.5mm;
     margin-block-start: 4mm;
+    break-inside: avoid;
   }
   .panel__plates img {
     inline-size: 100%;
-    block-size: 30mm;
+    block-size: 26mm;
     object-fit: cover;
     break-inside: avoid;
     -webkit-print-color-adjust: exact;

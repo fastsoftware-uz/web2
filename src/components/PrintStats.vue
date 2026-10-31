@@ -8,24 +8,29 @@
  * forum's timetable, which is the one thing in the document that answers no
  * investment question at all — so the agenda came out and this went in.
  *
- * Three pages, in the order the question is actually asked:
+ * Two pages, and the same two on every sheet in the portfolio — they open
+ * the document, before the project, because a reader deciding whether to
+ * spend an hour on a hotel in Bukhara is deciding about the country first:
  *
- *   1. tourism — the market the forum is about: how many visitors arrive,
- *      which countries they arrive from, and what the state has set for 2030;
- *   2. the country — what the economy is worth and what it is made of, then
- *      who would run the project and what an hour of their work costs,
- *      region by region;
- *   3. the offer — the zones, the reliefs and the five steps the agency
- *      walks an investor through.
+ *   1. the market the forum is about — how many visitors arrive, which
+ *      countries they arrive from, how much of the service export is travel,
+ *      and what the state has set itself for 2030;
+ *   2. the country and what it offers — what the economy is worth and what
+ *      it is made of, what an hour of work costs region by region, and the
+ *      zones and reliefs an arriving investor is actually given.
  *
- * It was five until the sheet was cut to seven pages against the ministry's
- * own one-pagers. What came out: the growth-driver tiles and the eight
- * largest branches of GDP (the donut above them says the same thing at the
- * level this document needs), the four labour-market rates, and the whole
- * 2030 page — its two trajectory charts, its five national priorities and
- * its three counting tiles. The strategy's tourism targets, which are the
- * half of it this document is about, are on page one where the market is.
- * What stayed is every figure a reader would put a pencil to.
+ * It was five pages, then three. What came out, in order: the growth-driver
+ * tiles and the eight largest branches of GDP (the donut says the same at
+ * the level this document needs), the four labour-market rates, the whole
+ * 2030 page (its tourism half is on page one, where the market is), the ten
+ * priority branches the state names, and the five steps from an enquiry to a
+ * running project — those are not a statistic, they are what to do next, so
+ * they moved to the page that says who to write to.
+ *
+ * What stayed is every figure a reader would put a pencil to, and every
+ * chart: these two pages are the only place in the sheet where something is
+ * drawn rather than stated, and that is most of what makes a document worth
+ * turning over.
  *
  * Each page carries one sentence of prose and then stops talking. A reader who
  * has four of these sheets on a desk does not read paragraphs, and a figure in
@@ -243,11 +248,17 @@ const exportLine = computed(() => {
  * The eight the data file states, in the order an investor reads them: how
  * big, how fast, how stable, then how much money is already arriving.
  */
+/*
+ * Five, with the people's three, because eight tiles are two clean rows of
+ * four and nine are two rows and a widow — which costs fifteen millimetres
+ * of a page that has a fourteen-row chart to fit. Foreign trade turnover was
+ * the one dropped: it is the figure on the page least likely to decide a
+ * hotel.
+ */
 const ECONOMY_ORDER = [
   'gdp',
   'gdp_growth',
   'foreign_investment',
-  'trade',
   'inflation',
   'foreign_enterprises',
 ];
@@ -361,32 +372,6 @@ const legalBasis = computed(() => {
   return match ? match[1]!.trim() : text;
 });
 
-/**
- * The ten branches the state itself names as priorities for investment.
- *
- * Not a tourism list, and that is why it is on this page rather than an
- * earlier one: a reader who has come for a hotel is being told, in one line,
- * what else the same door opens onto.
- */
-const sectors = computed(() =>
-  (content.value?.sectors.items ?? []).map((item) => ({
-    id: item.id,
-    name: tr({ uz: item.uz, ru: item.ru, en: item.en }),
-  })),
-);
-
-/** The five steps the agency puts between an enquiry and a running project. */
-const journey = computed(() =>
-  (content.value?.investor_journey ?? []).map((step) => {
-    const row = step as unknown as Record<string, unknown>;
-    return {
-      n: step.step,
-      title: tr({ uz: step.uz, ru: step.ru, en: step.en }),
-      desc: trSuffixed<string>(row, 'desc'),
-    };
-  }),
-);
-
 </script>
 
 <template>
@@ -494,14 +479,24 @@ const journey = computed(() =>
         </div>
       </header>
 
+      <!-- The economy and the people in one field: what a project earns in,
+           and who it would be run by. -->
       <ul class="pstat__kpis">
         <li v-for="kpi in economyKpis" :key="kpi.id">
           <strong>{{ kpiText(kpi) }}</strong>
           <span>{{ tr(kpi.label) }}</span>
         </li>
+        <li v-for="kpi in peopleKpis" :key="kpi.id">
+          <strong>{{ kpiText(kpi) }}</strong>
+          <span>{{ tr(kpi.label) }}</span>
+        </li>
       </ul>
 
-      <section class="pstat__block pstat__gdp">
+      <!-- Two blocks side by side: what the economy is made of, and what an
+           arriving investor is given. They are the page's two halves and
+           they are the same height, which is why they sit in one row. -->
+      <div class="pstat__pair">
+      <section class="pstat__block pstat__gdp pstat__keepWhole">
         <h3 class="pstat__sub">{{ t('pstats.gdpTitle') }}</h3>
 
         <div class="pstat__gdpCols">
@@ -540,24 +535,26 @@ const journey = computed(() =>
         </div>
       </section>
 
-      <!-- The people, on the same page: the economy is what a project earns
-           in, this is what it pays for, and a reader weighing two regions
-           wants both in one eyeful. -->
-      <section v-if="people" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.peopleEyebrow') }}</h3>
-        <ul class="pstat__kpis pstat__kpis--three pstat__kpis--small">
-          <li v-for="kpi in peopleKpis" :key="kpi.id">
-            <strong>{{ kpiText(kpi) }}</strong>
-            <span>{{ tr(kpi.label) }}</span>
-          </li>
+      <section v-if="zones" class="pstat__block pstat__keepWhole">
+        <h3 class="pstat__sub">{{ t('pstats.offerTitle') }}</h3>
+        <ul class="pstat__zones">
+          <li v-for="zone in zoneTypes" :key="zone">{{ zone }}</li>
         </ul>
+        <ol class="pstat__cards pstat__cards--one">
+          <li v-for="(point, i) in incentives" :key="i">
+            <span class="pstat__cardNo">{{ i + 1 }}</span>
+            <p>{{ point }}</p>
+          </li>
+        </ol>
+        <p v-if="legalBasis" class="pstat__caption pstat__caption--after">
+          {{ t('pstats.legalBasis') }} · {{ legalBasis }}
+        </p>
+        <p class="pstat__note">{{ tr(zones.disclaimer) }}</p>
       </section>
+      </div>
 
       <section v-if="salaries.length" class="pstat__block">
         <h3 class="pstat__sub">{{ t('pstats.salaryTitle') }}</h3>
-        <p v-if="salaries.some((s) => s.here)" class="pstat__caption">
-          {{ t('pstats.salaryHere') }}
-        </p>
         <p class="pstat__axisNote">
           <span class="pstat__unit">{{ t('pstats.salaryUnit') }}</span>
           <span class="pstat__avgKey">
@@ -588,59 +585,8 @@ const journey = computed(() =>
           </ol>
         </div>
       </section>
-    </section>
-
-    <!-- ========================================================= 3. the offer -->
-    <section v-if="zones" class="pstat__page">
-      <header class="pstat__head">
-        <FactIcon name="gate" class="pstat__headIcon" />
-        <div>
-          <p class="pstat__eyebrow">{{ t('pstats.offerEyebrow') }}</p>
-          <h2 class="pstat__title">{{ t('pstats.offerTitle') }}</h2>
-          <p class="pstat__lead">{{ t('pstats.offerLead') }}</p>
-        </div>
-      </header>
-
-      <section class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.zonesTitle') }}</h3>
-        <ul class="pstat__zones">
-          <li v-for="zone in zoneTypes" :key="zone">{{ zone }}</li>
-        </ul>
-      </section>
-
-      <section class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.incentivesTitle') }}</h3>
-        <ol class="pstat__cards">
-          <li v-for="(point, i) in incentives" :key="i">
-            <span class="pstat__cardNo">{{ i + 1 }}</span>
-            <p>{{ point }}</p>
-          </li>
-        </ol>
-        <p v-if="legalBasis" class="pstat__caption pstat__caption--after">
-          {{ t('pstats.legalBasis') }} · {{ legalBasis }}
-        </p>
-        <p class="pstat__note">{{ tr(zones.disclaimer) }}</p>
-      </section>
-
-      <section v-if="sectors.length" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.sectorsTitle') }}</h3>
-        <ul class="pstat__zones pstat__zones--quiet">
-          <li v-for="sector in sectors" :key="sector.id">{{ sector.name }}</li>
-        </ul>
-      </section>
-
-      <section v-if="journey.length" class="pstat__block pstat__keepWhole">
-        <h3 class="pstat__sub">{{ t('pstats.journeyTitle') }}</h3>
-        <ol class="pstat__journey">
-          <li v-for="step in journey" :key="step.n">
-            <span class="pstat__stepNo">{{ step.n }}</span>
-            <strong>{{ step.title }}</strong>
-            <span class="pstat__stepDesc">{{ step.desc }}</span>
-          </li>
-        </ol>
-      </section>
 </section>
-</div>
+  </div>
 </template>
 
 <style scoped>
@@ -680,7 +626,7 @@ const journey = computed(() =>
     grid-template-columns: 10mm minmax(0, 1fr);
     gap: 3.5mm;
     align-items: start;
-    padding-block-end: 2.2mm;
+    padding-block-end: 1.8mm;
     border-block-end: 0.4mm solid #15193a;
   }
   .pstat__headIcon {
@@ -715,7 +661,7 @@ const journey = computed(() =>
   }
 
   .pstat__sub {
-    margin: 0 0 1.8mm;
+    margin: 0 0 1.4mm;
     font-size: 8pt;
     font-weight: 700;
     letter-spacing: 0.16em;
@@ -725,7 +671,55 @@ const journey = computed(() =>
   }
 
   .pstat__block {
+    margin-block-start: 3mm;
+  }
+  /*
+   * The page's two halves: what the economy is made of, and what an investor
+   * arriving into it is given. Side by side rather than stacked, because
+   * stacked they ran to a page and a half and the second half of the page was
+   * the part a reader had come for.
+   */
+  .pstat__pair {
+    display: grid;
+    grid-template-columns: 66mm minmax(0, 1fr);
+    gap: 8mm;
+    align-items: start;
+  }
+  /* Fixed track, so a child that measures itself wider than the track spills
+     into the column beside it rather than wrapping. */
+  .pstat__pair > * {
+    min-inline-size: 0;
+  }
+  .pstat__pair > .pstat__block {
     margin-block-start: 3.5mm;
+  }
+  /* In a 62mm column the donut sits above its key, not beside it. */
+  .pstat__pair .pstat__gdpCols {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 3mm;
+    justify-items: center;
+  }
+  .pstat__pair .pstat__ring {
+    inline-size: 34mm;
+    block-size: 34mm;
+  }
+  .pstat__pair .pstat__legend {
+    inline-size: 100%;
+  }
+  .pstat__pair .pstat__legend li {
+    padding-block: 0.8mm;
+    font-size: 7.6pt;
+  }
+  .pstat__pair .pstat__zones li {
+    padding: 0.6mm 2.2mm;
+    font-size: 7.4pt;
+  }
+  .pstat__cards--one p {
+    font-size: 7.2pt;
+    line-height: 1.3;
+  }
+  .pstat__cards--one li {
+    padding-block-start: 1.2mm;
   }
   /* Blocks small enough to be worth keeping whole rather than fragmenting. */
   .pstat__keepWhole {
@@ -745,8 +739,8 @@ const journey = computed(() =>
   }
 
   .pstat__note {
-    margin: 2.5mm 0 0;
-    font-size: 7pt;
+    margin: 2mm 0 0;
+    font-size: 6.5pt;
     line-height: 1.45;
     color: #626b8b;
   }
@@ -772,14 +766,14 @@ const journey = computed(() =>
     grid-template-columns: repeat(3, 1fr);
   }
   .pstat__kpis li {
-    padding-block-start: 1.1mm;
+    padding-block-start: 0.8mm;
     border-block-start: 0.35mm solid #c9ccd8;
     break-inside: avoid;
   }
   .pstat__kpis strong {
     display: block;
     font-family: var(--font-display);
-    font-size: 15pt;
+    font-size: 13.5pt;
     font-weight: 600;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -792,9 +786,9 @@ const journey = computed(() =>
   }
   .pstat__kpis span {
     display: block;
-    margin-block-start: 1.4mm;
-    font-size: 7.5pt;
-    line-height: 1.35;
+    margin-block-start: 1mm;
+    font-size: 7pt;
+    line-height: 1.2;
     color: #4a5070;
   }
 
@@ -1067,8 +1061,8 @@ const journey = computed(() =>
     display: flex;
     justify-content: space-between;
     gap: 6mm;
-    margin: 0 0 2.5mm;
-    font-size: 7.5pt;
+    margin: 0 0 1.8mm;
+    font-size: 7pt;
     color: #626b8b;
   }
   .pstat__unit {
@@ -1108,11 +1102,18 @@ const journey = computed(() =>
     print-color-adjust: exact;
   }
   .pstat__bars--salary li {
-    padding-block: 0.45mm;
+    padding-block: 0.2mm;
   }
   .pstat__bars--salary .pstat__barTrack {
-    block-size: 3mm;
+    block-size: 2.6mm;
     background: transparent;
+  }
+  /* Fourteen rows have to fit under everything else on the page, in the
+     language that sets longest — so the names are a half point smaller here
+     than they are in the charts that have a page to themselves. */
+  .pstat__bars--salary .pstat__barLabel {
+    font-size: 7pt;
+    line-height: 1.2;
   }
   .pstat__row--here .pstat__barLabel,
   .pstat__row--here .pstat__barValue {
@@ -1166,6 +1167,12 @@ const journey = computed(() =>
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 3mm 8mm;
+  }
+  /* Inside the pair there is one column, not two. */
+  .pstat__cards--one {
+    grid-template-columns: minmax(0, 1fr);
+    margin-block-start: 3mm;
+    gap: 2.4mm;
   }
   .pstat__cards li {
     display: grid;
