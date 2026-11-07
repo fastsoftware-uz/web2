@@ -35,7 +35,7 @@ import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import { formatMoney } from '../lib/money';
-import { eventDates, tr, trSuffixed, useStore } from '../lib/state';
+import { eventDates, tr, useStore } from '../lib/state';
 import FactIcon from './FactIcon.vue';
 import ForumMark from './ForumMark.vue';
 import ground from '../assets/print-closing.svg?url';
@@ -99,14 +99,10 @@ const numbers = computed(() => {
  * happens after I write" should be beside the address they would write to.
  */
 const journey = computed(() =>
-  (content.value?.investor_journey ?? []).map((step) => {
-    const row = step as unknown as Record<string, unknown>;
-    return {
-      n: step.step,
-      title: tr({ uz: step.uz, ru: step.ru, en: step.en }),
-      desc: trSuffixed<string>(row, 'desc'),
-    };
-  }),
+  (content.value?.investor_journey ?? []).map((step) => ({
+    n: step.step,
+    title: tr({ uz: step.uz, ru: step.ru, en: step.en }),
+  })),
 );
 
 /** "41,3041 · 69,27863" — a position that survives being read off paper. */
@@ -175,12 +171,34 @@ const coords = computed(() => {
 
           <p class="closing__note">{{ t('print.contextNote') }}</p>
 
+          <!--
+            Where this one project sits in that portfolio.
+
+            It belongs on this page and not on the project's own because of
+            what it is: a block that will not split, about forty-seven
+            millimetres tall, which on a sparse sheet arrived at a page that
+            had twenty-seven left and opened a page of its own to hold it.
+            Three hundred and thirteen reading pages across the portfolio
+            ended that way. Here it follows the portfolio's four numbers,
+            which is the sentence it finishes, and the page it sits on is
+            fixed artwork with room to spare.
+          -->
+          <slot name="position" />
+
+          <!--
+            The five steps as names only. Each carries a sentence on the
+            screen and carried one here too, until the chart above it arrived
+            and the three languages stopped fitting: in Russian the sentences
+            run to three lines each and pushed the strip through the foot
+            rule. A reader holding the sheet needs the shape of the route and
+            a number to ring; the sentences are a click away and are what the
+            page can afford to lose.
+          -->
           <p class="closing__sub closing__sub--tight">{{ t('pstats.journeyTitle') }}</p>
           <ol v-if="journey.length" class="closing__journey">
             <li v-for="step in journey" :key="step.n">
               <span class="closing__stepNo">{{ step.n }}</span>
               <strong>{{ step.title }}</strong>
-              <span>{{ step.desc }}</span>
             </li>
           </ol>
         </div>
@@ -257,27 +275,29 @@ const coords = computed(() => {
   }
 
   /*
-   * 57mm, not 84: the page carries the forum and the portfolio as well as
-   * the address now. Everything below is set to the measure Russian needs —
-   * it runs about a tenth longer than the other two languages and this page
-   * has a fixed floor, so it is Russian that decides the type sizes here.
+   * 56mm, not 84: the page carries the forum, the portfolio and the
+   * project's place in it as well as the address now. Everything below is
+   * set to the measure Russian needs — it runs about a tenth longer than the
+   * other two languages and this page has a fixed floor, so it is Russian
+   * that decides the type sizes here. 56mm is where the ornament strip
+   * above ends: at 54 the lead's first line crossed it.
    */
   .closing__body {
-    inset-block-start: 57mm;
+    inset-block-start: 56mm;
     inset-inline: 18mm;
   }
   .closing__lead {
-    margin: 0 0 5mm;
+    margin: 0 0 3.5mm;
     max-inline-size: 118mm;
     font-family: var(--font-display);
-    font-size: 11.5pt;
-    line-height: 1.35;
+    font-size: 11pt;
+    line-height: 1.32;
     color: #fff;
   }
   .closing__rows {
     margin: 0;
     display: grid;
-    gap: 3mm;
+    gap: 2mm;
   }
   .closing__rows div {
     display: grid;
@@ -332,15 +352,15 @@ const coords = computed(() => {
   /* ------------------------------------------------- what the forum is */
 
   .closing__forum {
-    margin-block-start: 6mm;
-    padding-block-start: 4mm;
+    margin-block-start: 4.5mm;
+    padding-block-start: 3mm;
     border-block-start: 0.4mm solid rgb(255 255 255 / 0.28);
   }
   .closing__sub {
     margin: 0 0 2.5mm;
   }
   .closing__sub--tight {
-    margin: 4mm 0 2mm;
+    margin: 2.4mm 0 1.4mm;
     font-size: 7.5pt;
     font-weight: 700;
     letter-spacing: 0.2em;
@@ -361,9 +381,9 @@ const coords = computed(() => {
     color: #8fa0cb;
   }
   .closing__facts dd {
-    margin: 0.8mm 0 0;
-    font-size: 9pt;
-    line-height: 1.3;
+    margin: 0.7mm 0 0;
+    font-size: 8.6pt;
+    line-height: 1.28;
     color: #fff;
   }
   .closing__numbers {
@@ -375,7 +395,7 @@ const coords = computed(() => {
     gap: 4mm;
   }
   .closing__numbers li {
-    padding: 2mm 3mm;
+    padding: 1.4mm 3mm;
     border: 0.3mm solid rgb(255 255 255 / 0.28);
     border-radius: 1mm;
     text-align: center;
@@ -405,7 +425,7 @@ const coords = computed(() => {
     gap: 4mm;
   }
   .closing__journey li {
-    padding-block-start: 1.8mm;
+    padding-block-start: 1.5mm;
     border-block-start: 0.5mm solid #c18429;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -419,23 +439,16 @@ const coords = computed(() => {
   }
   .closing__journey strong {
     display: block;
-    margin-block-start: 0.8mm;
-    font-size: 8pt;
+    margin-block-start: 0.6mm;
+    font-size: 7.6pt;
     font-weight: 600;
-    line-height: 1.25;
+    line-height: 1.22;
     color: #fff;
   }
-  .closing__journey span {
-    display: block;
-    margin-block-start: 0.8mm;
-    font-size: 6.8pt;
-    line-height: 1.3;
-    color: #a7b6dd;
-  }
   .closing__note {
-    margin: 2.5mm 0 0;
-    font-size: 6.8pt;
-    line-height: 1.35;
+    margin: 1.5mm 0 0;
+    font-size: 6.2pt;
+    line-height: 1.3;
     color: #8fa0cb;
   }
 

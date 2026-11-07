@@ -712,8 +712,7 @@ onBeforeUnmount(() => {
             <h4 class="panel__heading">{{ t('portfolio.labels.overview') }}</h4>
             <p class="panel__overview">{{ story }}</p>
           </div>
-
-          </div>
+        </div>
 
           <template v-for="block in blocks" :key="block.key">
             <h4 class="panel__heading">{{ t(`portfolio.blocks.${block.key}`) }}</h4>
@@ -729,61 +728,6 @@ onBeforeUnmount(() => {
           </template>
 
           <p v-if="project.statusNote" class="panel__status">{{ project.statusNote }}</p>
-
-          <!--
-            Only on paper, and at the end of the reading: what this project
-            costs set against what the other hundred and eleven cost, with
-            its own column marked. It is the one block on the page that is
-            about the project and the portfolio at once — a reader with four
-            sheets on the desk learns from it which of the four is the
-            unusual one — and it is what fills the foot of a sheet that
-            states six fields where another states twenty-four.
-
-            It was tried inside the opening band, in the gap the picture and
-            the overview leave beside the figures. Measured, that was worse:
-            the band grew by the block's own height and pushed the field
-            rows onto the next page, so the thin page stayed and lost its
-            chart as well.
-          -->
-          <div v-if="sizeBands.length" class="panel__pos" aria-hidden="true">
-            <p class="panel__posHead">{{ t('print.sizeTitle') }}</p>
-            <div class="panel__posBody">
-              <div class="panel__cols">
-                <div v-for="band in sizeBands" :key="band.key" class="panel__col">
-                  <span class="panel__colPlot">
-                    <span class="panel__colValue" :class="{ 'panel__colValue--here': band.here }">
-                      {{ band.n }}
-                    </span>
-                    <span
-                      class="panel__colBar"
-                      :class="{ 'panel__colBar--here': band.here }"
-                      :style="{ blockSize: band.height + '%' }"
-                    ></span>
-                  </span>
-                  <span class="panel__colKey" :class="{ 'panel__colKey--here': band.here }">
-                    {{ band.key }}
-                  </span>
-                </div>
-              </div>
-
-              <dl v-if="regionLine" class="panel__region">
-                <div>
-                  <dt>{{ t('print.regionWhere') }}</dt>
-                  <dd>{{ regionLine.name }}</dd>
-                </div>
-                <div>
-                  <dt>{{ t('print.regionSalary') }}</dt>
-                  <dd>{{ regionLine.salary }}</dd>
-                </div>
-                <div>
-                  <dt>{{ t('print.regionProjects') }}</dt>
-                  <dd>{{ regionLine.projects }}</dd>
-                </div>
-              </dl>
-            </div>
-            <p class="panel__posNote">{{ t('print.sizeAxis') }} · {{ sizeNote }}</p>
-          </div>
-
 
           <!-- Only on paper: the sheet's other renders, which on screen are
                the thumbnail strip above. They close the reading rather than
@@ -812,7 +756,63 @@ onBeforeUnmount(() => {
         <PrintClosing
           :heading="t('portfolio.contactsTitle')"
           :lead="t('portfolio.contactsLead')"
-        />
+        >
+          <!--
+            On paper, under the portfolio's four numbers: what this project
+            costs set against what the other hundred and eighty-five cost,
+            with its own column marked. It is the one block on the sheet that
+            is about the project and the portfolio at once — a reader with
+            four sheets on the desk learns from it which of the four is the
+            unusual one.
+
+            Twice it has been somewhere else and been measured there. Inside
+            the opening band it pushed the field rows onto the next page. At
+            the foot of the reading it would not fit under a full page and
+            opened an almost empty one instead, on three hundred and thirteen
+            reading pages. The closing page is the only one with room that is
+            the same height on every sheet.
+          -->
+          <template #position>
+            <div v-if="sizeBands.length" class="panel__pos" aria-hidden="true">
+              <p class="panel__posHead">{{ t('print.sizeTitle') }}</p>
+              <div class="panel__posBody">
+                <div class="panel__cols">
+                  <div v-for="band in sizeBands" :key="band.key" class="panel__col">
+                    <span class="panel__colPlot">
+                      <span class="panel__colValue" :class="{ 'panel__colValue--here': band.here }">
+                        {{ band.n }}
+                      </span>
+                      <span
+                        class="panel__colBar"
+                        :class="{ 'panel__colBar--here': band.here }"
+                        :style="{ blockSize: band.height + '%' }"
+                      ></span>
+                    </span>
+                    <span class="panel__colKey" :class="{ 'panel__colKey--here': band.here }">
+                      {{ band.key }}
+                    </span>
+                  </div>
+                </div>
+
+                <dl v-if="regionLine" class="panel__region">
+                  <div>
+                    <dt>{{ t('print.regionWhere') }}</dt>
+                    <dd>{{ regionLine.name }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('print.regionSalary') }}</dt>
+                    <dd>{{ regionLine.salary }}</dd>
+                  </div>
+                  <div>
+                    <dt>{{ t('print.regionProjects') }}</dt>
+                    <dd>{{ regionLine.projects }}</dd>
+                  </div>
+                </dl>
+              </div>
+              <p class="panel__posNote">{{ t('print.sizeAxis') }} · {{ sizeNote }}</p>
+            </div>
+          </template>
+        </PrintClosing>
 
         <!-- What a reader can do with the project they have just read. -->
         <footer class="panel__act">
@@ -1540,22 +1540,28 @@ onBeforeUnmount(() => {
     color: #4a5070;
   }
 
-  /* ------------------------------ this project against the other hundred */
+  /* --------------------------- this project against the other hundred and
+     eighty-five, on the closing page
+
+     The block sits on the navy sheet, so it is lit for a dark ground: pale
+     bars, white figures, gold for the band this project falls in. The gold
+     is the same gold the closing page's own rules use, which is what ties
+     the chart to the page rather than to the reading it came from. */
 
   .panel__pos {
     display: block;
-    margin-block-start: 4mm;
+    margin-block-start: 3.5mm;
     padding-block-start: 2.5mm;
-    border-block-start: 0.4mm solid #15193a;
+    border-block-start: 0.3mm solid rgba(226, 232, 255, 0.28);
     break-inside: avoid;
   }
   .panel__posHead {
     margin: 0 0 2mm;
-    font-size: 7.5pt;
+    font-size: 7pt;
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
-    color: #00566e;
+    color: #e2b964;
   }
   .panel__posBody {
     display: grid;
@@ -1571,48 +1577,50 @@ onBeforeUnmount(() => {
   .panel__col {
     text-align: center;
   }
+  /* 11mm, not 16: the chart shares the closing page with the address, the
+     forum and the journey, and five bars read as well short as tall. */
   .panel__colPlot {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    block-size: 16mm;
+    block-size: 11mm;
   }
   .panel__colValue {
     display: block;
     padding-block-end: 1mm;
     font-family: var(--font-display);
-    font-size: 10.5pt;
+    font-size: 10pt;
     font-weight: 600;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
-    color: #4a5070;
+    color: rgba(226, 232, 255, 0.72);
   }
   .panel__colBar {
     display: block;
     inline-size: 100%;
-    background: #cdd3e2;
+    background: rgba(226, 232, 255, 0.3);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
   /* The band this project falls in, which is the whole point of the chart. */
   .panel__colValue--here {
-    color: #15193a;
+    color: #f3f6ff;
   }
   .panel__colBar--here {
-    background: #c18429;
+    background: #e2b964;
   }
   .panel__colKey {
     display: block;
     margin-block-start: 1.2mm;
     padding-block-start: 1mm;
-    border-block-start: 0.3mm solid #c9ccd8;
-    font-size: 7pt;
+    border-block-start: 0.3mm solid rgba(226, 232, 255, 0.28);
+    font-size: 6.8pt;
     font-variant-numeric: tabular-nums;
-    color: #4a5070;
+    color: rgba(226, 232, 255, 0.72);
   }
   .panel__colKey--here {
     font-weight: 700;
-    color: #15193a;
+    color: #f3f6ff;
   }
   .panel__region {
     margin: 0;
@@ -1625,26 +1633,26 @@ onBeforeUnmount(() => {
     align-items: baseline;
     gap: 3mm;
     padding-block-end: 1.2mm;
-    border-block-end: 0.3mm solid #e3e5ec;
+    border-block-end: 0.3mm solid rgba(226, 232, 255, 0.2);
   }
   .panel__region dt {
-    font-size: 6.8pt;
+    font-size: 6.6pt;
     font-weight: 700;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: #4a5070;
+    color: rgba(226, 232, 255, 0.72);
   }
   .panel__region dd {
     margin: 0;
     font-size: 8.5pt;
     text-align: end;
-    color: #15193a;
+    color: #f3f6ff;
   }
   .panel__posNote {
-    margin: 2.5mm 0 0;
-    font-size: 6.8pt;
+    margin: 2mm 0 0;
+    font-size: 6.4pt;
     line-height: 1.35;
-    color: #626b8b;
+    color: rgba(226, 232, 255, 0.62);
   }
 
   /* The map under the figures: 66mm wide, which is the column. */
