@@ -142,8 +142,16 @@
 }
 
 /* `.stage` also paints itself; `.on-stage` only borrows the tokens, which is
-   what the header needs while it floats over a stage without covering it. */
+   what the header needs while it floats over a stage without covering it.
+
+   It is positioned because it has to be: the girih field and the film grain
+   are `position: absolute; inset: 0` pseudo-elements of this box, and a box
+   that is not a containing block hands them to the viewport instead. The two
+   chapter stages never showed it — `.chapter` is relative already — but the
+   registration page is a plain `.reg.stage`, and there the pattern stopped
+   one screen down and left the form standing on two different grounds. */
 .stage {
+  position: relative;
   background:
     /* The light falls from the top of a portal, not from everywhere. */
     radial-gradient(130% 80% at 50% -12%, rgb(63 92 168 / 0.8), transparent 68%),
