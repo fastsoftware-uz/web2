@@ -305,16 +305,19 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
 
 <?php else: ?>
 <header class="bar">
-  <div>
-    <strong>Roʻyxatdan oʻtganlar</strong>
-    <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
+  <div class="bar__title">
+    <div>
+      <strong>Roʻyxatdan oʻtganlar</strong>
+      <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
+    </div>
+    <span class="muted store"><?= app_h(storage_describe()) ?></span>
   </div>
   <div class="bar__right">
-    <span class="muted store"><?= app_h(storage_describe()) ?></span>
-    <a class="btn" href="?action=csv&amp;<?= app_h($query) ?>">CSV yuklab olish</a>
-    <a class="btn btn--quiet" href="site.php">Saytni tahrirlash</a>
-    <a class="btn btn--quiet" href="?action=password">Parol</a>
-    <a class="btn btn--quiet" href="?action=logout">Chiqish</a>
+    <a class="btn btn--lead" href="?action=csv&amp;<?= app_h($query) ?>">CSV yuklab olish</a>
+    <a class="btn" href="site.php">Saytni tahrirlash</a>
+    <a class="btn" href="?action=password">Parol</a>
+    <span class="bar__sep" aria-hidden="true"></span>
+    <a class="btn btn--plain" href="?action=logout">Chiqish</a>
   </div>
 </header>
 
@@ -364,16 +367,23 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
   </section>
   <?php endif; ?>
 
+  <?php
+  /*
+   * The counters, which are three groups and not one row of seven: how many
+   * there are, who they are, and where each of them stands. `tile--group`
+   * marks the first of a group, which is where the strip is cut.
+   */
+  ?>
   <section class="tiles">
     <a class="tile <?= ($_GET['role'] ?? '') === '' && ($_GET['status'] ?? '') === '' ? 'tile--on' : '' ?>" href="?">
       <b><?= $counts['all'] ?></b><span>Jami</span>
     </a>
-    <?php foreach ($ROLE_LABEL as $k => $v): ?>
-      <a class="tile <?= ($_GET['role'] ?? '') === $k ? 'tile--on' : '' ?>" href="?role=<?= $k ?>">
+    <?php $first = true; foreach ($ROLE_LABEL as $k => $v): ?>
+      <a class="tile <?= $first ? 'tile--group ' : '' ?><?= ($_GET['role'] ?? '') === $k ? 'tile--on' : '' ?>" href="?role=<?= $k ?>">
         <b><?= $counts[$k] ?></b><span><?= $v ?></span>
       </a>
-    <?php endforeach; ?>
-    <a class="tile <?= ($_GET['status'] ?? '') === 'new' ? 'tile--on' : '' ?>" href="?status=new">
+    <?php $first = false; endforeach; ?>
+    <a class="tile tile--group <?= ($_GET['status'] ?? '') === 'new' ? 'tile--on' : '' ?>" href="?status=new">
       <b><?= $counts['new'] ?></b><span>Yangi</span>
     </a>
     <a class="tile <?= ($_GET['status'] ?? '') === 'confirmed' ? 'tile--on' : '' ?>" href="?status=confirmed">
@@ -404,7 +414,16 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
   <?php if (!$rows): ?>
     <p class="empty">Hozircha hech kim roʻyxatdan oʻtmagan.</p>
   <?php else: ?>
-  <table>
+  <?php
+  /*
+   * `data-th` on every cell is what lets the stylesheet turn each row into a
+   * card on a telephone: the cell carries its own column heading, so the
+   * table head can be hidden and nothing loses its name. The strings are the
+   * same ones in the `<th>` row above, written once here rather than
+   * repeated in CSS, where they could drift out of step with the headings.
+   */
+  ?>
+  <table class="regs">
     <thead>
       <tr>
         <th>#</th><th>Sana</th><th>Tur</th><th>Ism</th><th>Tashkilot</th>
@@ -414,23 +433,23 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
     <tbody>
       <?php foreach ($rows as $row): ?>
       <tr class="row--<?= app_h($row['status'] ?? 'new') ?>">
-        <td class="num"><?= (int) ($row['id'] ?? 0) ?></td>
-        <td class="nowrap"><?= app_h(substr((string) ($row['created_at'] ?? ''), 0, 16)) ?></td>
-        <td><span class="pill pill--<?= app_h($row['role'] ?? '') ?>"><?= app_h($ROLE_LABEL[$row['role'] ?? ''] ?? $row['role'] ?? '') ?></span></td>
-        <td>
+        <td class="num cell--id" data-th="#"><?= (int) ($row['id'] ?? 0) ?></td>
+        <td class="nowrap cell--when" data-th="Sana"><?= app_h(substr((string) ($row['created_at'] ?? ''), 0, 16)) ?></td>
+        <td data-th="Tur"><span class="pill pill--<?= app_h($row['role'] ?? '') ?>"><?= app_h($ROLE_LABEL[$row['role'] ?? ''] ?? $row['role'] ?? '') ?></span></td>
+        <td class="cell--name" data-th="Ism">
           <b><?= app_h($row['full_name'] ?? '') ?></b>
           <?php if (($row['position'] ?? '') !== ''): ?><br><span class="muted"><?= app_h($row['position']) ?></span><?php endif; ?>
         </td>
-        <td>
+        <td data-th="Tashkilot">
           <?= app_h($row['organisation'] ?? '') ?>
           <?php if (($row['country'] ?? '') !== ''): ?><br><span class="muted"><?= app_h($row['country']) ?></span><?php endif; ?>
         </td>
-        <td class="nowrap">
+        <td class="nowrap" data-th="Aloqa">
           <a href="mailto:<?= app_h($row['email'] ?? '') ?>"><?= app_h($row['email'] ?? '') ?></a><br>
           <a href="tel:<?= app_h(preg_replace('/[^\d+]/', '', (string) ($row['phone'] ?? '')) ?? '') ?>"><?= app_h($row['phone'] ?? '') ?></a>
         </td>
-        <td><?= app_h($DIRECTION_LABEL[$row['direction'] ?? ''] ?? '') ?></td>
-        <td>
+        <td data-th="Yoʻnalish"><?= app_h($DIRECTION_LABEL[$row['direction'] ?? ''] ?? '') ?></td>
+        <td data-th="Holat">
           <form method="post" class="status">
             <input type="hidden" name="action" value="status">
             <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
@@ -454,7 +473,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
         $auto = in_array(app_role($row['role'] ?? ''), TICKET_AUTO, true);
         $given = $auto || ticket_released($config, (int) $row['id']);
         ?>
-        <td class="nowrap ticket">
+        <td class="nowrap ticket" data-th="Bilet">
           <?php if ($given): ?>
             <a class="btn btn--quiet" href="/ticket/<?= app_h(ticket_number((int) $row['id'], $config)) ?>" target="_blank" rel="noopener">E-bilet</a>
           <?php endif; ?>
@@ -471,7 +490,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
         </td>
       </tr>
       <?php if (($row['note'] ?? '') !== ''): ?>
-      <tr class="note"><td></td><td colspan="8"><?= app_h($row['note']) ?></td></tr>
+      <tr class="note row--<?= app_h($row['status'] ?? 'new') ?>"><td></td><td colspan="8"><span><?= app_h($row['note']) ?></span></td></tr>
       <?php endif; ?>
       <?php endforeach; ?>
     </tbody>

@@ -27,7 +27,9 @@ server/
     api.php          ← POST a registration; GET it for a health check
     index.php        ← the admin: login, list, search, status, password, CSV
     site.php         ← the editor: the site's own texts, and the projects
-    admin.css  admin.js
+    admin.css        ← the whole look of both pages; no build, no CDN
+    admin.js         ← the two handlers the content policy keeps out of
+                       attributes. There is no other script on these pages.
   src/
     env.php            ← reads .env; the whole configuration is assembled here
     guard.php          ← sessions, headers, the login throttle, the password

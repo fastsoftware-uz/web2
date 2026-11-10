@@ -381,15 +381,25 @@ $projectId = (string) ($_GET['id'] ?? '');
 </head>
 <body>
 <header class="bar">
-  <div>
-    <strong>Saytni tahrirlash</strong>
-    <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
+  <div class="bar__title">
+    <div>
+      <strong>Saytni tahrirlash</strong>
+      <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
+    </div>
   </div>
   <nav class="bar__right">
-    <a class="btn btn--quiet" href="./">Roʻyxatdan oʻtganlar</a>
-    <a class="btn<?= $key === 'forum' ? '' : ' btn--quiet' ?>" href="site.php?f=forum">Forum sayti</a>
-    <a class="btn<?= $key === 'content' ? '' : ' btn--quiet' ?>" href="site.php?f=content">Umumiy maʼlumotlar</a>
-    <a class="btn btn--quiet" href="?action=logout">Chiqish</a>
+    <?php
+    /*
+     * Which of the two files is open is the one thing this bar has to say,
+     * so that is the button that is filled in; the other two places and the
+     * way out stand behind it.
+     */
+    ?>
+    <a class="btn<?= $key === 'forum' ? ' btn--lead' : '' ?>" href="site.php?f=forum">Forum sayti</a>
+    <a class="btn<?= $key === 'content' ? ' btn--lead' : '' ?>" href="site.php?f=content">Umumiy maʼlumotlar</a>
+    <span class="bar__sep" aria-hidden="true"></span>
+    <a class="btn btn--plain" href="./">Roʻyxatdan oʻtganlar</a>
+    <a class="btn btn--plain" href="?action=logout">Chiqish</a>
   </nav>
 </header>
 
@@ -433,28 +443,87 @@ $projectId = (string) ($_GET['id'] ?? '');
     <button type="submit">Qidirish</button>
     <a class="btn btn--quiet" href="site.php?f=<?= app_h($key) ?>&amp;page=projects">Tozalash</a>
   </form>
-  <p class="muted"><?= count($allProjects) ?> ta loyiha · saytda <?= count($projects) ?> ta koʻrinadi</p>
+  <p class="muted count"><?= count($allProjects) ?> ta loyiha · saytda <?= count($projects) ?> ta koʻrinadi</p>
+  <?php
+  /*
+   * Two hundred rows under one heading is a list nobody can find anything
+   * in, so the table is cut into its regions — which is the order the
+   * portfolio is already in — and each region gets a heading row carrying
+   * its own count. The rows are gathered first because that count cannot be
+   * known until the search has taken its share out.
+   */
+  $shown = [];
+  foreach ($allProjects as $p) {
+      $id = (string) ($p['id'] ?? '');
+      $name = (string) ($p['titleI18n']['uz'] ?? $p['displayTitle'] ?? $p['title'] ?? $id);
+      $live = site_get($merged, "portfolio.projects.$id") ?? $p;
+      $liveName = (string) ($live['titleI18n']['uz'] ?? $live['title'] ?? $name);
+      if ($needle !== '' && !str_contains(app_lower($liveName . ' ' . $id), $needle)) {
+          continue;
+      }
+      $rg = (string) ($live['region'] ?? '');
+      $shown[] = ['id' => $id, 'live' => $live, 'name' => $liveName, 'region' => $rg];
+  }
+  $perRegion = [];
+  foreach ($shown as $s) {
+      $perRegion[$s['region']] = ($perRegion[$s['region']] ?? 0) + 1;
+  }
+  $regionOf = static fn (string $rg): string => $rg === ''
+      ? 'Hududsiz'
+      : (string) ($regionNames[$rg]['uz'] ?? $rg);
+  $lastRegion = null;
+  /* The regions in the order the table puts them, for the jump bar. */
+  $regionOrder = [];
+  foreach ($shown as $s) {
+      if (!in_array($s['region'], $regionOrder, true)) {
+          $regionOrder[] = $s['region'];
+      }
+  }
+  ?>
+  <?php if (count($regionOrder) > 1): ?>
+  <nav class="jump" aria-label="Hududlar">
+    <?php foreach ($regionOrder as $rg): ?>
+      <a href="#r-<?= app_h($rg === '' ? 'none' : $rg) ?>"><b><?= app_h($regionOf($rg)) ?></b> <i><?= (int) $perRegion[$rg] ?></i></a>
+    <?php endforeach; ?>
+  </nav>
+  <?php endif; ?>
   <table class="rows">
-    <thead><tr><th>Loyiha</th><th>Hudud</th><th>Yoʻnalish</th><th>Investitsiya</th><th></th></tr></thead>
-    <tbody>
-    <?php foreach ($allProjects as $p):
-        $id = (string) ($p['id'] ?? '');
-        $name = (string) ($p['titleI18n']['uz'] ?? $p['displayTitle'] ?? $p['title'] ?? $id);
-        $live = site_get($merged, "portfolio.projects.$id") ?? $p;
-        $liveName = (string) ($live['titleI18n']['uz'] ?? $live['title'] ?? $name);
-        if ($needle !== '' && !str_contains(app_lower($liveName . ' ' . $id), $needle)) {
-            continue;
-        }
-        $isHidden = isset($hidden[$id]);
+    <?php /* No region column: every row under a heading is in that region,
+             and saying so two hundred times took a column's width to repeat
+             what the heading above it already says. */ ?>
+    <thead><tr><th>Loyiha</th><th>Yoʻnalish</th><th>Investitsiya</th><th></th></tr></thead>
+    <?php
+    /*
+     * One `tbody` per region, and not one for the whole table.
+     *
+     * The heading rows are sticky, and a sticky element stops sticking when
+     * its own containing block leaves the screen. In a single `tbody` that
+     * block is the whole two hundred rows, so every heading scrolled past
+     * stayed pinned and they piled up on each other — by Khorezm there were
+     * fourteen region names stacked under the column heads. A `tbody` per
+     * region gives each heading exactly its own rows to be stuck to.
+     */
     ?>
+    <?php foreach ($shown as $s):
+        $id = $s['id'];
+        $live = $s['live'];
+        $liveName = $s['name'];
+        $isHidden = isset($hidden[$id]);
+        if ($s['region'] !== $lastRegion):
+            if ($lastRegion !== null): ?></tbody><?php endif;
+            $lastRegion = $s['region'];
+    ?>
+      <tbody>
+      <tr class="rowgroup"><th colspan="4" scope="colgroup" id="r-<?= app_h($s['region'] === '' ? 'none' : $s['region']) ?>">
+        <?= app_h($regionOf($s['region'])) ?><span><?= (int) $perRegion[$s['region']] ?> ta</span>
+      </th></tr>
+    <?php endif; ?>
       <tr<?= $isHidden ? ' class="row--off"' : '' ?>>
         <td>
           <a href="site.php?f=<?= app_h($key) ?>&amp;page=project&amp;id=<?= app_h($id) ?>"><b><?= app_h($liveName) ?></b></a>
           <?php if ($isHidden): ?><span class="chip chip--off">saytda yoʻq</span><?php endif; ?>
           <div class="muted small"><?= app_h($id) ?></div>
         </td>
-        <td><?php $rg = (string) ($live['region'] ?? '');
-          echo app_h($rg === '' ? '—' : ($regionNames[$rg]['uz'] ?? $rg)); ?></td>
         <td><?= app_h(SEGMENT_LABEL[(string) ($live['segment'] ?? '')] ?? (string) ($live['segment'] ?? '—')) ?></td>
         <td><?= app_h((string) ($live['investmentDisplay'] ?? '—')) ?></td>
         <td>
@@ -467,7 +536,7 @@ $projectId = (string) ($_GET['id'] ?? '');
         </td>
       </tr>
     <?php endforeach; ?>
-    </tbody>
+    <?php if ($lastRegion !== null): ?></tbody><?php endif; ?>
   </table>
 
 <?php elseif ($page === 'project' && $key === 'forum' && $projectId !== ''): ?>
@@ -559,17 +628,33 @@ $projectId = (string) ($_GET['id'] ?? '');
   </form>
 
 <?php else: ?>
-  <p class="muted">
+  <p class="muted lede">
     Bu yerda oʻzgartirilgan narsa darhol saytga chiqadi — qayta qurish ham, deploy ham shart emas.
     Saytning yangi versiyasi yuklansa, oʻzgarishlaringiz uning ustiga oʻzi qayta qoʻllanadi.
   </p>
-  <section class="cards">
+  <?php
+  /*
+   * Two of these are not sections of the file. The portfolio is where the
+   * organiser spends their time, and publishing is the only thing on the
+   * page that leaves the server; among sixteen cards of equal weight both
+   * were invisible, so they stand above the sixteen rather than inside them.
+   */
+  ?>
+  <section class="cards cards--lead">
     <?php if ($key === 'forum'): ?>
       <a class="card card--link" href="site.php?f=forum&amp;page=projects">
         <b>Loyihalar</b>
         <span><?= count($base['portfolio']['projects'] ?? []) ?> ta loyiha — tahrirlash, yashirish</span>
       </a>
     <?php endif; ?>
+    <a class="card card--link" href="site.php?f=<?= app_h($key) ?>&amp;page=publish">
+      <b>Nashr va tarix</b>
+      <span><?= count($overrides['values']) ?> ta oʻzgarish · bekor qilish</span>
+    </a>
+  </section>
+
+  <p class="group-head">Sayt matnlari</p>
+  <section class="cards">
     <?php foreach ($base as $k => $v):
         if (in_array($k, ['portfolio'], true)) {
             continue;
@@ -587,10 +672,6 @@ $projectId = (string) ($_GET['id'] ?? '');
         <span><?= $count ?> ta maydon<?= $edited ? " · {$edited} ta oʻzgartirilgan" : '' ?></span>
       </a>
     <?php endforeach; ?>
-    <a class="card card--link" href="site.php?f=<?= app_h($key) ?>&amp;page=publish">
-      <b>Nashr va tarix</b>
-      <span><?= count($overrides['values']) ?> ta oʻzgarish · bekor qilish</span>
-    </a>
   </section>
 <?php endif; ?>
 </main>

@@ -67,14 +67,19 @@ kutish kerak; bir necha daqiqada oʻtadi.
 
 ## 2. Roʻyxatdan oʻtganlar
 
-Kirgach birinchi koʻradigan sahifangiz. Yuqorida beshta raqam:
+Kirgach birinchi koʻradigan sahifangiz. Yuqorida bir qator raqam, uch guruhga
+ajratilgan — chiziqchalar guruhlarni ajratib turadi:
 
 - **Jami** — kelgan arizalar soni
 - **VIP** / **Investor** / **Mehmon** / **Spiker** — ishtirok turi boʻyicha
-- **Yangi** — hali koʻrib chiqilmagan
-- **Tasdiqlangan** — siz tasdiqlagan
+- **Yangi** — hali koʻrib chiqilmagan, **Tasdiqlangan** — siz tasdiqlagan
 
 Raqamning oʻziga bosilsa roʻyxat shu boʻyicha filtrlanadi.
+
+> **Telefonda.** Ekran tor boʻlsa jadval qatorlari kartochkaga aylanadi: har
+> bir ariza alohida kartochka boʻlib, ichida ustun nomlari bilan birga
+> yoziladi. Yon tomonga surish shart emas — holatni oʻzgartirish ham, biletni
+> berish ham oʻsha kartochka ichida.
 
 ### Qidirish
 
@@ -178,10 +183,22 @@ Ikkita fayl bor:
 
 ### Boʻlimlar
 
-Birinchi sahifada kartochkalar: **Tadbir**, **Kirish**, **Maqsadlar**,
+Birinchi sahifaning tepasida ikkita katta kartochka — **Loyihalar** va
+**Nashr va tarix**. Ular sayt matni emas: biri portfel, ikkinchisi
+oʻzgarishlarni nashr qilish, shuning uchun alohida turadi.
+
+Ostida **Sayt matnlari**: **Tadbir**, **Kirish**, **Maqsadlar**,
 **Yoʻnalishlar**, **Ishtirokchilar**, **Sessiyalar**, **Dastur**, **Aloqa** va
 boshqalar. Har birining ostida nechta maydon borligi yozilgan. Agar siz
 oʻzgartirgan boʻlsangiz — “3 ta oʻzgartirilgan” deb ham koʻrsatadi.
+
+### Loyihalar roʻyxati
+
+Loyihalar ikki yuzdan ortiq, shuning uchun roʻyxat hududlar boʻyicha
+boʻlingan: har bir hudud oʻz sarlavhasi va soni bilan. Jadval tepasidagi
+hudud tugmalaridan biriga bosilsa, roʻyxat shu hududga oʻtadi — pastga
+aylantirib oʻtirish shart emas. Qidiruv maydoni loyiha nomi va kodi boʻyicha
+ishlaydi.
 
 ### Uch til
 
