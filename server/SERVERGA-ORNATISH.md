@@ -337,9 +337,29 @@ almashtiring:
         }
     }
 
+    # Saytning oʻzi uchun xavfsizlik sarlavhalari. Adminka va e-bilet
+    # oʻzinikini PHP dan yuboradi (src/guard.php), lekin statik sahifalarga
+    # sarlavha qoʻyadigan yagona joy — shu. GitHub Pages da bu imkoniyat
+    # yoʻq edi, oʻz serveringizda bor.
+    #   nosniff        — brauzer fayl turini oʻzi «taxmin qilmasin»
+    #   SAMEORIGIN     — sahifa begona saytning freymiga solinmasin
+    #   Referrer-Policy— boshqa saytga oʻtilganda toʻliq manzil berilmasin
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
+
     # Adminka yangilagan 2 ta JSON keshda qolmasin.
+    #
+    # Diqqat: nginx da bitta `location` ichida `add_header` yozilsa, yuqoridagi
+    # sarlavhalar SHU location uchun butunlay yoʻqoladi — meros olinmaydi.
+    # Shuning uchun ular bu yerda takrorlanadi.
     location /data/ {
-        add_header Cache-Control "no-cache";
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
     }
 ```
 

@@ -137,7 +137,7 @@ if (($config['admin_ip_allow'] ?? []) === []) {
 
 $url = (string) $config['site_url'];
 if ($url === '') {
-    say('warn', 'SITE_URL bo\'sh', 'e-bilet QR kodi so\'rov kelgan hostni ishlatadi — proksi orqasida bu xato bo\'lishi mumkin');
+    say('warn', 'SITE_URL bo\'sh', 'e-bilet manzili so\'rov kelgan Host sarlavhasidan olinadi — uni so\'rov yuboruvchi yozadi, ya\'ni beyjdagi QR ham, xabarnoma xatidagi havola ham begona domenga ko\'rsatilishi mumkin; to\'ldiring');
 } elseif (!str_starts_with($url, 'https://')) {
     say('warn', 'SITE_URL https emas', $url);
 } else {

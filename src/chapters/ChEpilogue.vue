@@ -98,11 +98,19 @@ const outcomes = computed(() => forum.value?.outcomes);
           </p>
 
           <div class="contacts__map">
+            <!-- The one frame on the site, and it belongs to somebody else.
+                 `allow-scripts allow-same-origin` is what the map needs to
+                 draw; everything the sandbox withholds — navigating the page
+                 that holds it above all — is something an embedded map has no
+                 business doing. Its own "View larger map" link is withheld
+                 along with the rest, which costs nothing: the same link is
+                 under the frame, where the attribution has to be anyway. -->
             <iframe
               :src="mapSrc"
               :title="t('contact.mapTitle')"
               loading="lazy"
               referrerpolicy="no-referrer-when-downgrade"
+              sandbox="allow-scripts allow-same-origin"
             />
           </div>
           <p class="contacts__credit">

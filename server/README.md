@@ -279,6 +279,20 @@ server {
     # already; this is the second lock.
     location ~ /\. { deny all; }
 
+    # The static site's own headers. The admin and the badge send theirs from
+    # PHP (src/guard.php), and they send a great deal more; these four are
+    # what a page of HTML and JSON needs, and nginx is the only place the
+    # built site can get them — a meta tag cannot send frame-ancestors, and
+    # GitHub Pages sends no headers of its own at all.
+    #
+    # They are repeated inside every location below that sends an add_header
+    # of its own. That is not tidiness: nginx replaces, rather than adds to,
+    # the inherited set the moment a location declares one header.
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
+
     # The built site. Everything is a real file; there is no SPA router to
     # fall back for, so a miss is a miss.
     location / {
@@ -288,13 +302,21 @@ server {
     # The hashed assets never change under their own name.
     location /assets/ {
         expires 1y;
-        add_header Cache-Control "public, immutable";
+        add_header Cache-Control "public, immutable" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
     }
 
     # The two files the admin rewrites. They must never be served from a
     # cache: the whole point of the editor is that a change is live at once.
     location /data/ {
-        add_header Cache-Control "no-cache";
+        add_header Cache-Control "no-cache" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
     }
 
     # The e-ticket. The number is in the path; ticket.php reads it from

@@ -132,9 +132,32 @@ function ticket_base(array $config): string
     if ($configured !== '') {
         return $configured;
     }
+
+    /*
+     * Falling back to the request's own host means falling back to a header
+     * the caller writes. This address is not only answered back to whoever
+     * sent the form: it goes into the QR code printed on the badge, and into
+     * the notification mail the organisers read — so `Host: somewhere.else`
+     * would put somebody else's link in front of the organisers.
+     *
+     * It cannot be verified from here, which is what SITE_URL is for and why
+     * bin/doctor.php asks for it. What can be done is to refuse a host that
+     * is not shaped like one, and to believe X-Forwarded-Proto only where
+     * TRUST_PROXY says a proxy is really in front — the same rule
+     * app_client_ip() follows, and for the same reason.
+     */
+    $host = (string) ($_SERVER['HTTP_HOST'] ?? '');
+    if (preg_match('/^(?:[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*(?::\d{1,5})?$/', $host) !== 1
+        && preg_match('/^\[[0-9A-Fa-f:.]+\](?::\d{1,5})?$/', $host) !== 1
+    ) {
+        $host = 'localhost';
+    }
+
     $https = ($_SERVER['HTTPS'] ?? '') !== '' && ($_SERVER['HTTPS'] ?? '') !== 'off';
-    $proto = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ($https ? 'https' : 'http'));
-    $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $proto = $https ? 'https' : 'http';
+    if (!empty($config['trust_proxy']) && ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https') {
+        $proto = 'https';
+    }
     return $proto . '://' . $host;
 }
 

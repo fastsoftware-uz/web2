@@ -56,6 +56,27 @@ function admin_check_token(): bool
         && hash_equals((string) $_SESSION['csrf'], (string) $_POST['token']);
 }
 
+/**
+ * The query string to come back to after a change, from the form that asked
+ * for the change.
+ *
+ * It is a reader's own filter — `?q=ivanov&status=new` — carried through a
+ * redirect so that confirming one registration does not throw away the
+ * search that found it. It is also a value from the request going into a
+ * `Location:` header, so it is taken as what it is: the characters a query
+ * string is made of, and nothing else. PHP refuses a header with a newline
+ * in it, but a field that arrives as an array rather than a string would
+ * still have reached the header as the word "Array".
+ */
+function admin_back(): string
+{
+    $back = $_POST['back'] ?? '';
+    if (!is_string($back)) {
+        return '';
+    }
+    return (string) preg_replace('/[^A-Za-z0-9_=&%.\-+]/', '', $back);
+}
+
 $error = '';
 
 if ($action === 'logout') {
@@ -137,7 +158,7 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
     if (admin_check_token()) {
         storage_set_status($config, (int) ($_POST['id'] ?? 0), (string) ($_POST['status'] ?? ''));
     }
-    header('Location: ?' . ($_POST['back'] ?? ''));
+    header('Location: ?' . admin_back());
     exit;
 }
 
@@ -155,8 +176,32 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'ticket') {
             error_log('[forum-admin] ticket: ' . $e->getMessage());
         }
     }
-    header('Location: ?' . ($_POST['back'] ?? ''));
+    header('Location: ?' . admin_back());
     exit;
+}
+
+/**
+ * One cell, written so that a spreadsheet reads it as what the guest typed.
+ *
+ * Excel and LibreOffice read a cell beginning with `=`, `+`, `-` or `@` as a
+ * formula, and the export is a file somebody opens on their own machine with
+ * every other guest's telephone number in the next column. A registration is
+ * a public form: `=HYPERLINK("https://…?x="&A2,"Click")` typed into the name
+ * field is a live link in the organiser's spreadsheet that carries the row
+ * beside it away, and `=WEBSERVICE(…)` does not wait to be clicked. Nothing
+ * refuses it on the way in, because none of those characters is wrong in a
+ * name — it is the spreadsheet, not the data, that has to be told.
+ *
+ * So a leading formula character is preceded by an apostrophe, which is the
+ * mark both programs read as "this cell is text" and neither displays.
+ *
+ * It also repairs the telephone column, which this got wrong from the start:
+ * every number here is written +998…, and Excel has been evaluating that as
+ * a sum and showing 998901112233 ever since.
+ */
+function admin_csv_cell(string $value): string
+{
+    return $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'" . $value : $value;
 }
 
 if ($authed && $action === 'csv') {
@@ -176,7 +221,7 @@ if ($authed && $action === 'csv') {
     foreach ($rows as $row) {
         $line = [];
         foreach (FIELDS as $f) {
-            $line[] = (string) ($row[$f] ?? '');
+            $line[] = admin_csv_cell((string) ($row[$f] ?? ''));
         }
         fputcsv($out, $line, ';', '"', '');
     }
