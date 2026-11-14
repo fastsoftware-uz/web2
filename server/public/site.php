@@ -15,44 +15,16 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/app.php';
+require_once __DIR__ . '/../src/adminui.php';
 require_once __DIR__ . '/../src/site.php';
-require_once __DIR__ . '/../src/guard.php';
+require_once __DIR__ . '/../src/photos.php';
+require_once __DIR__ . '/../src/import.php';
 
 $config = app_config();
 
 /* The same headers, the same session and the same locks as the list; this
    page shows no telephone numbers but it can change what the site says. */
-guard_require_https($config);
-guard_headers('admin');
-guard_admin_session($config);
-
-if (!guard_ip_allowed($config, app_client_ip())) {
-    http_response_code(403);
-    header('Content-Type: text/plain; charset=utf-8');
-    echo "Bu manzildan kirish yopilgan.\n";
-    exit;
-}
-
-if (empty($_SESSION['admin'])) {
-    header('Location: ./');
-    exit;
-}
-
-function admin_token(): string
-{
-    if (empty($_SESSION['csrf'])) {
-        $_SESSION['csrf'] = bin2hex(random_bytes(16));
-    }
-    return (string) $_SESSION['csrf'];
-}
-
-function admin_check_token(): bool
-{
-    return isset($_SESSION['csrf'])
-        && is_string($_POST['token'] ?? null)
-        && hash_equals((string) $_SESSION['csrf'], (string) $_POST['token']);
-}
+$user = admin_boot($config, 'site.edit');
 
 /* ------------------------------------------------------------------ names */
 
@@ -137,6 +109,12 @@ try {
     $problem = $e->getMessage();
 }
 $overrides = site_overrides($config, $key);
+/* The projects added from the admin are part of the base as far as the
+   editor is concerned — an override has to have a path to land on, and a
+   project added here is edited exactly like one that came out of a build. */
+if ($base !== null) {
+    $base = site_with_added($base, $overrides, $key);
+}
 
 /**
  * A deploy has landed since the last save, so re-apply on top of it.
@@ -172,6 +150,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
                 $fields = is_array($_POST['f'] ?? null) ? $_POST['f'] : [];
                 $changed = 0;
                 $cleared = 0;
+                $refused = [];
                 foreach ($fields as $path => $posted) {
                     $path = (string) $path;
                     if (!site_has($base, $path)) {
@@ -179,6 +158,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
                     }
                     $original = site_get($base, $path);
                     $value = site_cast($original, is_string($posted) ? $posted : '');
+                    /*
+                     * Two fields that are keys, not words.
+                     *
+                     * `region` and `segment` are shown in the form as what
+                     * they are — `surkhandarya`, `infrastructure` — because
+                     * that is what the site reads them as: the region
+                     * headings, the counts above the portfolio and the
+                     * filter all look the value up. Typed over with the
+                     * Uzbek name they would silently drop the project out of
+                     * its own region. Now that more than one person can edit
+                     * this, the two are checked rather than trusted.
+                     */
+                    $complaint = site_key_complaint($path, $value);
+                    if ($complaint !== '') {
+                        $refused[] = $complaint;
+                        continue;
+                    }
                     if (site_same($value, $original)) {
                         if (isset($overrides['values'][$path])) {
                             unset($overrides['values'][$path]);
@@ -212,6 +208,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
                 $notice = $changed || $cleared
                     ? "Saqlandi: {$changed} ta oʻzgarish, {$cleared} tasi asl holiga qaytdi. Sayt yangilandi."
                     : 'Oʻzgarish yoʻq edi — sayt baribir qayta nashr etildi.';
+                if ($refused !== []) {
+                    $problem = 'Saqlanmadi: ' . implode(' · ', $refused);
+                }
+                if ($changed || $cleared) {
+                    audit_log($config, 'site.save', [
+                        'fayl' => $key,
+                        'oʻzgardi' => $changed,
+                        'qaytdi' => $cleared,
+                        'maydonlar' => array_slice(array_keys($fields), 0, 6),
+                    ], (string) ($_GET['section'] ?? $_GET['id'] ?? $key));
+                }
                 $overrides = site_overrides($config, $key);
             } elseif ($do === 'hide' || $do === 'show') {
                 $id = (string) ($_POST['id'] ?? '');
@@ -222,6 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
                 site_save_overrides($config, $key, $overrides);
                 site_publish($config, $key);
                 $notice = $do === 'hide' ? 'Loyiha saytdan olib qoʻyildi.' : 'Loyiha saytga qaytarildi.';
+                audit_log($config, 'site.' . $do, [], $id);
                 $overrides = site_overrides($config, $key);
             } elseif ($do === 'revert') {
                 $path = (string) ($_POST['path'] ?? '');
@@ -229,17 +237,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
                 site_save_overrides($config, $key, $overrides);
                 site_publish($config, $key);
                 $notice = 'Maydon asl holiga qaytarildi.';
+                audit_log($config, 'site.revert', ['fayl' => $key], $path);
                 $overrides = site_overrides($config, $key);
             } elseif ($do === 'revert-all') {
+                $undone = count($overrides['values']) + count($overrides['hidden']);
                 $overrides['values'] = [];
                 $overrides['hidden'] = [];
                 site_save_overrides($config, $key, $overrides);
                 site_publish($config, $key);
                 $notice = 'Barcha oʻzgarishlar bekor qilindi — sayt asl holiga qaytdi.';
+                audit_log($config, 'site.revert-all', ['fayl' => $key, 'bekor qilindi' => $undone]);
                 $overrides = site_overrides($config, $key);
             } elseif ($do === 'republish') {
                 $result = site_publish($config, $key);
                 $notice = 'Sayt qayta nashr etildi: ' . $result['applied'] . ' ta oʻzgarish qoʻllandi.';
+                audit_log($config, 'site.republish', ['fayl' => $key, 'oʻzgarish' => $result['applied']]);
+                $overrides = site_overrides($config, $key);
+            } elseif (str_starts_with($do, 'photo-')) {
+                $notice = site_photo_action($config, $do, $overrides, $key);
                 $overrides = site_overrides($config, $key);
             }
         } catch (Throwable $e) {
@@ -247,7 +262,135 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
         }
         // Re-read the base: publishing may have re-taken it.
         $base = site_base($config, $key, $baseNote);
+        if ($base !== null) {
+            $base = site_with_added($base, $overrides, $key);
+        }
     }
+}
+
+/**
+ * Is this value allowed in this field?
+ *
+ * Only two fields are checked, and both for the same reason: they are keys
+ * the site looks things up by, not text it prints. Everything else in the
+ * editor is prose, a number or a date, and site_cast() already keeps each of
+ * those in the shape the base held.
+ */
+function site_key_complaint(string $path, mixed $value): string
+{
+    if (!is_string($value) || !str_starts_with($path, 'portfolio.projects.')) {
+        return '';
+    }
+    if (str_ends_with($path, '.region')) {
+        $known = array_column(INTAKE_REGIONS, 'region');
+        if (!in_array($value, $known, true)) {
+            return '«Hudud» uchun «' . $value . '» notoʻgʻri. Ruxsat etilganlari: '
+                . implode(', ', $known);
+        }
+    }
+    if (str_ends_with($path, '.segment')) {
+        $known = array_values(INTAKE_SEGMENTS);
+        if (!in_array($value, $known, true)) {
+            return '«Yoʻnalish» uchun «' . $value . '» notoʻgʻri. Ruxsat etilganlari: '
+                . implode(', ', $known);
+        }
+    }
+    return '';
+}
+
+/**
+ * The photographs of one project: add, remove, reorder.
+ *
+ * A project's `photos` list is an override like any other, so all three are
+ * one write to the overlay followed by a publish. The pictures themselves go
+ * through src/photos.php, which re-encodes them and keeps the original in the
+ * data directory where a deploy cannot delete it.
+ *
+ * Removing a photograph takes it off the project either way; the file is
+ * deleted only when it is one of ours. A photograph that came out of a build
+ * stays on disk, because the next deploy would bring it back anyway and a
+ * file that disappears and returns is worse than one that is simply unused.
+ */
+function site_photo_action(array $config, string $do, array $overrides, string $key): string
+{
+    if ($key !== 'forum') {
+        throw new RuntimeException('Rasmlar faqat forum sayti loyihalarida.');
+    }
+    $id = (string) ($_POST['id'] ?? '');
+    /*
+     * A project id and nothing else.
+     *
+     * It is pasted into a dotted path, and a dot inside it would be a second
+     * segment: `sur-91.titleI18n` names a real place in the file and the
+     * write would land on it. Every id the build produces, and every one the
+     * importer makes, is lower-case letters, digits, a dash or an underscore.
+     */
+    if (preg_match('/^[a-z0-9][a-z0-9_-]{1,80}$/', $id) !== 1) {
+        throw new RuntimeException('Loyiha kodi notoʻgʻri.');
+    }
+    $path = 'portfolio.projects.' . $id . '.photos';
+    $base = site_base($config, $key);
+    if ($base === null) {
+        throw new RuntimeException('Saytning maʼlumot fayli topilmadi.');
+    }
+    $base = site_with_added($base, $overrides, $key);
+    if (!site_has($base, 'portfolio.projects.' . $id)) {
+        throw new RuntimeException('Bunday loyiha yoʻq: ' . $id);
+    }
+    $current = $overrides['values'][$path] ?? site_get($base, $path);
+    $list = [];
+    foreach ((array) $current as $stem) {
+        if (is_string($stem) && photos_stem_ok($stem)) {
+            $list[] = $stem;
+        }
+    }
+
+    $message = '';
+    if ($do === 'photo-add') {
+        $file = $_FILES['photo'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Rasm yuklanmadi — fayl tanlanmagan yoki serverning chegarasidan katta.');
+        }
+        if (!is_uploaded_file((string) $file['tmp_name'])) {
+            throw new RuntimeException('Yuklangan fayl topilmadi.');
+        }
+        if (count($list) >= PHOTO_MAX_PER_PROJECT) {
+            throw new RuntimeException('Bitta loyihaga ' . PHOTO_MAX_PER_PROJECT . ' tadan koʻp rasm qoʻyilmaydi.');
+        }
+        $bytes = (string) @file_get_contents((string) $file['tmp_name']);
+        $stem = photos_store($config, $bytes, $id);
+        $list[] = $stem;
+        audit_log($config, 'photo.add', ['rasm' => $stem, 'jami' => count($list)], $id);
+        $message = 'Rasm qoʻshildi.';
+    } elseif ($do === 'photo-remove') {
+        $stem = (string) ($_POST['stem'] ?? '');
+        $list = array_values(array_filter($list, static fn(string $s): bool => $s !== $stem));
+        if (photos_is_own($config, $stem)) {
+            photos_delete($config, $stem);
+        }
+        audit_log($config, 'photo.remove', ['rasm' => $stem, 'qoldi' => count($list)], $id);
+        $message = 'Rasm olib tashlandi.';
+    } elseif ($do === 'photo-move') {
+        $stem = (string) ($_POST['stem'] ?? '');
+        $step = ($_POST['dir'] ?? '') === 'up' ? -1 : 1;
+        $at = array_search($stem, $list, true);
+        $to = $at === false ? -1 : $at + $step;
+        if ($at !== false && $to >= 0 && $to < count($list)) {
+            [$list[$at], $list[$to]] = [$list[$to], $list[$at]];
+            audit_log($config, 'photo.order', ['rasm' => $stem, 'oʻrin' => $to + 1], $id);
+            $message = 'Tartib oʻzgartirildi.';
+        }
+    }
+
+    $original = site_get($base, $path);
+    if (is_array($original) && $original === $list) {
+        unset($overrides['values'][$path]);
+    } else {
+        $overrides['values'][$path] = $list;
+    }
+    site_save_overrides($config, $key, $overrides);
+    site_publish($config, $key);
+    return $message;
 }
 
 $stale = [];
@@ -369,39 +512,22 @@ $title = 'Sayt matnlari';
 $section = (string) ($_GET['section'] ?? '');
 $projectId = (string) ($_GET['id'] ?? '');
 ?>
-<!doctype html>
-<html lang="uz">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title><?= app_h($title) ?> — <?= app_h($config['site_name'] ?? 'Forum') ?></title>
-<link rel="stylesheet" href="admin.css">
-<script src="admin.js" defer></script>
-</head>
-<body>
-<header class="bar">
-  <div class="bar__title">
-    <div>
-      <strong>Saytni tahrirlash</strong>
-      <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
-    </div>
-  </div>
-  <nav class="bar__right">
-    <?php
-    /*
-     * Which of the two files is open is the one thing this bar has to say,
-     * so that is the button that is filled in; the other two places and the
-     * way out stand behind it.
-     */
-    ?>
-    <a class="btn<?= $key === 'forum' ? ' btn--lead' : '' ?>" href="site.php?f=forum">Forum sayti</a>
-    <a class="btn<?= $key === 'content' ? ' btn--lead' : '' ?>" href="site.php?f=content">Umumiy maʼlumotlar</a>
-    <span class="bar__sep" aria-hidden="true"></span>
-    <a class="btn btn--plain" href="./">Roʻyxatdan oʻtganlar</a>
-    <a class="btn btn--plain" href="?action=logout">Chiqish</a>
-  </nav>
-</header>
+<?php
+admin_head($config, $user, 'Saytni tahrirlash', 'site');
+?>
+<div class="subbar">
+  <?php
+  /*
+   * Which of the two files is open is the one thing this strip has to say,
+   * so that is the button that is filled in. The doors to the other rooms
+   * are in the bar above it.
+   */
+  ?>
+  <a class="btn<?= $key === 'forum' ? ' btn--lead' : '' ?>" href="site.php?f=forum">Forum sayti</a>
+  <a class="btn<?= $key === 'content' ? ' btn--lead' : '' ?>" href="site.php?f=content">Umumiy maʼlumotlar</a>
+  <span class="subbar__spacer"></span>
+  <a class="btn" href="site.php?f=<?= app_h($key) ?>&amp;page=publish">Nashr va tarix</a>
+</div>
 
 <main>
 <?php if ($problem !== ''): ?>
@@ -491,7 +617,7 @@ $projectId = (string) ($_GET['id'] ?? '');
     <?php /* No region column: every row under a heading is in that region,
              and saying so two hundred times took a column's width to repeat
              what the heading above it already says. */ ?>
-    <thead><tr><th>Loyiha</th><th>Yoʻnalish</th><th>Investitsiya</th><th></th></tr></thead>
+    <thead><tr><th>Loyiha</th><th>Yoʻnalish</th><th>Investitsiya</th><th>Rasm</th><th></th></tr></thead>
     <?php
     /*
      * One `tbody` per region, and not one for the whole table.
@@ -514,7 +640,7 @@ $projectId = (string) ($_GET['id'] ?? '');
             $lastRegion = $s['region'];
     ?>
       <tbody>
-      <tr class="rowgroup"><th colspan="4" scope="colgroup" id="r-<?= app_h($s['region'] === '' ? 'none' : $s['region']) ?>">
+      <tr class="rowgroup"><th colspan="5" scope="colgroup" id="r-<?= app_h($s['region'] === '' ? 'none' : $s['region']) ?>">
         <?= app_h($regionOf($s['region'])) ?><span><?= (int) $perRegion[$s['region']] ?> ta</span>
       </th></tr>
     <?php endif; ?>
@@ -522,10 +648,12 @@ $projectId = (string) ($_GET['id'] ?? '');
         <td>
           <a href="site.php?f=<?= app_h($key) ?>&amp;page=project&amp;id=<?= app_h($id) ?>"><b><?= app_h($liveName) ?></b></a>
           <?php if ($isHidden): ?><span class="chip chip--off">saytda yoʻq</span><?php endif; ?>
+          <?php if (site_is_added($overrides, $id)): ?><span class="chip chip--new">adminkadan</span><?php endif; ?>
           <div class="muted small"><?= app_h($id) ?></div>
         </td>
         <td><?= app_h(SEGMENT_LABEL[(string) ($live['segment'] ?? '')] ?? (string) ($live['segment'] ?? '—')) ?></td>
         <td><?= app_h((string) ($live['investmentDisplay'] ?? '—')) ?></td>
+        <td class="num"><?php $n = count((array) ($live['photos'] ?? [])); echo $n > 0 ? $n : '—'; ?></td>
         <td>
           <form method="post" class="inline">
             <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
@@ -552,6 +680,78 @@ $projectId = (string) ($_GET['id'] ?? '');
   <?php if (!is_array($p)): ?>
     <p class="err big">Bunday loyiha yoʻq.</p>
   <?php else: ?>
+    <?php
+    /*
+     * The photographs come first, above the fields.
+     *
+     * They are what the organiser opens this page to change — a project
+     * published without a picture reads as a spreadsheet row — and they are
+     * the one thing here that is not a text box, so they would be lost at the
+     * bottom of thirty fields.
+     */
+    $shots = [];
+    foreach ((array) ($livep['photos'] ?? []) as $stem) {
+        if (is_string($stem) && photos_stem_ok($stem)) {
+            $shots[] = $stem;
+        }
+    }
+    ?>
+    <section class="shots">
+      <h2>Rasmlar <span class="muted"><?= count($shots) ?> / <?= PHOTO_MAX_PER_PROJECT ?></span></h2>
+      <?php if ($shots === []): ?>
+        <p class="muted">Bu loyihada hali rasm yoʻq. Saytda rasm oʻrnida chizma koʻrinadi.</p>
+      <?php endif; ?>
+      <ol class="shots__list">
+        <?php foreach ($shots as $i => $stem): $mine = photos_is_own($config, $stem); ?>
+          <li class="shot">
+            <?php if (photos_present($config, $stem)): ?>
+              <img src="<?= app_h(site_photo_url($config, $stem)) ?>" alt="" loading="lazy" width="110" height="80">
+            <?php else: ?>
+              <span class="shot__gone" title="<?= app_h($stem) ?>">fayl yoʻq</span>
+            <?php endif; ?>
+            <div class="shot__bar">
+              <span class="shot__n"><?= $i + 1 ?></span>
+              <?php foreach (['up' => '↑', 'down' => '↓'] as $dir => $arrow): ?>
+                <form method="post" class="inline">
+                  <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+                  <input type="hidden" name="do" value="photo-move">
+                  <input type="hidden" name="id" value="<?= app_h($projectId) ?>">
+                  <input type="hidden" name="stem" value="<?= app_h($stem) ?>">
+                  <input type="hidden" name="dir" value="<?= $dir ?>">
+                  <button class="btn btn--tiny" type="submit" title="<?= $dir === 'up' ? 'Oldinga' : 'Orqaga' ?>"
+                          <?= ($dir === 'up' && $i === 0) || ($dir === 'down' && $i === count($shots) - 1) ? 'disabled' : '' ?>><?= $arrow ?></button>
+                </form>
+              <?php endforeach; ?>
+              <form method="post" class="inline" data-confirm="Rasm olib tashlansinmi?">
+                <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+                <input type="hidden" name="do" value="photo-remove">
+                <input type="hidden" name="id" value="<?= app_h($projectId) ?>">
+                <input type="hidden" name="stem" value="<?= app_h($stem) ?>">
+                <button class="btn btn--tiny btn--danger" type="submit" title="Olib tashlash">×</button>
+              </form>
+            </div>
+            <?php if (!$mine): ?><span class="chip chip--quiet">build dan</span><?php endif; ?>
+          </li>
+        <?php endforeach; ?>
+      </ol>
+      <?php if (count($shots) < PHOTO_MAX_PER_PROJECT): ?>
+        <?php if (!photos_can()): ?>
+          <p class="warn"><?= app_h(photos_complaint_server()) ?></p>
+        <?php else: ?>
+        <form method="post" enctype="multipart/form-data" class="shots__add">
+          <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+          <input type="hidden" name="do" value="photo-add">
+          <input type="hidden" name="id" value="<?= app_h($projectId) ?>">
+          <label for="photo">Yangi rasm</label>
+          <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+          <button type="submit">Yuklash</button>
+          <small>JPEG, PNG yoki WebP. Eng kattasi <?= app_h(photos_say_size(PHOTO_MAX_BYTES)) ?>.
+            Rasm serverda WebP ga aylantiriladi, EXIF maʼlumotlari olib tashlanadi.</small>
+        </form>
+        <?php endif; ?>
+      <?php endif; ?>
+    </section>
+
     <form method="post" class="editor">
       <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
       <input type="hidden" name="do" value="save">
@@ -675,5 +875,5 @@ $projectId = (string) ($_GET['id'] ?? '');
   </section>
 <?php endif; ?>
 </main>
-</body>
-</html>
+<?php
+admin_foot();

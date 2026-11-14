@@ -21,6 +21,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/env.php';
 
+/**
+ * One directive's extra sources, as a string that appends to `'self'`.
+ *
+ * @param array<string,string[]> $extra
+ */
+function guard_allow(array $extra, string $directive): string
+{
+    $list = $extra[$directive] ?? [];
+    return $list === [] ? '' : ' ' . implode(' ', (array) $list);
+}
+
 /** Did this request arrive over TLS, directly or through one proxy? */
 function guard_is_https(): bool
 {
@@ -44,7 +55,7 @@ function guard_is_https(): bool
  * inline script in the admin; the two handlers that used to be attributes
  * live in admin.js precisely so that this header can stay strict.
  */
-function guard_headers(string $kind = 'admin'): void
+function guard_headers(string $kind = 'admin', array $extra = []): void
 {
     header('Cache-Control: no-store, no-cache, must-revalidate, private');
     header('Pragma: no-cache');
@@ -56,10 +67,25 @@ function guard_headers(string $kind = 'admin'): void
     header_remove('X-Powered-By');
 
     if ($kind === 'admin') {
-        header(
-            "Content-Security-Policy: default-src 'none'; style-src 'self'; script-src 'self'; "
-            . "img-src 'self' data:; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
-        );
+        /*
+         * `$extra` widens exactly one directive at a time, and only the login
+         * page uses it: Cloudflare's check is an iframe and a script from
+         * Cloudflare's own host, and a policy of `'none'` is a login page on
+         * which the check never appears. Everything else in the admin is
+         * served from this server and stays at `'self'`.
+         */
+        $policy = [
+            "default-src 'none'",
+            "style-src 'self'" . guard_allow($extra, 'style'),
+            "script-src 'self'" . guard_allow($extra, 'script'),
+            "img-src 'self' data:",
+            "connect-src 'self'" . guard_allow($extra, 'connect'),
+            'frame-src ' . (($extra['frame'] ?? []) === [] ? "'none'" : implode(' ', (array) $extra['frame'])),
+            "form-action 'self'",
+            "base-uri 'none'",
+            "frame-ancestors 'none'",
+        ];
+        header('Content-Security-Policy: ' . implode('; ', array_filter($policy)));
     } elseif ($kind === 'ticket') {
         // The badge draws its own CSS into the page: it is printed from a
         // saved file as often as from the network, and a badge whose styles
@@ -253,20 +279,50 @@ function guard_admin_session(array $config): void
     $born = (int) ($_SESSION['born'] ?? $now);
     $seen = (int) ($_SESSION['seen'] ?? $now);
     $stale = ($now - $seen) > $idle || ($now - $born) > $life;
-    $revoked = (int) ($_SESSION['pwv'] ?? 0) !== guard_password_version($config);
+
+    /*
+     * Does the account this session belongs to still exist, is it still
+     * allowed in, and is its password still the one this session logged in
+     * with?
+     *
+     * users.php is not required from here: api.php and ticket.php load guard
+     * and have no accounts to consult. When it is loaded — which is every
+     * admin page — the per-account version is what decides, so taking
+     * somebody's access away or changing their password ends their open
+     * sessions on the next request they make. A session from before accounts
+     * existed falls back to the installation-wide version, which is what it
+     * logged in against.
+     */
+    $uid = (string) ($_SESSION['uid'] ?? '');
+    if ($uid !== '' && function_exists('users_by_id')) {
+        $account = users_by_id($config, $uid);
+        $revoked = $account === null
+            || !$account['active']
+            || (int) ($_SESSION['upwv'] ?? 0) !== (int) $account['pwv'];
+        $reason = 'access';
+    } else {
+        $revoked = (int) ($_SESSION['pwv'] ?? 0) !== guard_password_version($config);
+        $reason = 'password';
+    }
 
     if ($stale || $revoked) {
         $_SESSION = [];
         session_destroy();
         session_start();
-        $_SESSION['ended'] = $revoked ? 'password' : 'timeout';
+        $_SESSION['ended'] = $revoked ? $reason : 'timeout';
         return;
     }
     $_SESSION['seen'] = $now;
 }
 
-/** Mark the session as logged in. Called on a verified password, only. */
-function guard_admin_login(array $config): void
+/**
+ * Mark the session as logged in. Called on a verified password, only.
+ *
+ * `$account` is the row from users.php. Its id, login and role are kept in
+ * the session so that every page knows who is reading without a file read,
+ * and so that the audit log has a name to write.
+ */
+function guard_admin_login(array $config, ?array $account = null): void
 {
     // A fresh id, so a session fixed before the login is not the one that
     // ends up logged in.
@@ -275,6 +331,12 @@ function guard_admin_login(array $config): void
     $_SESSION['born'] = time();
     $_SESSION['seen'] = time();
     $_SESSION['pwv'] = guard_password_version($config);
+    if ($account !== null) {
+        $_SESSION['uid'] = (string) $account['id'];
+        $_SESSION['ulogin'] = (string) $account['login'];
+        $_SESSION['urole'] = (string) $account['role'];
+        $_SESSION['upwv'] = (int) $account['pwv'];
+    }
 }
 
 /* ------------------------------------------------------------- the throttle */
@@ -361,6 +423,34 @@ function guard_login_wait(array $config, string $ip): int
 }
 
 /**
+ * How many wrong passwords this installation allows before it locks.
+ *
+ * One, unless somebody has said otherwise. That is the client's instruction
+ * and it is the right default for a door with a guest list behind it: a
+ * password list gets exactly one guess per address per lock period, which
+ * makes the address worthless to work from.
+ *
+ * It is a hard setting to live with and it has two ways out, both of which
+ * the login page and bin/doctor.php say out loud:
+ *
+ *   LOGIN_ONE_STRIKE=0   in .env — back to LOGIN_MAX_ATTEMPTS, five by
+ *                        default, which is what this was before;
+ *   php bin/unlock.php   on the server — clears the locks at once, for the
+ *                        organiser who mistyped their own password and
+ *                        cannot wait a quarter of an hour.
+ *
+ * The check that a person is there (captcha.php) runs before the password, so
+ * a mistyped *check* costs nothing. Only a wrong password spends the strike.
+ */
+function guard_attempt_budget(array $config): int
+{
+    if (!empty($config['login_one_strike'])) {
+        return 1;
+    }
+    return max(1, (int) $config['login_max_attempts']);
+}
+
+/**
  * Count a wrong password, and lock the address when there have been enough.
  *
  * The lock doubles each time it is earned again, up to a day: somebody who
@@ -372,7 +462,7 @@ function guard_login_failed(array $config, string $ip): void
     if ($ip === '') {
         return;
     }
-    $max = max(1, (int) $config['login_max_attempts']);
+    $max = guard_attempt_budget($config);
     $minutes = max(1, (int) $config['login_lock_minutes']);
     guard_attempts($config, static function (array $all) use ($ip, $max, $minutes): array {
         $row = is_array($all[$ip] ?? null) ? $all[$ip] : ['n' => 0, 'until' => 0, 'locks' => 0];
@@ -404,6 +494,25 @@ function guard_login_ok(array $config, string $ip): void
         unset($all[$ip]);
         return $all;
     });
+}
+
+/**
+ * Clear every lock. The way back in from a one-strike lock-out.
+ *
+ * Only bin/unlock.php calls it, and that file refuses to run anywhere but a
+ * command line — somebody who can open a shell on the server does not need to
+ * guess the password anyway.
+ *
+ * @return int how many addresses were holding a lock
+ */
+function guard_unlock_all(array $config): int
+{
+    $n = 0;
+    guard_attempts($config, static function (array $all) use (&$n): array {
+        $n = count($all);
+        return [];
+    });
+    return $n;
 }
 
 /* -------------------------------------------------------------- the ip lock */

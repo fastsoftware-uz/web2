@@ -330,6 +330,28 @@ almashtiring:
         alias <SERVER_PATH>/public/;
         index index.php;
 
+        # Adminkaning ikkita sahifasi fayl qabul qiladi: loyihalar roʻyxati
+        # (.xlsx / .csv) va rasmlar arxivi (.zip). nginx ning standart
+        # chegarasi bunga yetmaydi — fayl PHP ga yetib ham bormaydi, brauzer
+        # esa boʻm-boʻsh sahifa koʻrsatadi. Shuning uchun shu ikki manzilda
+        # chegara koʻtariladi, qolgan hamma joyda esa oʻz holicha qoladi.
+        #
+        # Raqam .env dagi UPLOAD_MAX_MB va php.ini dagi upload_max_filesize
+        # bilan bir xil boʻlsin.
+        location = /admin/import.php {
+            client_max_body_size 32m;
+            include fastcgi_params;
+            fastcgi_pass unix:<SOKET>;
+            fastcgi_param SCRIPT_FILENAME <SERVER_PATH>/public/import.php;
+        }
+
+        location = /admin/site.php {
+            client_max_body_size 32m;
+            include fastcgi_params;
+            fastcgi_pass unix:<SOKET>;
+            fastcgi_param SCRIPT_FILENAME <SERVER_PATH>/public/site.php;
+        }
+
         location ~ ^/admin/(.+\.php)$ {
             include fastcgi_params;
             fastcgi_pass unix:<SOKET>;

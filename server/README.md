@@ -26,23 +26,41 @@ server/
   public/            ← the only directory nginx is allowed to reach
     api.php          ← POST a registration; GET it for a health check
     index.php        ← the admin: login, list, search, status, password, CSV
-    site.php         ← the editor: the site's own texts, and the projects
-    admin.css        ← the whole look of both pages; no build, no CDN
-    admin.js         ← the two handlers the content policy keeps out of
+    site.php         ← the editor: the site's own texts, projects, photographs
+    import.php       ← adding projects: a filled-in list, a zip of pictures,
+                       or one project typed in by hand
+    users.php        ← accounts and their three roles (the owner only)
+    audit.php        ← the log: who did what, when, from where
+    captcha.php      ← the picture on the login form. The one page behind
+                       this door that answers without a session.
+    admin.css        ← the whole look of every page; no build, no CDN
+    admin.js         ← the handlers the content policy keeps out of
                        attributes. There is no other script on these pages.
   src/
     env.php            ← reads .env; the whole configuration is assembled here
     guard.php          ← sessions, headers, the login throttle, the password
+    users.php          ← the accounts, and what each role may do
+    captcha.php        ← the human check: drawn here, or Cloudflare's
+    audit.php          ← the append-only log, a file per month
+    adminui.php        ← the shell every admin page starts with: headers,
+                       session, address check, the right to be there
     app.php            ← validation and the record's shape
     storage.php        ← SQLite, or a flat file when SQLite is missing
     site.php           ← the overlay the editor saves into
+    import.php         ← the project list: checked, shaped, de-duplicated
+    xlsx.php           ← reads .xlsx without a spreadsheet library
+    zipread.php        ← reads .zip with or without the zip extension
+    photos.php         ← uploaded photographs: re-encoded, kept out of the
+                       web root, put back after every deploy
     ticket.php  qr.php ← the e-ticket and the QR code it carries
   bin/
     doctor.php       ← why it is not working. Run this first.
     password.php     ← set the admin password
+    unlock.php       ← clear the login locks. One wrong password earns one.
     publish.php      ← re-apply the admin's edits after a deploy
-  data/              ← the registrations, the overlay, the ticket key, the
-                       password if it was changed from the admin.
+  data/              ← the registrations, the overlay, the accounts, the log,
+                       the uploaded photographs, the ticket key, the password
+                       if it was changed from the admin.
                        NOT under public/. Must be writable.
 ```
 
@@ -268,7 +286,10 @@ server {
     root /var/www/forum/public;
     index index.html;
 
-    # A registration is a couple of kilobytes. Nothing here accepts a file.
+    # A registration is a couple of kilobytes, and that is all the public
+    # side of this server ever takes. The admin is the exception: it accepts
+    # a project list and a folder of photographs, so its own location raises
+    # the limit and nothing else does.
     client_max_body_size 64k;
 
     gzip on;
@@ -358,6 +379,28 @@ server {
         alias /var/www/forum/server/public/;
         index index.php;
 
+        # The two pages that take a file. Without this they answer a bare
+        # 413 that a form post shows as a blank page — which is what an
+        # upload that never worked looks like from a browser. The number has
+        # to agree with UPLOAD_MAX_MB in .env and with php.ini below.
+        #
+        # The admin page itself has a button that tests this: "Server fayl
+        # qabul qiladimi?" on the project-adding page sends two megabytes
+        # and says what came back.
+        location = /admin/import.php {
+            client_max_body_size 32m;
+            include fastcgi_params;
+            fastcgi_pass unix:/run/php-fpm84/php-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME /var/www/forum/server/public/import.php;
+        }
+
+        location = /admin/site.php {
+            client_max_body_size 32m;
+            include fastcgi_params;
+            fastcgi_pass unix:/run/php-fpm84/php-fpm.sock;
+            fastcgi_param SCRIPT_FILENAME /var/www/forum/server/public/site.php;
+        }
+
         location ~ ^/admin/(.+\.php)$ {
             include fastcgi_params;
             fastcgi_pass unix:/run/php-fpm84/php-fpm.sock;
@@ -376,6 +419,12 @@ Two settings matter and one of them is not about safety:
 display_errors = Off      ; a notice printed into a response lands inside the
                           ; CSV and corrupts it. That is not a theory.
 expose_php = Off
+
+; The admin takes a project list and a folder of photographs. These two and
+; nginx's client_max_body_size above have to agree, and post_max_size has to
+; be the larger of the two — it covers the whole form, not one file.
+upload_max_filesize = 32M
+post_max_size = 34M
 opcache.enable = 1
 opcache.memory_consumption = 128
 opcache.max_accelerated_files = 10000
@@ -550,13 +599,74 @@ browser that nginx, PHP and the data directory are all talking to each other.
 
 **The password.** `password_hash`/`password_verify`, no default, and the
 application refuses every login until an installation sets one. A wrong
-answer costs 0.4 s however wrong it is, and five of them lock that address
-out for fifteen minutes — doubling each time it is earned again, up to a day.
+answer costs 0.4 s however wrong it is — and **one** of them locks that
+address out for fifteen minutes, doubling each time it is earned again, up to
+a day. One, not five: this is a guest list on a public address, and a word
+list then gets a single guess per address per lock period. `LOGIN_ONE_STRIKE=0`
+puts `LOGIN_MAX_ATTEMPTS` back in charge for an installation that cannot live
+with it, and `bin/unlock.php` clears the locks from a shell for the organiser
+who mistyped their own password an hour before the forum opens.
+
 The counter is one small file under a lock, so several PHP-FPM workers cannot
 be used to outrun it, and it is only read on a login. The organiser changes
-the password from the admin itself: the current one is asked for, the new one
-goes into `data/admin.json`, and every other session is ended by the change.
-`bin/password.php` is the way back in when it has been forgotten.
+the password from the admin itself: the current one is asked for, the new hash
+goes into `data/users.json` (or `data/admin.json` while the installation still
+has only the one password), and every other session that account has open is
+ended by the change. `bin/password.php` is the way back in when it has been
+forgotten.
+
+**A person, before the password.** The login form asks a question first — five
+characters drawn by GD, or a sum written out in Uzbek where GD is not
+installed, or Cloudflare Turnstile when `TURNSTILE_SITE_KEY` and
+`TURNSTILE_SECRET` are filled in. The built-in check needs no outbound network,
+which is why it is the default: the organiser's server may have no route out,
+and a login that depends on reaching somebody else's API is a login that fails
+on the morning of the forum.
+
+The order is deliberate. The check is answered before the password is read, a
+wrong answer refuses the login without the password being verified at all, and
+it does **not** spend the single strike — misreading five drawn characters must
+not be the thing that locks the organiser out. Wrong answers have their own
+cheap limit in the session so a loop answering at random is not free either.
+
+**Who may do what.** `data/users.json` holds the accounts; three roles, and
+every page states the capability it needs in one line at the top
+(`admin_boot($config, 'site.edit')`). An owner may do everything; an editor may
+change the site, add projects and photographs, and move a registration between
+states; a viewer reads the guest list. The CSV export is the owner's alone,
+because it is the whole list — telephone numbers and e-mail addresses — in a
+file that leaves the server. Taking a role away or changing a password ends
+that account's open sessions on its next request. The last owner cannot be
+removed, demoted or deactivated, because there is no way back from that through
+a browser.
+
+Until somebody adds a second person there is no file and no visible change:
+the installation's own password is served as an owner account called `admin`,
+so an existing server keeps working with nothing edited on it.
+
+**What was done, and by whom.** `data/audit/<year>-<month>.jsonl`, appended
+under a lock, one line per action — logins, failed logins, every edit, every
+project and photograph added or removed, every account and role change, and
+both CSV exports. Reading is not logged; the two things that take personal data
+off the server are. Nothing in the application rewrites or deletes it, and
+there is no "clear the log" button: a log with one says whatever the last
+person to press it wanted it to say.
+
+**Uploads.** A list is read by `src/xlsx.php` and `src/zipread.php`, both of
+which parse the formats themselves rather than trusting an extension to be
+installed, and both of which refuse a file that unpacks to more than its limits
+allow — a zip is also the classic way to hand a server something small to send
+and enormous to open. Every entry name is checked before it is used: an
+absolute path, a `..`, a drive letter or a backslash is dropped, which is the
+whole of zip-slip.
+
+A photograph is identified by its bytes and never by its name, only JPEG, PNG
+and WebP are accepted, and every one of them is decoded and written out again
+as WebP. Nothing of the original file survives that — not its EXIF, not its
+colour profile, not a script appended after the image data. Uploads land in
+`data/photos/`, outside the web root, and are copied into the site's `photos/`
+whenever it is published; the deploy's `rsync --delete` therefore cannot lose
+them, because the deploy's last step is that publish.
 
 **The session.** A fresh id on a successful login, so a session fixed before
 it is not the one that ends up logged in; `session.use_strict_mode`, so an id
@@ -604,3 +714,5 @@ issued stops opening.
   this was being written, and the fix is in the code as well.
 - The CSV holds every guest's telephone number and e-mail address. It is for
   the organising committee and no one else.
+- Give each colleague their own account rather than the password. A shared
+  password makes the log say one name for everything that happens.

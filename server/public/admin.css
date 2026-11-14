@@ -708,3 +708,363 @@ fieldset fieldset { margin-inline: 0; }
 .pw .card label:first-of-type { margin-top: 0; }
 .pw .card p.muted { margin: 0.9rem 0 0; font-size: 0.82rem; }
 .pw .card .btn--quiet { display: block; margin-top: 0.5rem; text-align: center; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   The second pass: five rooms instead of two.
+
+   The admin grew from a table and an editor into five pages — registrations,
+   the site's text, adding projects, the log, the accounts. Everything below
+   exists because of that growth, and nothing above it changed:
+
+     navigation  the bar now carries the doors, as tabs, because a reader who
+                 cannot see where else they may go will not go there. The
+                 page's own switches moved down into a strip of their own, so
+                 that "which file am I editing" never looks like "which room
+                 am I in";
+     review      the import page is a decision and not a form: three states a
+                 row can be in, each one coloured, and the thing a row
+                 resembles printed underneath it;
+     pictures    a photograph is the only thing in this admin that is not
+                 text, so it is the only thing given a thumbnail.
+
+   Same two inks as the site, because it is the same forum. Nothing is
+   fetched: this has to open on a server with no outbound network.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ------------------------------------------------------- the doors, as tabs */
+
+.bar__nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.15rem;
+  margin-inline-end: auto;
+}
+
+/* A tab is quieter than a button and louder than a link: it says where you
+   are, not what you do. The one you are on is drawn in paper against the
+   cobalt, which is the relationship `btn--lead` already has in the bar. */
+.tab {
+  padding: 0.42rem 0.72rem;
+  border-radius: var(--radius-sm);
+  color: rgb(255 255 255 / 0.76);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tab:hover { background: rgb(255 255 255 / 0.14); color: #fff; }
+.tab--on { background: #fff; color: var(--cobalt); }
+.tab--on:hover { background: #fff; color: #16265a; }
+
+/* Who is reading, and with what rights. The role is the thing a second
+   person at the same screen needs to see, so it is a chip and not prose. */
+.who { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; }
+.who b { font-weight: 600; }
+.chip--role { background: rgb(255 255 255 / 0.18); color: #fff; }
+.chip--owner { background: #fff; color: var(--cobalt); }
+
+/* The page's own switches: one step below the bar, on paper, so that the two
+   kinds of navigation never read as one. */
+.subbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  max-inline-size: var(--measure-wide);
+  margin: 0.9rem auto -0.3rem;
+  padding-inline: clamp(0.75rem, 2vw, 1.5rem);
+}
+.subbar__spacer { flex: 1 1 auto; }
+.subbar .store { font-size: 0.78rem; }
+
+main.wide { max-inline-size: 104rem; }
+
+/* ------------------------------------------------------------- the gate */
+
+/* On the login page there is nothing else on the screen, so the check and
+   the password belong to one another rather than sitting in a list. */
+.captcha {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.captcha img {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+}
+.captcha .btn { white-space: nowrap; }
+#cap { letter-spacing: 0.18em; text-transform: uppercase; font-size: 1.05rem; }
+.gate__note { margin-top: 0.8rem; text-align: center; line-height: 1.5; }
+
+/* ------------------------------------------------- three states of a row */
+
+.tile--good b { color: var(--green); }
+.tile--warn b { color: var(--gold); }
+.tile--bad b { color: var(--red); }
+
+.row--warn td { background: rgb(153 95 0 / 0.06); }
+.row--warn:hover td { background: rgb(153 95 0 / 0.1); }
+.row--bad td { background: rgb(179 36 59 / 0.05); }
+.row--off td { opacity: 0.58; }
+
+.rows--pick .pick { width: 2.6rem; text-align: center; }
+.rows--pick input[type="checkbox"] { inline-size: 1.15rem; block-size: 1.15rem; }
+.rows--pick label { cursor: pointer; }
+
+/* What a row looks like. Printed under the row rather than in a column of
+   its own: it is a sentence about this row, and a column would have to be
+   wide enough for the longest one. */
+.clash {
+  margin-top: 0.3rem;
+  padding: 0.3rem 0.5rem;
+  border-inline-start: 3px solid var(--gold);
+  background: rgb(153 95 0 / 0.07);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.82rem;
+}
+.clash a { color: var(--cobalt); }
+
+.warns { margin-top: 0.3rem; font-size: 0.8rem; }
+.warns summary { cursor: pointer; color: var(--ink-dim); }
+.why { margin: 0.25rem 0 0; padding-inline-start: 1.1rem; font-size: 0.82rem; line-height: 1.45; }
+.why li { margin-bottom: 0.15rem; }
+
+/* ------------------------------------------------------------ the upload */
+
+/* A card that is a form rather than a link: the same frame, but it does not
+   lift on hover, because nothing happens when the card itself is clicked. */
+.card--form {
+  display: grid;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1rem 1.1rem 1.1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+}
+.card--form > b { font-size: 0.97rem; }
+.card--form > span { font-size: 0.82rem; color: var(--ink-dim); }
+.upload { display: grid; gap: 0.3rem; margin-top: 0.6rem; }
+.upload label { font-size: 0.82rem; font-weight: 600; }
+.upload input[type="file"] {
+  padding: 0.45rem;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+  font: inherit;
+  font-size: 0.85rem;
+}
+.upload small { font-size: 0.76rem; color: var(--ink-dim); line-height: 1.45; }
+.upload button { margin-top: 0.4rem; }
+
+/* A button that is really a question, so it is drawn as the link it behaves
+   like rather than as an action. */
+.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--cobalt);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.req { color: var(--red); }
+.fld--internal > label::after {
+  content: " — saytga chiqmaydi";
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+
+/* ---------------------------------------------------------- photographs */
+
+.shots {
+  margin: 0 0 1.4rem;
+  padding: 0.9rem 1rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  max-inline-size: var(--measure-form);
+}
+.shots h2 { margin: 0 0 0.6rem; font-size: 0.97rem; }
+.shots h2 .muted { font-weight: 400; font-size: 0.82rem; }
+.shots__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 0 0 0.8rem;
+  padding: 0;
+  list-style: none;
+}
+.shot {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: center;
+  padding: 0.35rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+}
+.shot img {
+  display: block;
+  inline-size: 110px;
+  block-size: 80px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--head);
+}
+/* A reference the build no longer carries. Shown as a gap rather than a
+   broken image: the organiser has to be able to tell "no photograph" from
+   "a photograph that will not load". */
+.shot__gone {
+  display: grid;
+  place-items: center;
+  inline-size: 110px;
+  block-size: 80px;
+  border: 1px dashed var(--red);
+  border-radius: var(--radius-sm);
+  color: var(--red);
+  font-size: 0.74rem;
+}
+.shot__bar { display: flex; gap: 0.15rem; align-items: center; }
+.shot__n { min-inline-size: 1.1rem; font-size: 0.76rem; color: var(--ink-dim); }
+.shots__add { display: grid; gap: 0.3rem; }
+.shots__add label { font-size: 0.82rem; font-weight: 600; }
+.shots__add small { font-size: 0.76rem; color: var(--ink-dim); line-height: 1.45; }
+.shots__add button { justify-self: start; }
+
+.btn--tiny { min-height: 1.6rem; padding: 0 0.4rem; font-size: 0.8rem; line-height: 1.5; }
+.btn--danger { color: var(--red); border-color: rgb(179 36 59 / 0.35); }
+.btn--danger:hover { background: rgb(179 36 59 / 0.08); border-color: var(--red); }
+.btn[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.chip--new { background: rgb(29 122 70 / 0.12); color: var(--green); }
+.chip--quiet { background: var(--wash); color: var(--ink-dim); }
+
+/* ------------------------------------------------------------ the people */
+
+/* Three actions that belong to one row, folded away: five buttons per person
+   turns a list of four colleagues into a wall. */
+.menu { position: relative; display: inline-block; }
+.menu > summary { display: inline-flex; list-style: none; cursor: pointer; }
+.menu > summary::-webkit-details-marker { display: none; }
+.menu__body {
+  position: absolute;
+  inset-inline-end: 0;
+  z-index: 15;
+  display: grid;
+  gap: 0.5rem;
+  inline-size: 17rem;
+  margin-top: 0.3rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  box-shadow: 0 10px 28px rgb(21 25 58 / 0.16);
+  text-align: start;
+  white-space: normal;
+}
+.menu__body label { font-size: 0.8rem; font-weight: 600; }
+.menu__body input[type="text"] {
+  inline-size: 100%;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 0.85rem;
+}
+.menu__body button { inline-size: 100%; justify-content: center; }
+.actions-cell { text-align: end; }
+
+/* Shown once, and never again. Deliberately the loudest thing on the page:
+   the password is on screen and the reader has to deal with it now. */
+.handover {
+  margin: 0 0 1.2rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--gold);
+  border-radius: var(--radius);
+  background: rgb(153 95 0 / 0.06);
+}
+.handover h2 { margin: 0 0 0.5rem; font-size: 1rem; }
+.handover p { margin: 0 0 0.5rem; }
+.secret {
+  display: inline-block;
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  user-select: all;
+}
+
+/* ---------------------------------------------------------------- the log */
+
+/* A detail is a handful of key-and-value pairs, which is a list and not a
+   sentence; set as chips so the key stays findable when a row carries five
+   of them. */
+.kv {
+  display: inline-block;
+  margin: 0 0.3rem 0.15rem 0;
+  padding: 0.08rem 0.35rem;
+  border-radius: 0.2rem;
+  background: var(--wash);
+  font-size: 0.78rem;
+}
+.kv i { font-style: normal; color: var(--ink-dim); }
+
+.warn { color: var(--gold); font-size: 0.9rem; }
+.warn.big {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius-sm);
+  background: rgb(153 95 0 / 0.05);
+}
+
+/* ------------------------------------------------------------- telephone */
+
+@media (max-width: 46rem) {
+  .bar__nav { order: 3; inline-size: 100%; margin-inline-end: 0; }
+  .tab { flex: 1 1 auto; text-align: center; }
+  .menu__body { position: static; inline-size: auto; box-shadow: none; }
+  .shots { max-inline-size: 100%; }
+}
+
+/* A card that is a form is taller than a card that is a link, and a grid
+   stretches both to the tallest. A link card with four inches of empty
+   white under two lines of text reads as a thing that failed to load. */
+.cards--lead { align-items: start; }
+
+/* In the bar the ink is reversed and a filled button reads as "here"; on
+   paper it reads as "do this". The strip under the bar is paper, so only the
+   file you are actually editing is filled and the other one is an outline —
+   two filled buttons side by side say nothing about which is which. */
+.subbar .btn { background: transparent; border-color: var(--line); color: var(--ink); }
+.subbar .btn:hover { background: var(--wash); border-color: var(--cobalt); }
+.subbar .btn--lead { background: var(--cobalt); border-color: var(--cobalt); color: #fff; }
+.subbar .btn--lead:hover { background: #16265a; color: #fff; }
+
+/* The arrows and the cross beside a photograph are controls on a thumbnail,
+   not actions on the page. Filled, they were four dark blocks under every
+   picture and the picture lost the argument. */
+.btn--tiny { background: transparent; border-color: var(--line); color: var(--ink-soft); }
+.btn--tiny:hover { background: var(--wash); border-color: var(--cobalt); color: var(--ink); }
+
+/* A table gives its slack to whichever column asks for it, and a column of
+   checkboxes with no stated width asks for as much as the project names do.
+   So the narrow columns say how narrow they are and the name column takes
+   what is left — which is the column anybody reads this table for. */
+.rows--pick th:first-child,
+.rows--pick td.pick { width: 3rem; }
+.rows--pick th:nth-child(2),
+.rows--pick td:nth-child(2) { width: 6rem; }
+.rows--pick th:nth-child(3) { width: 42%; }
+/* Fixed, because this one has three short columns and one long one, and
+   left to itself the browser hands the surplus to the row number. */
+.rows--refused { table-layout: fixed; }
+.rows--refused th:first-child { width: 4.5rem; }
+.rows--refused th:nth-child(2) { width: 6rem; }
+.rows--refused th:nth-child(3) { width: 14rem; }
+.rows--refused td { overflow-wrap: anywhere; }

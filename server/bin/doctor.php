@@ -25,6 +25,10 @@ require_once __DIR__ . '/../src/app.php';
 require_once __DIR__ . '/../src/site.php';
 require_once __DIR__ . '/../src/guard.php';
 require_once __DIR__ . '/../src/ticket.php';
+require_once __DIR__ . '/../src/photos.php';
+require_once __DIR__ . '/../src/users.php';
+require_once __DIR__ . '/../src/captcha.php';
+require_once __DIR__ . '/../src/audit.php';
 
 $problems = 0;
 $warnings = 0;
@@ -56,7 +60,7 @@ say(
     version_compare(PHP_VERSION, '8.1', '>=') ? '' : '8.1 yoki yangisi kerak',
 );
 
-foreach (['json' => true, 'session' => true, 'mbstring' => false, 'pdo_sqlite' => false, 'Zend OPcache' => false] as $ext => $required) {
+foreach (['json' => true, 'session' => true, 'mbstring' => false, 'pdo_sqlite' => false, 'gd' => false, 'zip' => false, 'Zend OPcache' => false] as $ext => $required) {
     $have = extension_loaded($ext);
     if ($have) {
         say('ok', $ext);
@@ -66,10 +70,21 @@ foreach (['json' => true, 'session' => true, 'mbstring' => false, 'pdo_sqlite' =
         $hint = [
             'mbstring' => 'apk add php84-mbstring — bo\'lmasa ham ishlaydi, lekin uzun ismlarda aniqroq bo\'ladi',
             'pdo_sqlite' => 'apk add php84-pdo php84-pdo_sqlite — bo\'lmasa arizalar matnli faylga yoziladi',
+            'gd' => 'apk add php84-gd — bo\'lmasa adminkadan rasm yuklab bo\'lmaydi va kirish tekshiruvi rasm o\'rniga savol bo\'ladi',
+            'zip' => 'apk add php84-zip — bo\'lmasa ham ishlaydi: zip va xlsx fayllari o\'z kodimiz bilan o\'qiladi',
             'Zend OPcache' => 'apk add php84-opcache — tezlik uchun, jonli serverda bo\'lishi kerak',
         ][$ext];
         say('warn', $ext . ' yo\'q', $hint);
     }
+}
+
+/* Rasm yuklash uchun GD ning o'zi yetmaydi — WebP ham kerak. */
+if (extension_loaded('gd')) {
+    say(
+        photos_can() ? 'ok' : 'warn',
+        'GD WebP qo\'llaydi',
+        photos_can() ? '' : 'apk add libwebp — WebP bo\'lmasa adminkadan rasm yuklab bo\'lmaydi',
+    );
 }
 
 $displayErrors = (string) ini_get('display_errors');
@@ -128,6 +143,41 @@ if ($hash === '') {
 
 say($config['force_https'] ? 'ok' : 'warn', 'FORCE_HTTPS=' . ($config['force_https'] ? '1' : '0'),
     $config['force_https'] ? '' : 'adminka paroli har kirishda tarmoqdan o\'tadi — sertifikat ishlagach 1 qiling');
+
+/* Kirish: kim kiradi, nima bilan tekshiriladi, necha urinish beriladi. */
+$kind = captcha_kind($config);
+say(
+    $kind === 'turnstile' ? 'ok' : 'info',
+    'Kirishda odamlik tekshiruvi',
+    [
+        'turnstile' => 'Cloudflare Turnstile (serverda tashqi tarmoq kerak)',
+        'image' => 'ichki rasm testi — tashqi tarmoq kerak emas',
+        'words' => 'ichki savol (GD yo\'q, shuning uchun rasm emas)',
+    ][$kind],
+);
+
+$budget = guard_attempt_budget($config);
+say(
+    $budget === 1 ? 'ok' : 'warn',
+    'Noto\'g\'ri parol chegarasi: ' . $budget . ' ta',
+    $budget === 1
+        ? 'bitta xato — manzil ' . (int) $config['login_lock_minutes'] . ' daqiqaga yopiladi; ochish: php server/bin/unlock.php'
+        : 'LOGIN_ONE_STRIKE=1 qo\'yilsa bitta xatodan keyin yopiladi',
+);
+
+if (users_installed($config)) {
+    $owners = users_owner_count($config);
+    say(
+        $owners > 0 ? 'ok' : 'bad',
+        'Foydalanuvchilar: ' . count(users_all($config)) . ' ta',
+        $owners > 0 ? $owners . ' tasi egasi' : 'birorta ham egasi qolmagan — users.json ni tekshiring',
+    );
+} else {
+    say('info', 'Foydalanuvchilar hali yaratilmagan', 'adminkaga bitta parol bilan kiriladi (login: admin)');
+}
+
+$lines = audit_total($config);
+say($lines > 0 ? 'ok' : 'info', 'Jurnal', $lines > 0 ? $lines . ' ta yozuv' : 'hali bo\'sh');
 
 if (($config['admin_ip_allow'] ?? []) === []) {
     say('info', 'ADMIN_IP_ALLOW bo\'sh', 'adminka hamma joydan ochiladi; parol — yagona qulf');
@@ -196,6 +246,31 @@ if (!is_dir($siteDir)) {
         }
         $overrides = site_overrides($config, $key);
         say('ok', $meta['file'], count($overrides['values']) . ' ta o\'zgartirish saqlangan');
+    }
+
+    /* Adminkadan yuklangan rasmlar: asli data/ da, nusxasi sayt ichida. */
+    $sitePhotos = photos_site_dir($config);
+    $usage = photos_usage($config);
+    if ($usage['count'] > 0) {
+        if (!is_dir($sitePhotos)) {
+            say('bad', 'photos/ papkasi yo\'q', $sitePhotos . ' — adminkadan yuklangan rasmlar saytda ko\'rinmaydi');
+        } else {
+            /* Counted, not copied: this file reads. Putting them back is
+               bin/publish.php's job, and the deploy runs it. */
+            $missing = 0;
+            foreach (photos_own($config) as $stem) {
+                if (!is_file($sitePhotos . '/' . $stem . '-full.webp')) {
+                    $missing++;
+                }
+            }
+            say(
+                $missing === 0 ? 'ok' : 'warn',
+                'Adminkadan yuklangan rasmlar: ' . $usage['count'] . ' ta',
+                $missing === 0
+                    ? 'hammasi sayt papkasida'
+                    : $missing . ' tasi sayt papkasida yo\'q — php server/bin/publish.php ishga tushiring',
+            );
+        }
     }
 
     $siteData = $siteDir . '/data';

@@ -48,8 +48,27 @@ const ENV_DEFAULTS = [
     'session_max_hours' => 12,
     'login_max_attempts' => 5,
     'login_lock_minutes' => 15,
+    /*
+     * One wrong password locks the address. On by default — see
+     * guard_attempt_budget(). LOGIN_ONE_STRIKE=0 puts LOGIN_MAX_ATTEMPTS back
+     * in charge.
+     */
+    'login_one_strike' => true,
     'force_https' => false,
     'trust_proxy' => false,
+    /*
+     * Cloudflare Turnstile, if the installation wants it. Both empty is the
+     * normal case and means the built-in check is used, which needs no
+     * outbound network — see src/captcha.php.
+     */
+    'turnstile_site_key' => '',
+    'turnstile_secret' => '',
+    /*
+     * The biggest file the admin will take, in megabytes. It is also what
+     * the upload page tells the reader, and nginx has to be told the same
+     * number — see server/README.md.
+     */
+    'upload_max_mb' => 32,
 ];
 
 /**
@@ -74,8 +93,12 @@ const ENV_MAP = [
     'SESSION_MAX_HOURS' => ['session_max_hours', 'int'],
     'LOGIN_MAX_ATTEMPTS' => ['login_max_attempts', 'int'],
     'LOGIN_LOCK_MINUTES' => ['login_lock_minutes', 'int'],
+    'LOGIN_ONE_STRIKE' => ['login_one_strike', 'bool'],
     'FORCE_HTTPS' => ['force_https', 'bool'],
     'TRUST_PROXY' => ['trust_proxy', 'bool'],
+    'TURNSTILE_SITE_KEY' => ['turnstile_site_key', 'string'],
+    'TURNSTILE_SECRET' => ['turnstile_secret', 'string'],
+    'UPLOAD_MAX_MB' => ['upload_max_mb', 'int'],
 ];
 
 /** The env file this request reads. `$FORUM_ENV` wins, for the QA suites. */

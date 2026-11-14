@@ -314,10 +314,59 @@ function site_recount(array $forum): array
     return $forum;
 }
 
-/** base + overrides, as the site will read it. */
+/**
+ * The build output with the admin's own projects appended.
+ *
+ * This, and not the build output alone, is what the editor treats as the
+ * base. A project added here has to be editable afterwards like any other —
+ * its title corrected, a figure fixed — and an override is keyed by a path
+ * that has to exist in the base for site_set() to find it. Appending first
+ * is what makes `portfolio.projects.<new-id>.titleI18n.uz` a real path.
+ *
+ * The added projects are stored whole rather than as overrides because there
+ * is nothing upstream for them to be a change *to*: the next build will not
+ * know about them, and that is exactly why they survive it.
+ */
+function site_with_added(array $base, array $overrides, string $key): array
+{
+    if ($key !== 'forum') {
+        return $base;
+    }
+    $added = $overrides['added'] ?? [];
+    if ($added === [] || !isset($base['portfolio']['projects'])) {
+        return $base;
+    }
+    /*
+     * An id that is already there wins, and the added copy is dropped.
+     *
+     * Two ways that happens. The harmless one is this function being called
+     * twice on the same array. The one that matters is a project added here
+     * and later shipped by the build as well — a region sends the list, the
+     * organiser adds one row by hand on the Friday, the Monday build carries
+     * it too. Appending blindly would publish that building twice, which is
+     * the exact fault this whole import page exists to prevent.
+     */
+    $have = [];
+    foreach ($base['portfolio']['projects'] as $p) {
+        if (is_array($p)) {
+            $have[(string) ($p['id'] ?? '')] = true;
+        }
+    }
+    foreach ($added as $p) {
+        $id = is_array($p) ? (string) ($p['id'] ?? '') : '';
+        if ($id === '' || isset($have[$id])) {
+            continue;
+        }
+        $have[$id] = true;
+        $base['portfolio']['projects'][] = $p;
+    }
+    return $base;
+}
+
+/** base + added + overrides, as the site will read it. */
 function site_merged(array $base, array $overrides, string $key, array &$stale = []): array
 {
-    $data = $base;
+    $data = site_with_added($base, $overrides, $key);
 
     foreach ($overrides['values'] as $path => $value) {
         if (!site_set($data, (string) $path, $value)) {
@@ -327,9 +376,6 @@ function site_merged(array $base, array $overrides, string $key, array &$stale =
 
     if ($key === 'forum') {
         $added = $overrides['added'];
-        if ($added !== [] && isset($data['portfolio']['projects'])) {
-            $data['portfolio']['projects'] = array_merge($data['portfolio']['projects'], $added);
-        }
         $hidden = array_flip($overrides['hidden']);
         if ($hidden !== [] && isset($data['portfolio']['projects'])) {
             $data['portfolio']['projects'] = array_values(array_filter(
@@ -369,6 +415,26 @@ function site_publish(array $config, string $key): array
     site_write_json($published, $merged);
     clearstatcache(true, $published);
 
+    /*
+     * The photographs, back into the web root.
+     *
+     * A deploy copies the build over the live site with `rsync --delete`, so
+     * every photograph uploaded from the admin is removed from the web root
+     * whenever one lands. The deploy's last step is to publish, which is
+     * here, so they are put back before it finishes. See src/photos.php.
+     */
+    /*
+     * Required here rather than at the top of the file, and on purpose.
+     *
+     * photos.php requires this file — it needs site_dir() — so requiring it
+     * back at the top is a cycle. Doing it at the point of use means every
+     * caller of site_publish() gets the photographs put back whether or not
+     * it thought to load that file: bin/publish.php, which is the one the
+     * deploy runs, did not, and the photographs stayed deleted.
+     */
+    require_once __DIR__ . '/photos.php';
+    $photos = photos_sync($config);
+
     $overrides['published_sha'] = (string) sha1_file($published);
     site_write_json(site_state_file($config, $key, 'overrides'), $overrides);
 
@@ -376,10 +442,65 @@ function site_publish(array $config, string $key): array
         'applied' => count($overrides['values']),
         'hidden' => count($overrides['hidden']),
         'added' => count($overrides['added']),
+        'photos' => $photos['copied'],
+        'photos_failed' => $photos['failed'],
         'stale' => $stale,
         'base' => $note,
         'file' => $published,
     ];
+}
+
+/* ------------------------------------------------------- projects of our own */
+
+/**
+ * Add a whole project to the portfolio.
+ *
+ * It is stored in the overlay rather than written into the published file,
+ * for the same reason an edited field is: the published file is build output
+ * and the next deploy replaces it. A project in `added` is re-appended every
+ * time the site is published, including by the deploy's own last step.
+ *
+ * @param array<string,mixed> $project a record shaped like the build's own
+ */
+function site_add_project(array $config, array $project): void
+{
+    $overrides = site_overrides($config, 'forum');
+    $overrides['added'][] = $project;
+    site_save_overrides($config, 'forum', $overrides);
+}
+
+/** Take one back out, with every override that was keyed to it. */
+function site_remove_added(array $config, string $id): bool
+{
+    $overrides = site_overrides($config, 'forum');
+    $before = count($overrides['added']);
+    $overrides['added'] = array_values(array_filter(
+        $overrides['added'],
+        static fn($p) => (string) (is_array($p) ? ($p['id'] ?? '') : '') !== $id,
+    ));
+    if (count($overrides['added']) === $before) {
+        return false;
+    }
+    $prefix = 'portfolio.projects.' . $id . '.';
+    foreach (array_keys($overrides['values']) as $path) {
+        if (str_starts_with((string) $path, $prefix)) {
+            unset($overrides['values'][$path]);
+        }
+    }
+    $overrides['hidden'] = array_values(array_diff($overrides['hidden'], [$id]));
+    site_save_overrides($config, 'forum', $overrides);
+    return true;
+}
+
+/** Was this project added from the admin rather than built? */
+function site_is_added(array $overrides, string $id): bool
+{
+    foreach ($overrides['added'] ?? [] as $p) {
+        if (is_array($p) && (string) ($p['id'] ?? '') === $id) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /* ------------------------------------------------------------- the editor */

