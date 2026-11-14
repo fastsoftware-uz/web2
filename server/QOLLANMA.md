@@ -15,7 +15,7 @@ uchun) va [`README.md`](README.md) (texnik tafsilotlar).
 |---|---|
 | **Roʻyxatdan oʻtganlar** | Arizalarni oʻqish, qidirish, holatini oʻzgartirish, Excel uchun CSV yuklab olish |
 | **Saytni tahrirlash → Boʻlimlar** | Sayt yozadigan har bir matn: sana, shahar, dastur, sessiyalar, aloqa, barchasi uch tilda |
-| **Saytni tahrirlash → Loyihalar** | 86 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
+| **Saytni tahrirlash → Loyihalar** | 260 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
 | **Saytni tahrirlash → Nashr** | Qilingan oʻzgarishlar roʻyxati; har birini yoki hammasini asl holiga qaytarish |
 | **Loyiha qoʻshish** | Excel yoki CSV roʻyxatidan yangi loyihalar, rasmlari bilan — dublikat tekshiruvidan oʻtkazib |
 | **Jurnal** | Kim, qachon, nima qilgani. Oʻchirilmaydi va tahrirlanmaydi |
@@ -252,7 +252,7 @@ yoki **Nashr** boʻlimidan **Asl holiga** tugmasini bosish.
 
 ## 4. Loyihalar
 
-**Saytni tahrirlash → Loyihalar** — 86 ta investitsiya loyihasi.
+**Saytni tahrirlash → Loyihalar** — 260 ta investitsiya loyihasi.
 
 ### Qidirish va koʻrish
 
@@ -285,7 +285,7 @@ Oʻchirmaydi — adminkada qoladi va **Qaytarish** bilan qaytariladi.
 
 Yashirilgan loyiha jadvalda xira koʻrinadi va “saytda yoʻq” belgisi bilan
 turadi. Hududlar va yoʻnalishlar boʻyicha raqamlar ham avtomatik qayta
-sanaladi, ya'ni sayt “86 ta loyiha” deb turib 85 tasini koʻrsatib qolmaydi.
+sanaladi, ya'ni sayt “260 ta loyiha” deb turib 259 tasini koʻrsatib qolmaydi.
 
 ---
 
