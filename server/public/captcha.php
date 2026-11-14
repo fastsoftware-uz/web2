@@ -36,6 +36,23 @@ if (!captcha_can_draw()) {
     exit;
 }
 
+/**
+ * Only ever draws a challenge that already exists.
+ *
+ * The login page makes one when it renders; this draws it. Asked for on its
+ * own, with no challenge in the session, it answers 404 and makes nothing —
+ * which also means it writes no session file, because PHP only stores a
+ * session that has something in it. Otherwise a loop on this address would
+ * be a loop filling the session directory with challenges nobody asked a
+ * question with.
+ */
+if (!isset($_SESSION['captcha'])) {
+    http_response_code(404);
+    header('Content-Type: text/plain; charset=utf-8');
+    echo "Tekshiruv savoli yoʻq — kirish sahifasini oching.\n";
+    exit;
+}
+
 try {
     $png = captcha_png($config);
 } catch (Throwable $e) {

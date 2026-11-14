@@ -21,7 +21,18 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          # 24, not 22, and it has to stay in step with whatever writes
+          # the lockfile below.
+          #
+          # This file regenerates package-lock.json with the developer's own
+          # npm whenever a dependency range changes. npm 11 — Node 24 — writes
+          # a lock that npm 10 — Node 22 — then refuses:
+          #
+          #   npm error Missing: @emnapi/runtime@2.0.0-beta.2 from lock file
+          #
+          # which is a deploy that fails at npm ci having built nothing. The
+          # two have to agree, so the runner follows the development runtime.
+          node-version: 24
           cache: npm
       - run: npm ci
       - run: npm run build
