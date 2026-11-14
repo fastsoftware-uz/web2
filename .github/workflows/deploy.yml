@@ -40,18 +40,20 @@ jobs:
         continue-on-error: true
       # Temporary: the runner's npm log is not readable without a token, so
       # a failure is copied into the job summary, which is public.
+      # Temporary: the runner's log needs a token to read, but annotations
+      # do not — so the npm error lines are emitted as annotations.
       - name: Why the install failed
         if: steps.install.outcome == 'failure'
         run: |
-          {
-            echo '### npm ci failed'
-            echo ''
-            echo 'node: ' "$(node -v)" '  npm: ' "$(npm -v)"
-            echo ''
-            echo '```'
-            tail -n 150 "$(ls -t ~/.npm/_logs/*.log | head -1)" || echo 'no npm log'
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::versions node=$(node -v) npm=$(npm -v)"
+          LOG="$(ls -t ~/.npm/_logs/*.log 2>/dev/null | head -1)"
+          if [ -z "$LOG" ]; then
+            echo "::error::no npm log was written"
+          else
+            grep -E 'error|ERR!' "$LOG" | tail -n 20 | while IFS= read -r line; do
+              echo "::error::${line:0:300}"
+            done
+          fi
           exit 1
       - run: npm run build
         env:
