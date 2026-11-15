@@ -43,10 +43,19 @@ Uchta katakcha: **login**, **parol** va **tekshiruv**.
   xuddi shu boʻladi. Ikkovi ham toʻgʻri; yoʻq loginni taxmin qilib
   yozmang — notoʻgʻri login ham notoʻgʻri parol hisoblanadi va manzil
   yopiladi.
-- **Tekshiruv** — rasmdagi besh belgi. Robot parol roʻyxati bilan urinmasligi
-  uchun. Rasm tushunarsiz boʻlsa, **Boshqa rasm** tugmasini bosing: javob
+- **Tekshiruv** — odatda **koʻrinmaydi**. Ikki holat bor:
+  - `.env` da Cloudflare Turnstile kalitlari toʻldirilgan boʻlsa (tavsiya
+    etiladi), tekshiruv har safar ishlaydi, lekin hech narsa soʻralmaydi:
+    Cloudflare brauzerning oʻzini tekshiradi va faqat shubha tugʻilsa biror
+    narsa koʻrsatadi;
+  - kalitlar boʻsh boʻlsa, adminkaning oʻz tekshiruvi — rasmdagi besh belgi —
+    ishlaydi, va u **faqat parolni xato kiritgan manzilga** koʻrsatiladi.
+    Yaʼni odatda siz faqat parol yozasiz; adashsangiz, keyingi urinishda
+    rasm paydo boʻladi.
+
+  Rasm tushunarsiz boʻlsa, **Boshqa rasm** tugmasini bosing: javob
   oʻzgarmaydi, rasm qaytadan chiziladi. Bu yerda xato qilish xavfsiz — parol
-  umuman tekshirilmaydi va hech narsa bloklanmaydi.
+  umuman tekshirilmaydi va urinish sarflanmaydi.
 
 Dastlabki parolni dasturchi oʻrnatadi. Parol faqat sizda boʻlsin: adminkada
 forum mehmonlarining ismi, telefoni va elektron pochtasi turadi.
@@ -75,13 +84,13 @@ Soʻraydi, ekranda koʻrsatmaydi, hech qayerga yozmaydi.
 
 ### Xato parol kiritilsa
 
-**Bitta xato parol — shu manzil darhol bloklanadi**, 15 daqiqaga; takrorlansa
-muddat ikki barobar oshadi. Qattiq qoida, va atayin shunday: mehmonlar
-roʻyxati turgan eshikda parol roʻyxati bilan urinayotgan odam har bir
-manzildan atigi bitta taxmin qila oladi.
+**Uch marta xato parol — shu manzil bloklanadi**, 15 daqiqaga; takrorlansa
+muddat ikki barobar oshadi, bir sutkagacha. Uchta urinish parol roʻyxati
+bilan urinayotgan odamga hech narsa bermaydi — uni toʻxtatadigan narsa
+urinishlar soni emas, har safar ikkilanadigan blok.
 
-Rasmdagi tekshiruvda xato qilish blokga olib **kelmaydi** — u paroldan oldin
-soʻraladi va xato boʻlsa parol umuman oʻqilmaydi.
+Tekshiruvda xato qilish blokga olib **kelmaydi** — u paroldan oldin
+oʻtadi va xato boʻlsa parol umuman oʻqilmaydi.
 
 Oʻzingiz bloklanib qolsangiz va kutib boʻlmasa, serverga kira oladigan odam
 bir buyruq bilan ochadi:

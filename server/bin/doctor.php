@@ -150,19 +150,20 @@ say(
     $kind === 'turnstile' ? 'ok' : 'info',
     'Kirishda odamlik tekshiruvi',
     [
-        'turnstile' => 'Cloudflare Turnstile (serverda tashqi tarmoq kerak)',
-        'image' => 'ichki rasm testi — tashqi tarmoq kerak emas',
+        'turnstile' => 'Cloudflare Turnstile — har safar ishlaydi, lekin koʻrinmaydi '
+            . '(serverda tashqi tarmoq kerak)',
+        'image' => 'ichki rasm testi — faqat parolni xato kiritgan manzilga koʻrsatiladi. '
+            . 'Doimiy va koʻrinmas tekshiruv uchun: TURNSTILE_SITE_KEY va TURNSTILE_SECRET',
         'words' => 'ichki savol (GD yo\'q, shuning uchun rasm emas)',
     ][$kind],
 );
 
 $budget = guard_attempt_budget($config);
 say(
-    $budget === 1 ? 'ok' : 'warn',
+    $budget <= 3 ? 'ok' : 'warn',
     'Noto\'g\'ri parol chegarasi: ' . $budget . ' ta',
-    $budget === 1
-        ? 'bitta xato — manzil ' . (int) $config['login_lock_minutes'] . ' daqiqaga yopiladi; ochish: php server/bin/unlock.php'
-        : 'LOGIN_ONE_STRIKE=1 qo\'yilsa bitta xatodan keyin yopiladi',
+    $budget . ' ta xatodan keyin manzil ' . (int) $config['login_lock_minutes']
+        . ' daqiqaga yopiladi (takrorlansa ikki barobar oshadi); ochish: php server/bin/unlock.php',
 );
 
 if (users_installed($config)) {

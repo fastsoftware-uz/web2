@@ -67,10 +67,10 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
      *
      *   1. is the address already locked out?
      *   2. is there a person here? — answered before the password is read,
-     *      and a wrong answer costs nothing but a new question, because the
-     *      lock below is a single strike and misreading five drawn letters
-     *      must not spend it;
-     *   3. is the password right? — one wrong answer locks the address.
+     *      and a wrong answer costs nothing but a new question, because
+     *      misreading five drawn letters must not spend one of the three
+     *      attempts the password has;
+     *   3. is the password right? — three wrong answers lock the address.
      */
     $login = trim((string) ($_POST['login'] ?? ''));
     $given = (string) ($_POST['password'] ?? '');
@@ -82,7 +82,19 @@ if ($action === 'login' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'locked';
         audit_log($config, 'login.locked', ['login' => $login]);
     } else {
-        [$human, $why] = captcha_verify($config, $_POST, $ip);
+        /*
+         * Only where the page put one. With Turnstile that is every login,
+         * invisibly; with the built-in check it is an address that has
+         * already got a password wrong, because a drawn picture cannot be
+         * shown to nobody. See captcha_wanted() in ../src/captcha.php.
+         *
+         * Asked the same way here as it is drawn there: a form that carried
+         * no check is not refused for having no answer, and a form that did
+         * cannot skip it by leaving the field out.
+         */
+        [$human, $why] = captcha_wanted($config, $ip)
+            ? captcha_verify($config, $_POST, $ip)
+            : [true, 'ok'];
         if (!$human) {
             $error = $why === 'unreachable' ? 'captcha-down' : 'captcha';
             audit_log($config, 'login.captcha', ['login' => $login, 'sabab' => $why]);
@@ -319,8 +331,12 @@ $STATUS_LABEL = ['new' => 'Yangi', 'confirmed' => 'Tasdiqlangan', 'declined' => 
 $mayEdit = user_can($user, 'registrations.edit');
 
 if (!$authed):
-    $kind = captcha_kind($config);
-    $challenge = $kind === 'turnstile' ? null : captcha_challenge($config);
+    /* No check at all until this address has earned one; see
+       captcha_wanted(). A challenge is made only if one will be shown —
+       making one otherwise writes a session file for every visitor. */
+    $asking = captcha_wanted($config, $ip);
+    $kind = $asking ? captcha_kind($config) : '';
+    $challenge = $asking && $kind !== 'turnstile' ? captcha_challenge($config) : null;
 ?>
 <!doctype html>
 <html lang="uz">
@@ -358,8 +374,19 @@ if (!$authed):
     <label for="pw">Parol</label>
     <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
 
-    <?php if ($kind === 'turnstile'): ?>
-      <div class="cf-turnstile" data-sitekey="<?= app_h((string) $config['turnstile_site_key']) ?>" data-theme="light"></div>
+    <?php if (!$asking): ?>
+      <?php /* Nothing: this address has given no reason to be asked. */ ?>
+    <?php elseif ($kind === 'turnstile'): ?>
+      <?php
+      /*
+       * `interaction-only`: Cloudflare runs on every login and draws
+       * nothing unless it has decided somebody has to be asked something.
+       * The reader sees a password box; a robot meets a challenge. The
+       * token is verified on the server either way.
+       */
+      ?>
+      <div class="cf-turnstile" data-sitekey="<?= app_h((string) $config['turnstile_site_key']) ?>"
+           data-theme="light" data-appearance="interaction-only"></div>
     <?php elseif ($kind === 'image'): ?>
       <label for="cap">Rasmdagi belgilarni kiriting</label>
       <div class="captcha">
@@ -413,7 +440,7 @@ if (!$authed):
     <?php /* The login box carries its own note now, so this one says the
              one thing left: what a mistyped password costs. */ ?>
     <p class="muted small gate__note">
-      Bitta notoʻgʻri parol — manzil vaqtincha yopiladi.
+      <?= (int) guard_attempt_budget($config) ?> marta notoʻgʻri parol — manzil vaqtincha yopiladi.
     </p>
   </form>
 </main>

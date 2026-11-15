@@ -46,14 +46,20 @@ const ENV_DEFAULTS = [
     'notify_email' => '',
     'session_idle_minutes' => 30,
     'session_max_hours' => 12,
-    'login_max_attempts' => 5,
+    /*
+     * Three wrong passwords and the address is locked, at the client's
+     * instruction on 15 November 2026. It was one, which is the strictest a
+     * door can be and locked the organiser out for mistyping their own
+     * password; three still leaves a word list nothing to work with, because
+     * the lock doubles every time it is earned again.
+     */
+    'login_max_attempts' => 3,
     'login_lock_minutes' => 15,
     /*
-     * One wrong password locks the address. On by default — see
-     * guard_attempt_budget(). LOGIN_ONE_STRIKE=0 puts LOGIN_MAX_ATTEMPTS back
-     * in charge.
+     * Back to one strike, for an installation that wants it:
+     * LOGIN_ONE_STRIKE=1 in .env. See guard_attempt_budget().
      */
-    'login_one_strike' => true,
+    'login_one_strike' => false,
     'force_https' => false,
     'trust_proxy' => false,
     /*

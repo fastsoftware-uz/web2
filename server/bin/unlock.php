@@ -71,7 +71,7 @@ echo $cleared === 0
     ? "Tozalashga narsa yoʻq edi.\n"
     : "Tozalandi: {$cleared} ta manzilning hisobi oʻchirildi. Endi kirib koʻring.\n";
 
-if ((int) ($config['login_one_strike'] ?? 1) === 1) {
+if (!empty($config['login_one_strike'])) {
     echo "\nEslatma: hozir bitta notoʻgʻri parol ham blokga olib keladi.\n";
     echo "Yumshatish uchun server/.env ga: LOGIN_ONE_STRIKE=0\n";
 }

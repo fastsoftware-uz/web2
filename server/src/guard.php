@@ -425,22 +425,21 @@ function guard_login_wait(array $config, string $ip): int
 /**
  * How many wrong passwords this installation allows before it locks.
  *
- * One, unless somebody has said otherwise. That is the client's instruction
- * and it is the right default for a door with a guest list behind it: a
- * password list gets exactly one guess per address per lock period, which
- * makes the address worthless to work from.
+ * Three, since 15 November 2026. It was one — the client asked for the
+ * strictest door there is — and one turned out to be a door that locks the
+ * person holding the key: a mistyped password at the wrong moment and the
+ * organiser waits a quarter of an hour. Three costs an attacker nearly
+ * nothing extra, because what stops a word list is not the count but the
+ * lock that doubles each time it is earned again, up to a day.
  *
- * It is a hard setting to live with and it has two ways out, both of which
- * the login page and bin/doctor.php say out loud:
+ * Two settings and one way back:
  *
- *   LOGIN_ONE_STRIKE=0   in .env — back to LOGIN_MAX_ATTEMPTS, five by
- *                        default, which is what this was before;
- *   php bin/unlock.php   on the server — clears the locks at once, for the
- *                        organiser who mistyped their own password and
- *                        cannot wait a quarter of an hour.
+ *   LOGIN_MAX_ATTEMPTS   in .env — the count, three by default;
+ *   LOGIN_ONE_STRIKE=1   in .env — back to one, whatever the count says;
+ *   php bin/unlock.php   on the server — clears every lock at once.
  *
  * The check that a person is there (captcha.php) runs before the password, so
- * a mistyped *check* costs nothing. Only a wrong password spends the strike.
+ * a mistyped *check* costs nothing. Only a wrong password spends an attempt.
  */
 function guard_attempt_budget(array $config): int
 {
@@ -482,6 +481,30 @@ function guard_login_failed(array $config, string $ip): void
         $all[$ip] = $row;
         return $all;
     });
+}
+
+/**
+ * Has this address got a password wrong lately?
+ *
+ * Read by captcha.php, which uses it to decide whether the built-in check
+ * has to be put in front of somebody. A clean address is asked nothing; one
+ * that has already slipped is asked to read a picture. A day of quiet
+ * forgets it, and so does one correct password.
+ *
+ * `n` is the count since the last lock — it is reset when a lock is set —
+ * so a lock that has since expired is read off `locks` instead.
+ */
+function guard_login_suspect(array $config, string $ip): bool
+{
+    if ($ip === '') {
+        return false;
+    }
+    $all = guard_attempts($config, static fn(array $a): array => $a);
+    $row = $all[$ip] ?? null;
+    if (!is_array($row) || (int) ($row['seen'] ?? 0) + 86400 < time()) {
+        return false;
+    }
+    return (int) ($row['n'] ?? 0) > 0 || (int) ($row['locks'] ?? 0) > 0;
 }
 
 /** A right password forgets every wrong one from that address. */

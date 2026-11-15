@@ -7,17 +7,25 @@
  * a person is typing stops the attempt being made at all, which is the only
  * thing that helps when the attempts come from a thousand addresses one each.
  *
- * ## Two of them, and the first needs nothing
+ * ## Two of them, and only one of them can be invisible
+ *
+ * Cloudflare Turnstile is the one to use, and the one this is configured for:
+ * it watches the browser instead of the eyes, so the reader is asked nothing
+ * at all unless Cloudflare decides somebody has to be. The page asks for it
+ * with `data-appearance="interaction-only"` — the widget draws nothing until
+ * it has something to ask — and the token is still checked on the server
+ * every single time. Invisible to a person, present for a robot, which is
+ * exactly what the client asked for on 15 November 2026.
  *
  * The built-in check is five characters drawn into an image by GD, or — where
- * GD is not installed — a sum written out in Uzbek words. It asks nothing of
- * the network, which matters: the organiser's server may sit behind a
- * firewall with no outbound route, and a login that depends on reaching
- * somebody else's API is a login that fails on the morning of the forum.
- *
- * Cloudflare Turnstile is used instead the moment the two keys are filled in.
- * It is the better check — it watches the browser rather than the eyes — and
- * it is opt-in for exactly the reason above.
+ * GD is not installed — a sum written out in Uzbek words. It cannot be
+ * invisible: it is a picture to read. So it is the fallback for an
+ * installation with no Turnstile keys, and there it is shown only to an
+ * address that has already got a password wrong — see captcha_wanted(). It
+ * asks nothing of the network, which matters: the organiser's server may sit
+ * behind a firewall with no outbound route, and a login that depends on
+ * reaching somebody else's API is a login that fails on the morning of the
+ * forum.
  *
  * ## The order it runs in
  *
@@ -30,6 +38,8 @@
  */
 
 declare(strict_types=1);
+
+require_once __DIR__ . '/guard.php';
 
 /** The alphabet, with every pair that can be misread taken out: 0/O, 1/I/l. */
 const CAPTCHA_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -53,6 +63,28 @@ function captcha_kind(array $config): string
         return 'turnstile';
     }
     return captcha_can_draw() ? 'image' : 'words';
+}
+
+/**
+ * Is a check put in front of this login at all?
+ *
+ * Turnstile: always. It costs the reader nothing to be there, so there is no
+ * reason to leave any login unwatched.
+ *
+ * The built-in check: only for an address that has already got a password
+ * wrong. The client asked for a login page that shows nothing but a password
+ * box, and a drawn picture cannot be shown invisibly — so the picture is
+ * held back until the address has given a reason to doubt it. What guards
+ * the first attempts is the throttle: three wrong passwords and the address
+ * is shut for fifteen minutes, doubling each time. Fill in the two Turnstile
+ * keys and every login is watched from the first one.
+ */
+function captcha_wanted(array $config, string $ip): bool
+{
+    if (captcha_turnstile($config)) {
+        return true;
+    }
+    return guard_login_suspect($config, $ip);
 }
 
 function captcha_can_draw(): bool
