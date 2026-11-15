@@ -344,6 +344,17 @@ if (!$authed):
     <label for="login">Login</label>
     <input id="login" name="login" type="text" autocomplete="username" autocapitalize="none"
            spellcheck="false" placeholder="admin" value="<?= app_h($_POST['login'] ?? '') ?>">
+    <?php
+    /*
+     * Said here, not only in the guide.
+     *
+     * One wrong password locks the address, and somebody who has only ever
+     * had a password will guess at this box — their name, their e-mail,
+     * anything — and spend the one attempt on it. The field is optional and
+     * the page should be the thing that says so.
+     */
+    ?>
+    <small class="hint">Bitta parol bilan ishlatilsa, boʻsh qoldiring.</small>
     <label for="pw">Parol</label>
     <input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>
 
@@ -391,9 +402,10 @@ if (!$authed):
       <p class="muted">Huquqingiz yoki parolingiz oʻzgardi — qaytadan kiring.</p>
     <?php endif; ?>
     <button type="submit">Kirish</button>
+    <?php /* The login box carries its own note now, so this one says the
+             one thing left: what a mistyped password costs. */ ?>
     <p class="muted small gate__note">
-      Bitta notoʻgʻri parol — manzil vaqtincha yopiladi. Loginni bilmasangiz
-      boʻsh qoldiring.
+      Bitta notoʻgʻri parol — manzil vaqtincha yopiladi.
     </p>
   </form>
 </main>

@@ -37,8 +37,12 @@ Manzil: **`https://<sayt-manzili>/admin/`**
 Uchta katakcha: **login**, **parol** va **tekshiruv**.
 
 - **Login** — oʻzingizniki. Hamkasblar uchun alohida login ochiladi (§10).
-  Adminkaga faqat bitta parol bilan kiriladigan boʻlsa, login katakchasini
-  boʻsh qoldirsangiz ham boʻladi.
+  Adminkaga faqat bitta parol bilan kiriladigan boʻlsa — yaʼni §10 dagi
+  foydalanuvchilar hali ochilmagan boʻlsa — **login katakchasini boʻsh
+  qoldiring**: u holda `admin` hisobiga kiriladi. «admin» deb yozsangiz ham
+  xuddi shu boʻladi. Ikkovi ham toʻgʻri; yoʻq loginni taxmin qilib
+  yozmang — notoʻgʻri login ham notoʻgʻri parol hisoblanadi va manzil
+  yopiladi.
 - **Tekshiruv** — rasmdagi besh belgi. Robot parol roʻyxati bilan urinmasligi
   uchun. Rasm tushunarsiz boʻlsa, **Boshqa rasm** tugmasini bosing: javob
   oʻzgarmaydi, rasm qaytadan chiziladi. Bu yerda xato qilish xavfsiz — parol

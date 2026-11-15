@@ -92,13 +92,21 @@ a { color: var(--cobalt); }
 .card h1 { margin: 0; font-size: 1.3rem; color: var(--ink); }
 .card p { margin: 0.25rem 0 1.25rem; font-size: 0.9rem; }
 .card label { display: block; margin-bottom: 0.35rem; font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+/* Air between the fields of the login card. Without it the password box sat
+   against the next label and its focus ring was drawn over the words. */
+.card > input { margin-bottom: 0.9rem; }
+.card > .hint + label { margin-top: 0; }
 
 /* --------------------------------------------------------------- controls */
 
 input, select, button, .btn, textarea {
   font: inherit;
 }
-input[type="password"], input[type="search"], select {
+/* The login card's own text boxes — the login name and the answer to the
+   check — were left with the browser's default chrome when they were added
+   beside an already-styled password field, so the three boxes in one card
+   were two different shapes. */
+input[type="password"], input[type="search"], .card input[type="text"], select {
   width: 100%;
   min-height: 2.5rem;
   padding: 0.4rem 0.65rem;
@@ -797,6 +805,15 @@ main.wide { max-inline-size: 104rem; }
 .captcha .btn { white-space: nowrap; }
 #cap { letter-spacing: 0.18em; text-transform: uppercase; font-size: 1.05rem; }
 .gate__note { margin-top: 0.8rem; text-align: center; line-height: 1.5; }
+/* A word under a field, inside the login card: the same quiet as a form
+   field's own note, with the gap the next label needs under it. */
+.card > .hint {
+  display: block;
+  margin: 0.3rem 0 0.9rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
 
 /* ------------------------------------------------- three states of a row */
 
