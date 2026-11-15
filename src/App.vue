@@ -74,6 +74,19 @@ onBeforeUnmount(stopSmoothScroll);
   <SiteChrome v-if="isReady" :chapters="CHAPTERS" />
 
   <main>
+    <!--
+      The title card is drawn before the data arrives, and the rest is not.
+
+      Everything on this page comes out of one 750 kB file, and until it had
+      landed the whole of `main` was a spinner — so the first thing anybody
+      sees, the forum's own name and date, waited on a download it does not
+      need. The card reads whatever it has: the wordmark, the organiser's
+      line and the two buttons are the page's own text, and the date, the
+      count and the photograph appear when the file lands, each behind its
+      own `v-if`. Largest Contentful Paint is that first line of type.
+    -->
+    <ChPrologue />
+
     <div v-if="error" class="state" role="alert">
       <h1>{{ t('state.errorTitle') }}</h1>
       <p>{{ t('state.errorBody') }}</p>
@@ -87,7 +100,6 @@ onBeforeUnmount(stopSmoothScroll);
     </div>
 
     <template v-else>
-      <ChPrologue />
       <ChProgramme />
       <ChSpeakers />
       <ChThemes />

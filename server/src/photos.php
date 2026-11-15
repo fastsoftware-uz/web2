@@ -42,20 +42,25 @@ const PHOTO_QUALITY = ['thumb' => 70, 'full' => 76];
 /**
  * The three jobs a picture can have on this site, and the widths each needs.
  *
- * Every set writes the same two files — `<stem>-thumb.webp` and
- * `<stem>-full.webp` — because that pair is the contract the site, the sync
- * into the web root and the delete all read. Only the pixels differ: a
- * portrait is never shown wider than a card, and the photograph behind the
- * title card is the full width of a desktop window. Writing a 2200-pixel
- * file for a face, or a 1000-pixel one for the title card, would be a
- * slower page in one direction and a blurred one in the other.
+ * Every set writes `<stem>-thumb.webp` and `<stem>-full.webp`, because that
+ * pair is the contract the site, the sync into the web root and the delete
+ * all read. Only the pixels differ: a portrait is never shown wider than a
+ * card, and the photograph behind the title card is the full width of a
+ * desktop window. Writing a 2200-pixel file for a face, or a 1000-pixel one
+ * for the title card, would be a slower page in one direction and a blurred
+ * one in the other.
+ *
+ * The title card gets a third file, `-card.webp`. It is the one a telephone
+ * actually downloads: offered only 320 and 2200, a 412-pixel screen at three
+ * times the density takes the 2200 and spends 175 kB on a picture it draws
+ * at a third of the size.
  *
  * `[width, quality]`.
  */
 const PHOTO_SETS = [
     'project' => ['thumb' => [220, 70], 'full' => [1000, 76]],
     'face' => ['thumb' => [220, 72], 'full' => [720, 78]],
-    'hero' => ['thumb' => [320, 70], 'full' => [2200, 72]],
+    'hero' => ['thumb' => [320, 70], 'card' => [1100, 70], 'full' => [2200, 66]],
 ];
 
 /** The smallest picture each job can be made from. */

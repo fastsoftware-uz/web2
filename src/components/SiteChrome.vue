@@ -107,7 +107,18 @@ function measure() {
 
 function updateProgress() {
   progress.value = maxScroll > 0 ? Math.min(1, window.scrollY / maxScroll) : 0;
-  scrolled.value = window.scrollY > 120;
+  /*
+   * 8px, not 120.
+   *
+   * The bar floats over the title card on a scrim, which is right while the
+   * page is at rest: the photograph runs under it and nothing is hidden.
+   * The moment the page moves, though, the card's own type travels up
+   * underneath a bar that is still see-through, and the organiser's line
+   * was being drawn straight through the section links. A scrim cannot fix
+   * that — it is translucent by definition — so the bar takes its own
+   * surface as soon as there is anything behind it to cover.
+   */
+  scrolled.value = window.scrollY > 8;
 }
 
 function onScroll() {

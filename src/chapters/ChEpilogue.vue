@@ -466,6 +466,13 @@ h2 {
   gap: 0.25rem;
 }
 .footer__langs button {
+  /* A thumb's worth, like every other control on the page: these were 43×34
+     and the only targets on site 2 the device sweep still had a note about. */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: var(--tap);
+  min-block-size: var(--tap);
   padding: 0.4rem 0.75rem;
   border: 1px solid var(--hairline);
   border-radius: 0.2rem;

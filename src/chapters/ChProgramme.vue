@@ -284,7 +284,7 @@ h2 {
   border: 1px solid var(--accent);
   border-radius: 1rem;
   font-family: var(--font-body);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
@@ -317,7 +317,7 @@ h2 {
 .halls__kind,
 .aside__kind {
   margin: 0;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
@@ -370,7 +370,7 @@ h2 {
 }
 .slot__kind {
   margin: 0.25rem 0 0;
-  font-size: 0.66rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;

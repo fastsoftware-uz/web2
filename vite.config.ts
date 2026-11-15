@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { defineConfig } from 'vite';
@@ -58,9 +59,61 @@ function preloadFonts() {
   };
 }
 
+/**
+ * The two numbers in the static description, and a head start on the data.
+ *
+ * ## The numbers
+ *
+ * `<meta name="description">` is what a crawler and a chat app's link
+ * preview read, and neither runs the JavaScript that keeps the live page's
+ * description accurate. Written by hand it said "74 projects from 13
+ * regions" for the four months the portfolio grew to 260 from 14. So the
+ * markup carries `{count}` and `{regions}` and they are filled in here from
+ * the same file the page itself reads.
+ *
+ * ## The head start
+ *
+ * Everything on the page comes out of `data/forum-2026.json`, and the fetch
+ * for it cannot begin until the bundle has been downloaded, parsed and run —
+ * which on a throttled phone put the title card's own first line nearly two
+ * seconds behind the first paint. The preload starts that download while the
+ * HTML is still being parsed, in parallel with the script instead of behind
+ * it. Only on the site's own page: the registration page does not read it.
+ */
+function forumFacts() {
+  /* The site's own copy, not the monorepo's: `npm run export` writes this
+     project out as a standalone repository with no `shared/` above it, and
+     a build that reads outside its own directory fails there. `npm run
+     sync` puts the same file here before every build. */
+  const data = JSON.parse(
+    readFileSync(new URL('./public/data/forum-2026.json', import.meta.url), 'utf8'),
+  ) as { portfolio: { projects: unknown[]; regionCounts: Record<string, number> } };
+  const count = String(data.portfolio.projects.length);
+  const regions = String(Object.keys(data.portfolio.regionCounts).length);
+
+  return {
+    name: 'forum-facts',
+    transformIndexHtml(html: string, ctx: { path?: string }) {
+      const filled = html.replaceAll('{count}', count).replaceAll('{regions}', regions);
+      const isSite = (ctx.path ?? '/index.html').replace(/^\/+/, '') === 'index.html';
+      if (!isSite) return filled;
+      return {
+        html: filled,
+        tags: [
+          {
+            tag: 'link',
+            attrs: { rel: 'preload', as: 'fetch', href: 'data/forum-2026.json' },
+            injectTo: 'head-prepend' as const,
+          },
+        ],
+      };
+    },
+  };
+}
+
 export default defineConfig({
   base: './',
-  plugins: [vue(), preloadFonts()],
+  plugins: [vue(), preloadFonts(), forumFacts()],
   build: {
     target: 'es2022',
     rollupOptions: {
@@ -81,10 +134,9 @@ export default defineConfig({
         register: fileURLToPath(new URL('./register/index.html', import.meta.url)),
       },
       output: {
-        // three.js is only needed by the hero globe, which is loaded on idle and
-        // skipped entirely when WebGL is missing or motion is reduced.
+        // The globe and its three.js came off the title card on 15 November
+        // 2026, so only GSAP is still worth a chunk of its own.
         manualChunks(id: string) {
-          if (id.includes('node_modules/three')) return 'three';
           if (id.includes('node_modules/gsap')) return 'gsap';
           return undefined;
         },

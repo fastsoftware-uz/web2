@@ -114,6 +114,30 @@ button[aria-pressed='true'] {
   white-space: nowrap;
 }
 
+/*
+ * On a phone the name goes above its bar instead of being cut off.
+ *
+ * The row is label | bar | count, and at 390px the label column is about 206
+ * pixels while «Madaniy, tarixiy va meros asosidagi» wants 294 — so six of
+ * the six directions ended in an ellipsis, which is the one place on the
+ * page where the reader is choosing between them by name. Given the whole
+ * width the names fit, and the bar and its count keep their own line
+ * underneath.
+ */
+@media (max-width: 30rem) {
+  button {
+    grid-template-columns: minmax(0, 1fr) 2rem;
+    row-gap: 0.3rem;
+  }
+  .bars__label {
+    grid-column: 1 / -1;
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+    line-height: 1.3;
+  }
+}
+
 .bars__track {
   /* Same height and same ink as the region bars beside them: three bar charts
      on one screen, all counting the same seventy-four projects, drawn two

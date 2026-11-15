@@ -69,9 +69,10 @@ useChapterTimeline(
       y: 26,
       opacity: 0,
       duration: 0.9,
-      stagger: 0.1,
-      // After the wordmark's own three lines have landed.
-      delay: 0.85,
+      stagger: 0.08,
+      // After the wordmark's own lines have landed — see ForumMark.vue, whose
+      // entrance this waits on and was shortened with.
+      delay: 0.5,
       ease: 'power3.out',
     });
   },
@@ -83,12 +84,21 @@ useChapterTimeline(
     <div class="prologue__bg">
       <!-- The venue, if the organiser has put one up. `alt=""`: the card's
            name and date say what this is, and the photograph adds nothing a
-           reader who cannot see it is missing. -->
+           reader who cannot see it is missing.
+
+           Three widths, and the middle one is the point: with only 320 and
+           2200 on offer, a 412-pixel phone at three times the density asked
+           for the 2200 and spent 175 kB on a picture it draws at a third of
+           that. 1100 covers every phone and most laptops. -->
       <img
         v-if="heroPhoto"
         class="prologue__photo"
         :src="`photos/${heroPhoto}-full.webp`"
-        :srcset="`photos/${heroPhoto}-thumb.webp 320w, photos/${heroPhoto}-full.webp 2200w`"
+        :srcset="
+          `photos/${heroPhoto}-thumb.webp 320w,` +
+          `photos/${heroPhoto}-card.webp 1100w,` +
+          `photos/${heroPhoto}-full.webp 2200w`
+        "
         sizes="100vw"
         alt=""
         fetchpriority="high"

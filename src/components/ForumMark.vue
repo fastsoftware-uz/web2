@@ -2,6 +2,12 @@
 /**
  * The forum's mark, inlined so it can be animated.
  *
+ * The entrance was trimmed on 15 November 2026 — the emblem and five lines
+ * took about 1.8 seconds to finish arriving, and because every one of them
+ * starts at `opacity: 0`, that time is counted straight into Largest
+ * Contentful Paint: the card is the largest thing on the screen. It still
+ * arrives a line at a time; it does it in about a second.
+ *
  * `scripts/process-logos.mjs` exports both files with their parts as separate
  * `<g id="…">` elements — the State Emblem, then the forum's name a line at a
  * time — which is the whole reason these are inlined rather than linked as
@@ -98,16 +104,16 @@ onMounted(() => {
         opacity: 0,
         scale: 0.86,
         transformOrigin: '50% 50%',
-        duration: 0.9,
+        duration: 0.6,
         ease: 'power3.out',
       })
       .from(
         Array.from(parts).slice(1),
-        { opacity: 0, yPercent: 16, duration: 0.85, stagger: 0.14, ease: 'power3.out' },
-        '-=0.55',
+        { opacity: 0, yPercent: 16, duration: 0.6, stagger: 0.09, ease: 'power3.out' },
+        '-=0.4',
       );
   } else {
-    tween.from(parts, { opacity: 0, yPercent: 16, duration: 0.85, stagger: 0.14, ease: 'power3.out' });
+    tween.from(parts, { opacity: 0, yPercent: 16, duration: 0.6, stagger: 0.09, ease: 'power3.out' });
   }
 
   // The artwork's gradient runs bottom-left to top-right. Rocking its axis a
