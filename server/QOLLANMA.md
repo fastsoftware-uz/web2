@@ -16,6 +16,8 @@ uchun) va [`README.md`](README.md) (texnik tafsilotlar).
 | **Roʻyxatdan oʻtganlar** | Arizalarni oʻqish, qidirish, holatini oʻzgartirish, Excel uchun CSV yuklab olish |
 | **Saytni tahrirlash → Boʻlimlar** | Sayt yozadigan har bir matn: sana, shahar, dastur, sessiyalar, aloqa, barchasi uch tilda |
 | **Saytni tahrirlash → Loyihalar** | 260 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
+| **Saytni tahrirlash → Spikerlar** | Forum spikerlari: ism, lavozim, rasm, tartib — saytning II bobi |
+| **Saytni tahrirlash → Bosh sahifa foni** | Birinchi ekrandagi orqa fon surati va uning muallifi |
 | **Saytni tahrirlash → Nashr** | Qilingan oʻzgarishlar roʻyxati; har birini yoki hammasini asl holiga qaytarish |
 | **Loyiha qoʻshish** | Excel yoki CSV roʻyxatidan yangi loyihalar, rasmlari bilan — dublikat tekshiruvidan oʻtkazib |
 | **Jurnal** | Kim, qachon, nima qilgani. Oʻchirilmaydi va tahrirlanmaydi |
@@ -488,6 +490,51 @@ lekin bu loyihada koʻrinmaydi.
 
 > **Nega rasm darhol koʻrinmasligi mumkin.** Brauzer rasmlarni keshlaydi.
 > Sahifani `Ctrl+F5` bilan yangilang.
+
+---
+
+## 9a. Spikerlar
+
+Saytning **II bobi — «Forum spikerlari»** — toʻliq shu yerdan boshqariladi.
+Build dan hech qanday spiker kelmaydi, shuning uchun bu roʻyxatni sayt
+yangilansa ham hech narsa oʻchirib yubormaydi.
+
+**Saytni tahrirlash → Spikerlar.**
+
+- **Yangi spiker** — pastdagi forma: ism familiya, lavozimi, tashkiloti va
+  rasm. Ism kamida bitta tilda yozilsin; ruscha yoki inglizchasi boʻsh
+  qolsa, sayt oʻzbekchasini koʻrsatadi.
+- **↑ ↓** — tartib. Saytdagi tartib shu yerdagidek boʻladi.
+- **×** — oʻchirish. Rasmi ham birga oʻchadi.
+- Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon va rasm.
+
+**Rasm.** Portret, kamida 320×320. Kvadrat yoki tik (vertikal) rasm eng
+yaxshi chiqadi — sayt uni gumbazsimon ramkaga soladi. Rasm yoʻq boʻlsa,
+ramkada ismning bosh harflari turadi: roʻyxat baribir butun koʻrinadi.
+
+Roʻyxat boʻsh boʻlsa, saytda «Spikerlar roʻyxati hali eʼlon qilinmagan»
+degan yozuv turadi — yaʼni bob boʻsh koʻrinmaydi.
+
+---
+
+## 9b. Bosh sahifa foni
+
+**Saytni tahrirlash → Bosh sahifa foni.** Saytning birinchi ekranida —
+forum nomi va sanasi turgan joyda — orqa fon surati.
+
+- Surat qoʻyilsa: chizma globus uning ortiga oʻtadi va xira koʻrinadi,
+  tepasiga esa tungi rang qoʻyiladi — yozuvlar har qanday suratda ham oʻqiladi.
+- Surat olib tashlansa: hammasi avvalgi holiga qaytadi.
+- **Surat muallifi** — suratning tagida chiqadigan kichkina yozuv. Boʻsh
+  qoldirilsa, hech narsa chiqmaydi.
+
+Oʻlchami: keng (gorizontal), kamida 1200×600, ideali 2000 piksel va undan
+keng. Serverda WebP ga aylantiriladi.
+
+> **Huquq masalasi.** Faqat huquqi oʻzingizda boʻlgan suratni qoʻying:
+> tashkilotchining oʻz surati, fotograf bilan kelishilgani yoki litsenziyasi
+> aniq boʻlgani. Internetdan olingan surat — hatto binoning oʻzi boʻlsa ham —
+> bu yerga yaramaydi.
 
 ---
 

@@ -43,6 +43,8 @@ const SECTION_LABEL = [
     'goals' => 'Maqsadlar',
     'themes' => 'Yoʻnalishlar',
     'participants' => 'Ishtirokchilar',
+    'speakers' => 'Spikerlar',
+    'media' => 'Bosh sahifa foni',
     'sessions' => 'Sessiyalar',
     'programme' => 'Dastur',
     'standard' => 'Standart',
@@ -65,7 +67,8 @@ const FIELD_LABEL = [
     'lat' => 'Kenglik', 'lon' => 'Uzunlik', 'title' => 'Sarlavha', 'body' => 'Matn',
     'subtitle' => 'Izoh', 'purpose' => 'Maqsadi', 'paragraphs' => 'Paragraflar',
     'note' => 'Eslatma', 'items' => 'Bandlar', 'topics' => 'Mavzular',
-    'who' => 'Kim', 'category' => 'Toifa', 'icon' => 'Belgi', 'n' => 'Raqam',
+    'who' => 'Kim', 'category' => 'Toifa', 'role' => 'Lavozimi', 'org' => 'Tashkilot',
+    'photo' => 'Rasm', 'hero' => 'Fon surati', 'heroCredit' => 'Surat muallifi', 'icon' => 'Belgi', 'n' => 'Raqam',
     'roman' => 'Rim raqami', 'block' => 'Blok', 'number' => 'Raqam',
     'workingTitle' => 'Ishchi nomi', 'source' => 'Manba', 'publisher' => 'Nashr etuvchi',
     'document' => 'Hujjat', 'asOf' => 'Holat sanasi', 'id' => 'Kalit',
@@ -88,6 +91,17 @@ const SEGMENT_LABEL = [
     'leisure' => 'Koʻngilochar va oilaviy',
     'transport' => 'Transport',
 ];
+
+/** The languages a speaker's three fields are kept in. */
+const SPEAKER_LANGS = ['uz' => 'Oʻzbekcha', 'ru' => 'Ruscha', 'en' => 'Inglizcha'];
+/** name, role, org — what the card prints, in the order it prints them. */
+const SPEAKER_FIELDS = [
+    'name' => ['label' => 'Ism familiya', 'max' => 120],
+    'role' => ['label' => 'Lavozimi', 'max' => 200],
+    'org' => ['label' => 'Tashkilot', 'max' => 200],
+];
+/** Above this the chapter is a page of faces nobody reads to the end of. */
+const SPEAKER_MAX = 60;
 
 function label_for(string $key): string
 {
@@ -113,7 +127,19 @@ $overrides = site_overrides($config, $key);
    editor is concerned — an override has to have a path to land on, and a
    project added here is edited exactly like one that came out of a build. */
 if ($base !== null) {
-    $base = site_with_added($base, $overrides, $key);
+    $base = site_overlay($base, $overrides, $key);
+}
+
+/**
+ * Everything the editor treats as part of the base.
+ *
+ * The projects added here, the speaker list, and the slot the title card's
+ * photograph goes in. All three have to be in the base before an override
+ * can be keyed to a path inside them — see site_with_added() for why.
+ */
+function site_overlay(array $base, array $overrides, string $key): array
+{
+    return site_with_media(site_with_speakers(site_with_added($base, $overrides, $key), $overrides, $key), $key);
 }
 
 /**
@@ -256,6 +282,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
             } elseif (str_starts_with($do, 'photo-')) {
                 $notice = site_photo_action($config, $do, $overrides, $key);
                 $overrides = site_overrides($config, $key);
+            } elseif (str_starts_with($do, 'speaker-')) {
+                $notice = site_speaker_action($config, $do, $key);
+                $overrides = site_overrides($config, $key);
+            } elseif (str_starts_with($do, 'hero-')) {
+                $notice = site_hero_action($config, $do, $overrides, $key);
+                $overrides = site_overrides($config, $key);
             }
         } catch (Throwable $e) {
             $problem = $e->getMessage();
@@ -263,7 +295,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $base !== null) {
         // Re-read the base: publishing may have re-taken it.
         $base = site_base($config, $key, $baseNote);
         if ($base !== null) {
-            $base = site_with_added($base, $overrides, $key);
+            $base = site_overlay($base, $overrides, $key);
         }
     }
 }
@@ -333,7 +365,7 @@ function site_photo_action(array $config, string $do, array $overrides, string $
     if ($base === null) {
         throw new RuntimeException('Saytning maʼlumot fayli topilmadi.');
     }
-    $base = site_with_added($base, $overrides, $key);
+    $base = site_overlay($base, $overrides, $key);
     if (!site_has($base, 'portfolio.projects.' . $id)) {
         throw new RuntimeException('Bunday loyiha yoʻq: ' . $id);
     }
@@ -392,6 +424,283 @@ function site_photo_action(array $config, string $do, array $overrides, string $
     site_publish($config, $key);
     return $message;
 }
+
+
+/* ----------------------------------------------------------- the speakers */
+
+/** One empty speaker, so the add form and the editor agree on the shape. */
+function speaker_blank(): array
+{
+    $record = ['id' => 'sp' . bin2hex(random_bytes(4))];
+    foreach (array_keys(SPEAKER_FIELDS) as $field) {
+        $record[$field] = ['uz' => '', 'ru' => '', 'en' => ''];
+    }
+    $record['photo'] = null;
+    return $record;
+}
+
+/** Where a speaker sits in the list, or null. */
+function speaker_index(array $list, string $id): ?int
+{
+    foreach ($list as $i => $speaker) {
+        if (is_array($speaker) && (string) ($speaker['id'] ?? '') === $id) {
+            return $i;
+        }
+    }
+    return null;
+}
+
+/** The three languages of one field out of a posted form. */
+function speaker_posted(string $field): array
+{
+    $max = SPEAKER_FIELDS[$field]['max'];
+    $out = [];
+    foreach (array_keys(SPEAKER_LANGS) as $lang) {
+        $out[$lang] = app_str($_POST, $field . '_' . $lang, $max);
+    }
+    return $out;
+}
+
+/** The name to show in the admin's own lists. Never empty. */
+function speaker_name(array $speaker): string
+{
+    foreach (array_keys(SPEAKER_LANGS) as $lang) {
+        $value = (string) ($speaker['name'][$lang] ?? '');
+        if ($value !== '') {
+            return $value;
+        }
+    }
+    return '(nomsiz)';
+}
+
+/**
+ * The three fields in three languages, as boxes.
+ *
+ * Only the Uzbek name is insisted on. A name is usually the same in all
+ * three, and the site falls back to the first language that has one, so a
+ * list typed in a hurry on the morning of the forum still reads in Russian
+ * and English rather than showing blanks.
+ */
+function speaker_fields(?array $speaker): void
+{
+    foreach (SPEAKER_FIELDS as $field => $meta) {
+        echo '<fieldset class="i18n"><legend>' . app_h($meta['label']) . '</legend>';
+        foreach (SPEAKER_LANGS as $lang => $title) {
+            $name = $field . '_' . $lang;
+            $value = (string) ($speaker[$field][$lang] ?? '');
+            echo '<div class="fld"><label for="' . app_h($name) . '">' . app_h($title) . '</label>';
+            echo '<input id="' . app_h($name) . '" name="' . app_h($name) . '" type="text" maxlength="'
+                . (int) $meta['max'] . '" value="' . app_h($value) . '"'
+                . ($field === 'name' && $lang === 'uz' ? ' required' : '') . '></div>';
+        }
+        echo '</fieldset>';
+    }
+}
+
+/**
+ * Add, edit, reorder, photograph and remove a speaker.
+ *
+ * The whole list is written back every time rather than a change to it. It
+ * is not an override on something the build produced — the build produces an
+ * empty list and always will — so there is nothing for a change to be a
+ * change *to*, and holding the list whole is what lets it survive a deploy
+ * untouched. See site_with_speakers() in ../src/site.php.
+ */
+function site_speaker_action(array $config, string $do, string $key): string
+{
+    if ($key !== 'forum') {
+        throw new RuntimeException('Spikerlar faqat forum saytida.');
+    }
+    $list = site_speakers($config);
+    $id = (string) ($_POST['sid'] ?? '');
+    /* An id reaches a dotted path when the overrides of a removed speaker
+       are swept, so it is checked the way a project's is: letters, digits,
+       dash, underscore, nothing else. */
+    if ($do !== 'speaker-add' && preg_match('/^[a-z0-9][a-z0-9_-]{1,40}$/', $id) !== 1) {
+        throw new RuntimeException('Spiker kodi notoʻgʻri.');
+    }
+    $at = $do === 'speaker-add' ? null : speaker_index($list, $id);
+    if ($do !== 'speaker-add' && $at === null) {
+        throw new RuntimeException('Bunday spiker yoʻq.');
+    }
+
+    $message = '';
+    if ($do === 'speaker-add' || $do === 'speaker-save') {
+        $fields = [];
+        foreach (array_keys(SPEAKER_FIELDS) as $field) {
+            $fields[$field] = speaker_posted($field);
+        }
+        if (trim(implode('', $fields['name'])) === '') {
+            throw new RuntimeException('Ism familiya boʻsh — hech boʻlmaganda bitta tilda yozing.');
+        }
+        if ($do === 'speaker-add') {
+            if (count($list) >= SPEAKER_MAX) {
+                throw new RuntimeException('Spikerlar soni ' . SPEAKER_MAX . ' tadan oshmasin.');
+            }
+            $speaker = array_merge(speaker_blank(), $fields);
+            $file = $_FILES['photo'] ?? null;
+            if (is_array($file) && (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+                $speaker['photo'] = speaker_store_photo($config, $file);
+            }
+            $list[] = $speaker;
+            audit_log($config, 'speaker.add', [
+                'ism' => speaker_name($speaker),
+                'rasm' => $speaker['photo'] === null ? 'yoʻq' : 'bor',
+            ], (string) $speaker['id']);
+            $message = 'Spiker qoʻshildi.';
+        } else {
+            $before = $list[$at];
+            $list[$at] = array_merge($list[$at], $fields);
+            if ($before === $list[$at]) {
+                $message = 'Oʻzgarish yoʻq edi.';
+            } else {
+                audit_log($config, 'speaker.save', ['ism' => speaker_name($list[$at])], $id);
+                $message = 'Spiker saqlandi.';
+            }
+        }
+    } elseif ($do === 'speaker-photo') {
+        $file = $_FILES['photo'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Rasm yuklanmadi — fayl tanlanmagan yoki serverning chegarasidan katta.');
+        }
+        $old = (string) ($list[$at]['photo'] ?? '');
+        $list[$at]['photo'] = speaker_store_photo($config, $file);
+        /* The replaced portrait is nobody's any more: it was uploaded here,
+           it is on no other card, and leaving it would grow the data
+           directory by one file per correction for ever. */
+        if ($old !== '' && photos_is_own($config, $old)) {
+            photos_delete($config, $old);
+        }
+        audit_log($config, 'speaker.photo', ['ism' => speaker_name($list[$at])], $id);
+        $message = 'Rasm yuklandi.';
+    } elseif ($do === 'speaker-photo-remove') {
+        $old = (string) ($list[$at]['photo'] ?? '');
+        $list[$at]['photo'] = null;
+        if ($old !== '' && photos_is_own($config, $old)) {
+            photos_delete($config, $old);
+        }
+        audit_log($config, 'speaker.photo', [
+            'ism' => speaker_name($list[$at]),
+            'holat' => 'olib tashlandi',
+        ], $id);
+        $message = 'Rasm olib tashlandi.';
+    } elseif ($do === 'speaker-move') {
+        $to = $at + (($_POST['dir'] ?? '') === 'up' ? -1 : 1);
+        if ($to < 0 || $to >= count($list)) {
+            return '';
+        }
+        [$list[$at], $list[$to]] = [$list[$to], $list[$at]];
+        audit_log($config, 'speaker.order', [
+            'ism' => speaker_name($list[$to]),
+            'oʻrin' => $to + 1,
+        ], $id);
+        $message = 'Tartib oʻzgartirildi.';
+    } elseif ($do === 'speaker-remove') {
+        $gone = $list[$at];
+        $photo = (string) ($gone['photo'] ?? '');
+        array_splice($list, $at, 1);
+        if ($photo !== '' && photos_is_own($config, $photo)) {
+            photos_delete($config, $photo);
+        }
+        /* Any field of theirs edited through the generic editor goes with
+           them; a path into a list element that no longer exists would be
+           reported as stale on every page load for ever. */
+        $overrides = site_overrides($config, 'forum');
+        $prefix = 'speakers.' . $id . '.';
+        foreach (array_keys($overrides['values']) as $path) {
+            if (str_starts_with((string) $path, $prefix)) {
+                unset($overrides['values'][$path]);
+            }
+        }
+        site_save_overrides($config, 'forum', $overrides);
+        audit_log($config, 'speaker.remove', ['ism' => speaker_name($gone)], $id);
+        $message = 'Spiker oʻchirildi.';
+    } else {
+        throw new RuntimeException('Notaʼrif amal.');
+    }
+
+    site_save_speakers($config, $list);
+    site_publish($config, $key);
+    return $message;
+}
+
+/** One uploaded portrait, re-encoded at the width a card asks for. */
+function speaker_store_photo(array $config, array $file): string
+{
+    if (!is_uploaded_file((string) $file['tmp_name'])) {
+        throw new RuntimeException('Yuklangan fayl topilmadi.');
+    }
+    $bytes = (string) @file_get_contents((string) $file['tmp_name']);
+    return photos_store($config, $bytes, 'face', 'face');
+}
+
+/**
+ * The photograph behind the title card, and the line crediting it.
+ *
+ * This one is an ordinary override — `media.hero` is a field of the file —
+ * so it is written the way every other edited field is and reverted from the
+ * same page. What is different is that its value is a stem rather than
+ * something somebody types, so it is set from an upload rather than a box.
+ */
+function site_hero_action(array $config, string $do, array $overrides, string $key): string
+{
+    if ($key !== 'forum') {
+        throw new RuntimeException('Bosh fon surati faqat forum saytida.');
+    }
+    $current = (string) ($overrides['values']['media.hero'] ?? '');
+
+    if ($do === 'hero-set') {
+        $file = $_FILES['photo'] ?? null;
+        if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('Rasm yuklanmadi — fayl tanlanmagan yoki serverning chegarasidan katta.');
+        }
+        if (!is_uploaded_file((string) $file['tmp_name'])) {
+            throw new RuntimeException('Yuklangan fayl topilmadi.');
+        }
+        $bytes = (string) @file_get_contents((string) $file['tmp_name']);
+        $stem = photos_store($config, $bytes, 'hero', 'hero');
+        $overrides['values']['media.hero'] = $stem;
+        /* The shipped picture is one made for the page and the card says so.
+           A photograph the organiser uploaded is a photograph, so the line
+           comes off with the same save rather than having to be found. */
+        $overrides['values']['media.heroIllustrative'] = false;
+        if ($current !== '' && $current !== $stem && photos_is_own($config, $current)) {
+            photos_delete($config, $current);
+        }
+        audit_log($config, 'hero.set', ['rasm' => $stem]);
+        $message = 'Bosh fon surati qoʻyildi.';
+    } elseif ($do === 'hero-credit') {
+        $credit = app_str($_POST, 'credit', 160);
+        if ($credit === '') {
+            unset($overrides['values']['media.heroCredit']);
+        } else {
+            $overrides['values']['media.heroCredit'] = $credit;
+        }
+        audit_log($config, 'hero.credit', ['matn' => $credit]);
+        $message = 'Surat muallifi saqlandi.';
+    } elseif ($do === 'hero-remove') {
+        unset($overrides['values']['media.hero'], $overrides['values']['media.heroIllustrative']);
+        /* The site ships a picture of its own. "Remove" has to mean removed,
+           so where the build names one the override says so with a null
+           rather than merely getting out of the way. */
+        $base = site_base($config, $key);
+        if (is_array($base) && ($base['media']['hero'] ?? null) !== null) {
+            $overrides['values']['media.hero'] = null;
+        }
+        if ($current !== '' && photos_is_own($config, $current)) {
+            photos_delete($config, $current);
+        }
+        audit_log($config, 'hero.remove', ['rasm' => $current]);
+        $message = 'Bosh fon surati olib tashlandi — chizma fon qaytdi.';
+    } else {
+        throw new RuntimeException('Notaʼrif amal.');
+    }
+
+    site_save_overrides($config, $key, $overrides);
+    site_publish($config, $key);
+    return $message;
+}
+
 
 $stale = [];
 $merged = $base === null ? null : site_merged($base, $overrides, $key, $stale);
@@ -768,6 +1077,198 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
     </form>
   <?php endif; ?>
 
+<?php elseif ($page === 'speakers' && $key === 'forum'): ?>
+  <?php $speakers = site_speakers($config); ?>
+  <nav class="crumbs"><a href="site.php?f=forum">Boʻlimlar</a> › Spikerlar</nav>
+  <p class="muted lede">
+    Bu roʻyxat saytning II bobida — «Forum spikerlari» — koʻrinadi. Tartibi shu yerdagidek boʻladi.
+    Roʻyxat boʻsh boʻlsa, saytda «Spikerlar roʻyxati hali eʼlon qilinmagan» degan yozuv turadi.
+    Spikerlar saytning yangi versiyasi yuklansa ham oʻchib ketmaydi.
+  </p>
+
+  <?php if ($speakers === []): ?>
+    <p class="muted">Hali birorta spiker qoʻshilmagan.</p>
+  <?php else: ?>
+  <ol class="people">
+    <?php foreach ($speakers as $i => $sp): $sid = (string) ($sp['id'] ?? ''); ?>
+      <li class="person card">
+        <div class="person__face">
+          <?php if (!empty($sp['photo']) && photos_present($config, (string) $sp['photo'])): ?>
+            <img src="<?= app_h(site_photo_url($config, (string) $sp['photo'])) ?>" alt="" width="72" height="86" loading="lazy">
+          <?php else: ?>
+            <span class="person__none">rasm yoʻq</span>
+          <?php endif; ?>
+        </div>
+        <div class="person__who">
+          <a href="site.php?f=forum&amp;page=speaker&amp;sid=<?= app_h($sid) ?>"><b><?= app_h(speaker_name($sp)) ?></b></a>
+          <div class="muted small"><?= app_h((string) ($sp['role']['uz'] ?? '')) ?></div>
+          <div class="muted small"><?= app_h((string) ($sp['org']['uz'] ?? '')) ?></div>
+        </div>
+        <div class="person__bar">
+          <span class="shot__n"><?= $i + 1 ?></span>
+          <?php foreach (['up' => '↑', 'down' => '↓'] as $dir => $arrow): ?>
+            <form method="post" class="inline">
+              <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+              <input type="hidden" name="do" value="speaker-move">
+              <input type="hidden" name="sid" value="<?= app_h($sid) ?>">
+              <input type="hidden" name="dir" value="<?= $dir ?>">
+              <button class="btn btn--tiny" type="submit" title="<?= $dir === 'up' ? 'Yuqoriga' : 'Pastga' ?>"
+                      <?= ($dir === 'up' && $i === 0) || ($dir === 'down' && $i === count($speakers) - 1) ? 'disabled' : '' ?>><?= $arrow ?></button>
+            </form>
+          <?php endforeach; ?>
+          <form method="post" class="inline" data-confirm="Spiker oʻchirilsinmi?">
+            <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+            <input type="hidden" name="do" value="speaker-remove">
+            <input type="hidden" name="sid" value="<?= app_h($sid) ?>">
+            <button class="btn btn--tiny btn--danger" type="submit" title="Oʻchirish">×</button>
+          </form>
+        </div>
+      </li>
+    <?php endforeach; ?>
+  </ol>
+  <?php endif; ?>
+
+  <?php if (count($speakers) < SPEAKER_MAX): ?>
+  <section class="card card--form">
+    <h2>Yangi spiker</h2>
+    <form method="post" enctype="multipart/form-data" class="editor">
+      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+      <input type="hidden" name="do" value="speaker-add">
+      <?php speaker_fields(null); ?>
+      <?php if (photos_can()): ?>
+        <div class="fld">
+          <label for="newface">Rasm</label>
+          <input id="newface" name="photo" type="file" accept="image/jpeg,image/png,image/webp">
+          <small>Ixtiyoriy. Portret — kamida 320×320. Serverda WebP ga aylantiriladi, EXIF olib tashlanadi.</small>
+        </div>
+      <?php else: ?>
+        <p class="warn"><?= app_h(photos_complaint_server()) ?></p>
+      <?php endif; ?>
+      <div class="actions"><button type="submit">Qoʻshish</button></div>
+    </form>
+  </section>
+  <?php endif; ?>
+
+<?php elseif ($page === 'speaker' && $key === 'forum'): ?>
+  <?php
+  $sid = (string) ($_GET['sid'] ?? '');
+  $speakers = site_speakers($config);
+  $at = speaker_index($speakers, $sid);
+  $sp = $at === null ? null : $speakers[$at];
+  ?>
+  <nav class="crumbs">
+    <a href="site.php?f=forum">Boʻlimlar</a> ›
+    <a href="site.php?f=forum&amp;page=speakers">Spikerlar</a> ›
+    <?= app_h($sp === null ? 'topilmadi' : speaker_name($sp)) ?>
+  </nav>
+  <?php if ($sp === null): ?>
+    <p class="err big">Bunday spiker yoʻq.</p>
+  <?php else: ?>
+    <section class="shots">
+      <h2>Rasm</h2>
+      <ol class="shots__list">
+        <li class="shot">
+          <?php if (!empty($sp['photo']) && photos_present($config, (string) $sp['photo'])): ?>
+            <img src="<?= app_h(site_photo_url($config, (string) $sp['photo'])) ?>" alt="" width="110" height="132" loading="lazy">
+            <div class="shot__bar">
+              <form method="post" class="inline" data-confirm="Rasm olib tashlansinmi?">
+                <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+                <input type="hidden" name="do" value="speaker-photo-remove">
+                <input type="hidden" name="sid" value="<?= app_h($sid) ?>">
+                <button class="btn btn--tiny btn--danger" type="submit">×</button>
+              </form>
+            </div>
+          <?php else: ?>
+            <span class="shot__gone">rasm yoʻq</span>
+          <?php endif; ?>
+        </li>
+      </ol>
+      <?php if (!photos_can()): ?>
+        <p class="warn"><?= app_h(photos_complaint_server()) ?></p>
+      <?php else: ?>
+      <form method="post" enctype="multipart/form-data" class="shots__add">
+        <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+        <input type="hidden" name="do" value="speaker-photo">
+        <input type="hidden" name="sid" value="<?= app_h($sid) ?>">
+        <label for="face"><?= empty($sp['photo']) ? 'Rasm' : 'Rasmni almashtirish' ?></label>
+        <input id="face" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+        <button type="submit">Yuklash</button>
+        <small>Portret, kamida 320×320. Eski rasm almashtirilganda oʻchiriladi.</small>
+      </form>
+      <?php endif; ?>
+    </section>
+
+    <form method="post" class="editor">
+      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+      <input type="hidden" name="do" value="speaker-save">
+      <input type="hidden" name="sid" value="<?= app_h($sid) ?>">
+      <?php speaker_fields($sp); ?>
+      <div class="actions">
+        <button type="submit">Saqlash va saytni yangilash</button>
+        <a class="btn btn--quiet" href="site.php?f=forum&amp;page=speakers">Bekor qilish</a>
+      </div>
+    </form>
+  <?php endif; ?>
+
+<?php elseif ($page === 'hero' && $key === 'forum'): ?>
+  <?php
+  $hero = (string) ($merged['media']['hero'] ?? '');
+  $credit = (string) ($merged['media']['heroCredit'] ?? '');
+  ?>
+  <nav class="crumbs"><a href="site.php?f=forum">Boʻlimlar</a> › Bosh sahifa foni</nav>
+  <p class="muted lede">
+    Saytning birinchi ekranida — nomi va sanasi turgan joyda — orqa fon surati.
+    Surat qoʻyilsa, chizma globus uning ortiga oʻtadi va xira koʻrinadi; surat olib tashlansa,
+    hammasi avvalgi holiga qaytadi. Eng yaxshisi — keng (gorizontal) surat, kamida 1200×600,
+    ideali 2000 piksel va undan keng.
+  </p>
+  <p class="warn">
+    Faqat huquqi oʻzingizda boʻlgan suratni qoʻying: tashkilotchining oʻz surati, fotograf bilan
+    kelishilgani yoki litsenziyasi aniq boʻlgani. Internetdan olingan surat emas.
+  </p>
+
+  <section class="shots">
+    <h2>Hozirgi fon</h2>
+    <?php if ($hero !== '' && photos_present($config, $hero)): ?>
+      <p><img class="hero-shot" src="<?= app_h(site_photo_url($config, $hero)) ?>" alt="" loading="lazy"></p>
+      <form method="post" class="inline" data-confirm="Fon surati olib tashlansinmi?">
+        <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+        <input type="hidden" name="do" value="hero-remove">
+        <button class="btn btn--quiet" type="submit">Olib tashlash</button>
+      </form>
+    <?php else: ?>
+      <p class="muted">Surat yoʻq — saytda chizma globus va tungi fon turibdi.</p>
+    <?php endif; ?>
+
+    <?php if (!photos_can()): ?>
+      <p class="warn"><?= app_h(photos_complaint_server()) ?></p>
+    <?php else: ?>
+    <form method="post" enctype="multipart/form-data" class="shots__add">
+      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+      <input type="hidden" name="do" value="hero-set">
+      <label for="heroimg"><?= $hero === '' ? 'Fon surati' : 'Suratni almashtirish' ?></label>
+      <input id="heroimg" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
+      <button type="submit">Yuklash</button>
+      <small>JPEG, PNG yoki WebP. Eng kattasi <?= app_h(photos_say_size(PHOTO_MAX_BYTES)) ?>.</small>
+    </form>
+    <?php endif; ?>
+  </section>
+
+  <section class="card card--form">
+    <h2>Surat muallifi</h2>
+    <form method="post" class="editor">
+      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+      <input type="hidden" name="do" value="hero-credit">
+      <div class="fld">
+        <label for="credit">Suratning tagida chiqadigan yozuv</label>
+        <input id="credit" name="credit" type="text" maxlength="160" value="<?= app_h($credit) ?>"
+               placeholder="Masalan: Surat — Central Asian Expo">
+        <small>Boʻsh qoldirilsa, hech narsa chiqmaydi.</small>
+      </div>
+      <div class="actions"><button type="submit">Saqlash</button></div>
+    </form>
+  </section>
+
 <?php elseif ($page === 'publish'): ?>
   <nav class="crumbs"><a href="site.php?f=<?= app_h($key) ?>">Boʻlimlar</a> › Nashr</nav>
   <section class="tiles">
@@ -847,6 +1348,16 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
         <span><?= count($base['portfolio']['projects'] ?? []) ?> ta loyiha — tahrirlash, yashirish</span>
       </a>
     <?php endif; ?>
+    <?php if ($key === 'forum'): ?>
+      <a class="card card--link" href="site.php?f=forum&amp;page=speakers">
+        <b>Spikerlar</b>
+        <span><?= count(site_speakers($config)) ?> ta spiker — qoʻshish, rasm, tartib</span>
+      </a>
+      <a class="card card--link" href="site.php?f=forum&amp;page=hero">
+        <b>Bosh sahifa foni</b>
+        <span><?= ($merged['media']['hero'] ?? null) ? 'surat qoʻyilgan' : 'surat yoʻq — chizma fon' ?></span>
+      </a>
+    <?php endif; ?>
     <a class="card card--link" href="site.php?f=<?= app_h($key) ?>&amp;page=publish">
       <b>Nashr va tarix</b>
       <span><?= count($overrides['values']) ?> ta oʻzgarish · bekor qilish</span>
@@ -856,7 +1367,10 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
   <p class="group-head">Sayt matnlari</p>
   <section class="cards">
     <?php foreach ($base as $k => $v):
-        if (in_array($k, ['portfolio'], true)) {
+        /* Three sections have a room of their own above: the portfolio, the
+           speaker list and the title card's photograph. A second door to
+           the same thing, in a grid of sixteen, is a door nobody trusts. */
+        if (in_array($k, ['portfolio', 'speakers', 'media'], true)) {
             continue;
         }
         $count = is_array($v) ? count($v) : 1;

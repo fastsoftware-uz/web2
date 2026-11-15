@@ -24,6 +24,33 @@ const root = ref<HTMLElement | null>(null);
 const Globe = shallowRef<ReturnType<typeof defineAsyncComponent> | null>(null);
 
 const event = computed(() => forum.value?.event);
+
+/**
+ * The photograph behind the title card.
+ *
+ * Uploaded from the admin and recorded as a stem under `photos/`, exactly
+ * like a project's pictures — so the venue can be changed, or a better frame
+ * put up, without a build. While there is none the card is what it always
+ * was: the globe on the night gradient, which is drawn and owes nobody a
+ * licence. With one, the globe stays and moves behind the photograph, dimmed
+ * to the strength of a watermark, because it is the page's own signature and
+ * the photograph is the ground it is signed on.
+ */
+const heroPhoto = computed(() => forum.value?.media?.hero ?? null);
+const heroCredit = computed(() => forum.value?.media?.heroCredit ?? '');
+/**
+ * What the small line under the buttons says.
+ *
+ * Whoever the picture belongs to, if the organiser has said so. Otherwise,
+ * while the card is carrying the image this repository ships, the fact that
+ * it is an image and not a photograph of the venue — in the reader's own
+ * language, because somebody deciding where to travel should not have to
+ * guess which building they are looking at.
+ */
+const heroNote = computed(() => {
+  if (heroCredit.value) return heroCredit.value;
+  return forum.value?.media?.heroIllustrative ? t('prologue.heroNote') : '';
+});
 const dates = computed(() => eventDates());
 
 /**
@@ -61,8 +88,29 @@ useChapterTimeline(
 </script>
 
 <template>
-  <section id="prologue" ref="root" class="chapter stage prologue">
-    <div class="prologue__bg">
+  <section
+    id="prologue"
+    ref="root"
+    class="chapter stage prologue"
+    :class="{ 'prologue--photo': heroPhoto }"
+  >
+    <div class="prologue__bg" :class="{ 'prologue__bg--photo': heroPhoto }">
+      <!-- The venue, if the organiser has put one up. `alt=""`: the card's
+           name and date say what this is, and the photograph adds nothing a
+           reader who cannot see it is missing. -->
+      <img
+        v-if="heroPhoto"
+        class="prologue__photo"
+        :src="`photos/${heroPhoto}-full.webp`"
+        :srcset="`photos/${heroPhoto}-thumb.webp 320w, photos/${heroPhoto}-full.webp 2200w`"
+        sizes="100vw"
+        alt=""
+        fetchpriority="high"
+        decoding="async"
+      />
+      <!-- Night over the photograph, so the wordmark keeps its contrast
+           whatever was uploaded. Decoration; announced as nothing. -->
+      <div v-if="heroPhoto" class="prologue__scrim" aria-hidden="true" />
       <component :is="Globe" v-if="Globe" />
       <!-- Fallback and under-layer: generated arcs, no asset, always present. -->
       <svg v-else class="prologue__arcs" viewBox="0 0 800 800" aria-hidden="true">
@@ -161,7 +209,9 @@ useChapterTimeline(
         </button>
       </div>
 
-      <button type="button" class="prologue__scroll prologue__reveal" @click="scrollToId('crossroads')">
+      <p v-if="heroNote" class="prologue__credit">{{ heroNote }}</p>
+
+      <button type="button" class="prologue__scroll prologue__reveal" @click="scrollToId('programme')">
         <span>{{ t('scrollHint') }}</span>
         <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
           <path d="M12 4v15m0 0-6-6m6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" />
@@ -193,6 +243,58 @@ useChapterTimeline(
   width: min(120vh, 110vw);
   height: auto;
   opacity: 0.9;
+}
+
+/**
+ * The photograph, and everything that has to happen to it.
+ *
+ * It fills the card and is cropped from the centre, because the card is
+ * whatever shape the window is and a building photographed in landscape has
+ * to survive a phone held upright. Over it: a wash that is the stage's own
+ * night at the bottom, where the type sits, and almost clear at the top,
+ * where the sky usually is. The globe and the arcs are pushed down to a
+ * watermark so two drawings do not fight each other.
+ */
+.prologue__photo {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  object-position: 50% 55%;
+}
+.prologue__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #0b1030 30%, transparent) 0%,
+      color-mix(in srgb, #0b1030 52%, transparent) 46%,
+      color-mix(in srgb, #0b1030 82%, transparent) 100%
+    ),
+    /* A little more night on the side the type runs down. */
+      linear-gradient(90deg, color-mix(in srgb, #0b1030 55%, transparent) 0%, transparent 65%);
+}
+.prologue__bg--photo .prologue__arcs {
+  opacity: 0.22;
+}
+.prologue__bg--photo :deep(canvas) {
+  opacity: 0.28;
+}
+/* The carved screen is set into a wall, and over a photograph the wall is
+   gone: at its usual strength it reads as a grille hung in front of the
+   building. Halved, it goes back to being a texture. */
+.prologue--photo .aperture {
+  opacity: 0.07;
+}
+
+/** Whose photograph it is. Small, under everything, and never in the way. */
+.prologue__credit {
+  margin-block-start: 1.75rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
 }
 
 .prologue__content {

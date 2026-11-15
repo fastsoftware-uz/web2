@@ -11,7 +11,7 @@
  * opens the full-screen chapter list this site already had rather than an
  * accordion under the bar.
  *
- * The bar shows five sections. All eight chapters stay in the overlay, which is
+ * The bar shows five sections. All seven chapters stay in the overlay, which is
  * also the only navigation below 68rem.
  */
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
@@ -30,10 +30,10 @@ const { lang } = useStore();
 
 /** The sections the bar links to, and the chapter each one lands on. */
 const NAV = [
-  { key: 'why', id: 'crossroads' },
+  { key: 'programme', id: 'programme' },
+  { key: 'speakers', id: 'speakers' },
   { key: 'themes', id: 'themes' },
   { key: 'projects', id: 'portfolio' },
-  { key: 'programme', id: 'programme' },
   { key: 'contacts', id: 'epilogue' },
 ] as const;
 

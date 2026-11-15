@@ -38,6 +38,32 @@ require_once __DIR__ . '/site.php';
 /** The two widths the site asks for, as `npm run photos` writes them. */
 const PHOTO_SIZES = ['thumb' => 220, 'full' => 1000];
 const PHOTO_QUALITY = ['thumb' => 70, 'full' => 76];
+
+/**
+ * The three jobs a picture can have on this site, and the widths each needs.
+ *
+ * Every set writes the same two files — `<stem>-thumb.webp` and
+ * `<stem>-full.webp` — because that pair is the contract the site, the sync
+ * into the web root and the delete all read. Only the pixels differ: a
+ * portrait is never shown wider than a card, and the photograph behind the
+ * title card is the full width of a desktop window. Writing a 2200-pixel
+ * file for a face, or a 1000-pixel one for the title card, would be a
+ * slower page in one direction and a blurred one in the other.
+ *
+ * `[width, quality]`.
+ */
+const PHOTO_SETS = [
+    'project' => ['thumb' => [220, 70], 'full' => [1000, 76]],
+    'face' => ['thumb' => [220, 72], 'full' => [720, 78]],
+    'hero' => ['thumb' => [320, 70], 'full' => [2200, 72]],
+];
+
+/** The smallest picture each job can be made from. */
+const PHOTO_MIN = [
+    'project' => [320, 200],
+    'face' => [320, 320],
+    'hero' => [1200, 600],
+];
 /** Bigger than this and it is not a photograph of a building site. */
 const PHOTO_MAX_BYTES = 12582912;   /* 12 MB */
 const PHOTO_MAX_PIXELS = 25000000;  /* a 5000×5000 image */
@@ -124,12 +150,15 @@ function photos_stem_ok(string $stem): bool
  *
  * @return string the stem
  */
-function photos_store(array $config, string $bytes, string $hint = ''): string
+function photos_store(array $config, string $bytes, string $hint = '', string $set = 'project'): string
 {
     if (!photos_can()) {
         throw new RuntimeException(photos_complaint_server());
     }
-    $complaint = photos_complaint_image($bytes);
+    if (!isset(PHOTO_SETS[$set])) {
+        throw new RuntimeException('Rasm turi notoʻgʻri: ' . $set);
+    }
+    $complaint = photos_complaint_image($bytes, $set);
     if ($complaint !== '') {
         throw new RuntimeException($complaint);
     }
@@ -150,10 +179,10 @@ function photos_store(array $config, string $bytes, string $hint = ''): string
     $stem = 'adm' . ($slug === '' ? '' : $slug) . '-' . bin2hex(random_bytes(5));
 
     try {
-        foreach (PHOTO_SIZES as $label => $width) {
+        foreach (PHOTO_SETS[$set] as $label => [$width, $quality]) {
             $scaled = photos_scale($image, $width);
             $path = $dir . '/' . $stem . '-' . $label . '.webp';
-            $ok = @imagewebp($scaled, $path, PHOTO_QUALITY[$label]);
+            $ok = @imagewebp($scaled, $path, $quality);
             imagedestroy($scaled);
             if (!$ok) {
                 throw new RuntimeException('Rasmni saqlab boʻlmadi: ' . $path);
@@ -176,7 +205,7 @@ function photos_store(array $config, string $bytes, string $hint = ''): string
  * is, and only the three formats the site's own pipeline accepts are let
  * through.
  */
-function photos_complaint_image(string $bytes): string
+function photos_complaint_image(string $bytes, string $set = 'project'): string
 {
     $size = strlen($bytes);
     if ($size === 0) {
@@ -194,8 +223,9 @@ function photos_complaint_image(string $bytes): string
     if (!in_array($type, [IMAGETYPE_JPEG, IMAGETYPE_PNG, IMAGETYPE_WEBP], true)) {
         return 'Faqat JPEG, PNG va WebP qabul qilinadi.';
     }
-    if ($w < 320 || $h < 200) {
-        return 'Rasm juda kichkina: ' . $w . '×' . $h . '. Kamida 320×200 boʻlsin.';
+    [$minW, $minH] = PHOTO_MIN[$set] ?? PHOTO_MIN['project'];
+    if ($w < $minW || $h < $minH) {
+        return 'Rasm juda kichkina: ' . $w . '×' . $h . '. Kamida ' . $minW . '×' . $minH . ' boʻlsin.';
     }
     if ($w * $h > PHOTO_MAX_PIXELS) {
         return 'Rasmning piksellari juda koʻp: ' . $w . '×' . $h . '. Kichraytirib yuboring.';
@@ -315,7 +345,15 @@ function photos_delete(array $config, string $stem): bool
         return false;
     }
     $ok = false;
-    foreach (array_keys(PHOTO_SIZES) as $label) {
+    /* Every set writes the same two labels; taken from the sets rather than
+       from one of them, so a third width added above is deleted too. */
+    $labels = [];
+    foreach (PHOTO_SETS as $sizes) {
+        foreach (array_keys($sizes) as $label) {
+            $labels[$label] = true;
+        }
+    }
+    foreach (array_keys($labels) as $label) {
         foreach ([photos_dir($config), photos_site_dir($config)] as $dir) {
             $file = $dir . '/' . $stem . '-' . $label . '.webp';
             if (is_file($file)) {

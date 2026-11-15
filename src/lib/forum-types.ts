@@ -28,6 +28,36 @@ export interface ForumTheme {
   body: I18nText;
 }
 
+/**
+ * One speaker on the forum's stage.
+ *
+ * Kept entirely in the admin's overlay: the build ships an empty list, the
+ * organiser fills it in the weeks before the forum, and no later build can
+ * overwrite what they typed. `photo` is a stem under `photos/`, the same
+ * contract a project's pictures use.
+ */
+export interface ForumSpeaker {
+  id: string;
+  name: I18nText;
+  role: I18nText;
+  org: I18nText;
+  photo: string | null;
+}
+
+/** Pictures that belong to the page itself rather than to a project. */
+export interface ForumMedia {
+  /** The photograph behind the title card; a stem under `photos/`. */
+  hero: string | null;
+  /** Whose photograph it is, printed under the title card when set. */
+  heroCredit: string | null;
+  /**
+   * True while the picture is one made for this page rather than a
+   * photograph of the venue. The card then says so, in the reader's own
+   * language, so nobody takes it for the building they are coming to.
+   */
+  heroIllustrative?: boolean;
+}
+
 export interface ForumParticipant {
   id: string;
   category: I18nText;
@@ -266,6 +296,8 @@ export interface ForumData {
   goals: I18nText[];
   themes: ForumTheme[];
   participants: ForumParticipant[];
+  speakers: ForumSpeaker[];
+  media: ForumMedia;
   sessions: ForumSession[];
   programme: ForumProgramme;
   standard: StandardBlock[];

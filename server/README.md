@@ -26,7 +26,7 @@ server/
   public/            ← the only directory nginx is allowed to reach
     api.php          ← POST a registration; GET it for a health check
     index.php        ← the admin: login, list, search, status, password, CSV
-    site.php         ← the editor: the site's own texts, projects, photographs
+    site.php         ← the editor: texts, projects, photographs, speakers, the title card
     import.php       ← adding projects: a filled-in list, a zip of pictures,
                        or one project typed in by hand
     users.php        ← accounts and their three roles (the owner only)
@@ -46,7 +46,7 @@ server/
                        session, address check, the right to be there
     app.php            ← validation and the record's shape
     storage.php        ← SQLite, or a flat file when SQLite is missing
-    site.php           ← the overlay the editor saves into
+    site.php           ← the overlay the editor saves into, speaker list included
     import.php         ← the project list: checked, shaped, de-duplicated
     xlsx.php           ← reads .xlsx without a spreadsheet library
     zipread.php        ← reads .zip with or without the zip extension

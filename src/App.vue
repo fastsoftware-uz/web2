@@ -4,11 +4,10 @@ import { useI18n } from 'vue-i18n';
 
 import SiteChrome from './components/SiteChrome.vue';
 import ChPrologue from './chapters/ChPrologue.vue';
-import ChCrossroads from './chapters/ChCrossroads.vue';
-import ChMomentum from './chapters/ChMomentum.vue';
+import ChProgramme from './chapters/ChProgramme.vue';
+import ChSpeakers from './chapters/ChSpeakers.vue';
 import ChThemes from './chapters/ChThemes.vue';
 import ChPortfolio from './chapters/ChPortfolio.vue';
-import ChProgramme from './chapters/ChProgramme.vue';
 import ChPath from './chapters/ChPath.vue';
 import ChEpilogue from './chapters/ChEpilogue.vue';
 import { ScrollTrigger, startSmoothScroll, stopSmoothScroll } from './lib/motion';
@@ -17,14 +16,22 @@ import { retry, startLoading, useStore } from './lib/state';
 const { t } = useI18n();
 const { content, error, isReady } = useStore();
 
-/** Chapter order; SiteChrome uses this for the counter and the menu. */
+/**
+ * Chapter order; SiteChrome uses this for the counter and the menu.
+ *
+ * The two chapters that opened the page — the Silk Road corridor and the
+ * macroeconomic ground under it — came off at the client's request on
+ * 15 November 2026: a visitor arriving at a forum site wants the day's
+ * agenda and the people on the stage, not two chapters of argument first.
+ * The agenda took the first slot and the speakers the second, and the
+ * numbering in lib/i18n.ts follows the new order rather than keeping gaps.
+ */
 const CHAPTERS = [
   { id: 'prologue', key: 'prologue' },
-  { id: 'crossroads', key: 'crossroads' },
-  { id: 'momentum', key: 'momentum' },
+  { id: 'programme', key: 'programme' },
+  { id: 'speakers', key: 'speakers' },
   { id: 'themes', key: 'themes' },
   { id: 'portfolio', key: 'portfolio' },
-  { id: 'programme', key: 'programme' },
   { id: 'path', key: 'path' },
   { id: 'epilogue', key: 'epilogue' },
 ];
@@ -81,11 +88,10 @@ onBeforeUnmount(stopSmoothScroll);
 
     <template v-else>
       <ChPrologue />
-      <ChCrossroads />
-      <ChMomentum />
+      <ChProgramme />
+      <ChSpeakers />
       <ChThemes />
       <ChPortfolio />
-      <ChProgramme />
       <ChPath />
       <ChEpilogue />
     </template>

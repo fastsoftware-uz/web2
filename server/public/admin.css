@@ -1068,3 +1068,79 @@ main.wide { max-inline-size: 104rem; }
 .rows--refused th:nth-child(2) { width: 6rem; }
 .rows--refused th:nth-child(3) { width: 14rem; }
 .rows--refused td { overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------- speakers */
+
+/* The speaker list: a face, who they are, and the handles that move or
+   remove them — one row each, so the order on the page is the order on the
+   site and can be read at a glance. */
+.people {
+  display: grid;
+  gap: 0.6rem;
+  margin: 1.25rem 0 1.75rem;
+  padding: 0;
+  list-style: none;
+  counter-reset: none;
+}
+
+.person {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem 0.75rem;
+}
+
+.person__face img {
+  display: block;
+  inline-size: 72px;
+  block-size: 86px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--head);
+}
+
+.person__none {
+  display: grid;
+  place-items: center;
+  inline-size: 72px;
+  block-size: 86px;
+  border: 1px dashed var(--line-soft);
+  border-radius: var(--radius-sm);
+  color: var(--ink-dim);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+.person__who b {
+  font-size: 1rem;
+}
+
+.person__bar {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* The title card's photograph, shown at the width the panel has rather than
+   at the width of the file: it is a 2200-pixel picture and this is a
+   preview. */
+.hero-shot {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 32rem;
+  block-size: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line-soft);
+}
+
+@media (max-width: 34rem) {
+  .person {
+    grid-template-columns: auto 1fr;
+    row-gap: 0.5rem;
+  }
+  .person__bar {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}

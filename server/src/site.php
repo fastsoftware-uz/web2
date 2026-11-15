@@ -124,6 +124,7 @@ function site_overrides(array $config, string $key): array
         'values' => is_array($data['values'] ?? null) ? $data['values'] : [],
         'hidden' => is_array($data['hidden'] ?? null) ? array_values($data['hidden']) : [],
         'added' => is_array($data['added'] ?? null) ? array_values($data['added']) : [],
+        'speakers' => is_array($data['speakers'] ?? null) ? array_values($data['speakers']) : [],
         'published_sha' => (string) ($data['published_sha'] ?? ''),
         'updated_at' => (string) ($data['updated_at'] ?? ''),
         'updated_count' => (int) ($data['updated_count'] ?? 0),
@@ -363,10 +364,76 @@ function site_with_added(array $base, array $overrides, string $key): array
     return $base;
 }
 
-/** base + added + overrides, as the site will read it. */
+/**
+ * The forum file with the admin's speaker list in it.
+ *
+ * The build ships `speakers: []` and will go on shipping it: the list is not
+ * in any document the generator reads, it is settled in the weeks before the
+ * forum, and it changes until the morning of it. So unlike every other field
+ * here the overlay does not record a *change* to something upstream — it
+ * holds the whole list, and replaces an empty one each time the site is
+ * published. That is also why nothing a later deploy brings can overwrite it.
+ *
+ * Appending it before the overrides are applied is what makes
+ * `speakers.<id>.role.uz` a path site_set() can find, so a speaker is
+ * editable from the generic editor as well as from their own page.
+ */
+function site_with_speakers(array $base, array $overrides, string $key): array
+{
+    if ($key !== 'forum') {
+        return $base;
+    }
+    $list = $overrides['speakers'] ?? [];
+    if ($list === [] && !array_key_exists('speakers', $base)) {
+        return $base;
+    }
+    $base['speakers'] = array_values($list);
+    return $base;
+}
+
+/**
+ * Make sure the file has somewhere to put the title card's photograph.
+ *
+ * `media.hero` is an ordinary override — a path with a value — and site_set()
+ * writes only into paths that already exist, on purpose. A server running a
+ * build from before this field existed would therefore refuse the upload and
+ * list it as stale. One empty object costs nothing and means the admin works
+ * against the site that is installed rather than the one in the repository.
+ */
+function site_with_media(array $base, string $key): array
+{
+    if ($key !== 'forum') {
+        return $base;
+    }
+    if (!isset($base['media']) || !is_array($base['media'])) {
+        $base['media'] = ['hero' => null, 'heroCredit' => null];
+        return $base;
+    }
+    $base['media'] += ['hero' => null, 'heroCredit' => null];
+    return $base;
+}
+
+/** The speaker list as the admin holds it. */
+function site_speakers(array $config): array
+{
+    return site_overrides($config, 'forum')['speakers'] ?? [];
+}
+
+/** Put the whole list back, in the order it is given. */
+function site_save_speakers(array $config, array $list): void
+{
+    $overrides = site_overrides($config, 'forum');
+    $overrides['speakers'] = array_values($list);
+    site_save_overrides($config, 'forum', $overrides);
+}
+
+/** base + added + speakers + overrides, as the site will read it. */
 function site_merged(array $base, array $overrides, string $key, array &$stale = []): array
 {
-    $data = site_with_added($base, $overrides, $key);
+    $data = site_with_media(
+        site_with_speakers(site_with_added($base, $overrides, $key), $overrides, $key),
+        $key,
+    );
 
     foreach ($overrides['values'] as $path => $value) {
         if (!site_set($data, (string) $path, $value)) {
