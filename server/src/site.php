@@ -120,15 +120,29 @@ function site_write_json(string $file, array $data): void
 function site_overrides(array $config, string $key): array
 {
     $data = site_read_json(site_state_file($config, $key, 'overrides')) ?? [];
-    return [
+    $out = [
         'values' => is_array($data['values'] ?? null) ? $data['values'] : [],
         'hidden' => is_array($data['hidden'] ?? null) ? array_values($data['hidden']) : [],
         'added' => is_array($data['added'] ?? null) ? array_values($data['added']) : [],
-        'speakers' => is_array($data['speakers'] ?? null) ? array_values($data['speakers']) : [],
         'published_sha' => (string) ($data['published_sha'] ?? ''),
         'updated_at' => (string) ($data['updated_at'] ?? ''),
         'updated_count' => (int) ($data['updated_count'] ?? 0),
     ];
+    /*
+     * `speakers` only when the file has one, and no default.
+     *
+     * Having a list of one's own and having an empty list mean opposite
+     * things to site_with_speakers(): no list means the speakers the build
+     * ships stand, an empty list means the operator removed them all. A
+     * default of `[]` collapses the two — and it did: site_publish() writes
+     * this array straight back, so the first publish on a fresh
+     * installation invented an empty list and the build's speakers
+     * disappeared from the site.
+     */
+    if (is_array($data['speakers'] ?? null)) {
+        $out['speakers'] = array_values($data['speakers']);
+    }
+    return $out;
 }
 
 function site_save_overrides(array $config, string $key, array $overrides): void
@@ -367,12 +381,19 @@ function site_with_added(array $base, array $overrides, string $key): array
 /**
  * The forum file with the admin's speaker list in it.
  *
- * The build ships `speakers: []` and will go on shipping it: the list is not
- * in any document the generator reads, it is settled in the weeks before the
- * forum, and it changes until the morning of it. So unlike every other field
- * here the overlay does not record a *change* to something upstream — it
- * holds the whole list, and replaces an empty one each time the site is
- * published. That is also why nothing a later deploy brings can overwrite it.
+ * The list is settled in the weeks before the forum and changes until the
+ * morning of it, so unlike every other field here the overlay does not
+ * record a *change* to something upstream: it holds the whole list and
+ * replaces whatever was published. That is why nothing a later deploy
+ * brings can overwrite an arrangement made here.
+ *
+ * The build may ship speakers of its own — it did not for the first month,
+ * and then four were added to the data file — and those stand until the
+ * operator arranges a list of their own. Which is why this asks whether the
+ * overlay *has* a list rather than whether the list is empty: an operator
+ * who has deliberately removed every speaker must not have the build's four
+ * handed back to them on the next save. See site_overrides(), which is
+ * careful not to invent the key.
  *
  * Appending it before the overrides are applied is what makes
  * `speakers.<id>.role.uz` a path site_set() can find, so a speaker is
@@ -383,11 +404,10 @@ function site_with_speakers(array $base, array $overrides, string $key): array
     if ($key !== 'forum') {
         return $base;
     }
-    $list = $overrides['speakers'] ?? [];
-    if ($list === [] && !array_key_exists('speakers', $base)) {
+    if (!array_key_exists('speakers', $overrides)) {
         return $base;
     }
-    $base['speakers'] = array_values($list);
+    $base['speakers'] = array_values($overrides['speakers']);
     return $base;
 }
 
@@ -413,10 +433,24 @@ function site_with_media(array $base, string $key): array
     return $base;
 }
 
-/** The speaker list as the admin holds it. */
+/**
+ * The speaker list the admin works on.
+ *
+ * The operator's own arrangement once they have made one; until then, the
+ * list the build shipped — so the speakers page shows what the site is
+ * showing rather than an empty page beside a chapter full of faces. The
+ * first save copies whatever is here into the overlay, and from that moment
+ * it is theirs.
+ */
 function site_speakers(array $config): array
 {
-    return site_overrides($config, 'forum')['speakers'] ?? [];
+    $overrides = site_overrides($config, 'forum');
+    if (array_key_exists('speakers', $overrides)) {
+        return array_values($overrides['speakers']);
+    }
+    $base = site_base($config, 'forum');
+    $shipped = is_array($base) ? ($base['speakers'] ?? null) : null;
+    return is_array($shipped) ? array_values($shipped) : [];
 }
 
 /** Put the whole list back, in the order it is given. */

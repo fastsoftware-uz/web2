@@ -509,8 +509,12 @@ lekin bu loyihada koʻrinmaydi.
 ## 9a. Spikerlar
 
 Saytning **II bobi — «Forum spikerlari»** — toʻliq shu yerdan boshqariladi.
-Build dan hech qanday spiker kelmaydi, shuning uchun bu roʻyxatni sayt
-yangilansa ham hech narsa oʻchirib yubormaydi.
+
+Saytda hozir **4 ta spiker** bor — ular tashkilotchining oʻz roʻyxatidan
+olinib, sayt bilan birga keladi. Siz bu yerda birinchi marta biror
+oʻzgartirish kiritganingizdan soʻng roʻyxat **butunlay sizniki** boʻladi:
+undan keyin sayt yangilansa ham sizning roʻyxatingiz oʻz holicha qoladi,
+hech narsa oʻchmaydi va qaytib kelmaydi.
 
 **Saytni tahrirlash → Spikerlar.**
 
@@ -520,6 +524,11 @@ yangilansa ham hech narsa oʻchirib yubormaydi.
 - **↑ ↓** — tartib. Saytdagi tartib shu yerdagidek boʻladi.
 - **×** — oʻchirish. Rasmi ham birga oʻchadi.
 - Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon va rasm.
+
+> **Oʻchirish qaytmaydi.** «Nashr → Hammasini asl holiga qaytarish» tugmasi
+> spikerlar roʻyxatiga tegmaydi: u tahrirlangan matnlarni qaytaradi, qoʻlda
+> kiritilgan roʻyxatni emas. Shuning uchun notoʻgʻri oʻchirilgan spikerni
+> qaytadan qoʻshishga toʻgʻri keladi.
 
 **Rasm.** Portret, kamida 320×320. Kvadrat yoki tik (vertikal) rasm eng
 yaxshi chiqadi — sayt uni gumbazsimon ramkaga soladi. Rasm yoʻq boʻlsa,

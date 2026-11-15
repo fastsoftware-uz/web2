@@ -44,7 +44,6 @@ export interface ForumSpeaker {
   photo: string | null;
 }
 
-/** Pictures that belong to the page itself rather than to a project. */
 /** One of the pictures the title card turns between. */
 export interface ForumHeroShot {
   /** The picture itself; a stem under `photos/`. */

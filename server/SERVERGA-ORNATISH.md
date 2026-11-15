@@ -388,6 +388,42 @@ almashtiring:
 > **Boshqa `server { }` bloklariga tegmang.** Agar faylda bir nechta blok
 > boʻlsa, `server_name` boʻyicha oʻzingiznikini aniq toping.
 
+### 7.2a. Siqish (gzip) — bir marta, lekin eng katta foyda
+
+15.11.2026 da tekshirilganda server fayllarni **siqmasdan** yuborayotgan
+edi: saytning maʼlumot fayli 776 KB, JavaScript 342 KB. Siqilsa ikkalasi
+ham taxminan **toʻrt baravar** kichrayadi — sekin mobil internetda sahifa
+bir necha soniyaga tez ochiladi. Bu saytning oʻzida emas, nginx sozlamasida
+hal qilinadi.
+
+Avval tekshiring (oʻz kompyuteringizdan yoki serverdan):
+
+```sh
+curl -sI -H "Accept-Encoding: gzip" https://<domen>/data/forum-2026.json | grep -i content-encoding
+```
+
+- `content-encoding: gzip` chiqsa — hammasi joyida, bu boʻlimni oʻtkazib
+  yuboring.
+- Hech narsa chiqmasa — oʻsha `server { }` blokining ichiga, `location`
+  lardan **oldin** qoʻshing:
+
+```nginx
+    gzip              on;
+    gzip_comp_level   5;
+    gzip_min_length   1024;
+    gzip_vary         on;
+    gzip_proxied      any;
+    gzip_types        text/plain text/css text/xml application/json
+                      application/javascript application/xml+rss
+                      image/svg+xml application/manifest+json;
+```
+
+> WebP, PNG va JPEG roʻyxatda yoʻq — ular allaqachon siqilgan, qayta siqish
+> faqat protsessorni band qiladi.
+
+Keyin 7.3 dagi `nginx -t` va `reload`, soʻng yuqoridagi `curl` ni yana bir
+marta ishlatib tasdiqlang.
+
 ### 7.3. Tekshirish va qoʻllash
 
 ```sh
