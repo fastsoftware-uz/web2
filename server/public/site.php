@@ -68,7 +68,7 @@ const FIELD_LABEL = [
     'subtitle' => 'Izoh', 'purpose' => 'Maqsadi', 'paragraphs' => 'Paragraflar',
     'note' => 'Eslatma', 'items' => 'Bandlar', 'topics' => 'Mavzular',
     'who' => 'Kim', 'category' => 'Toifa', 'role' => 'Lavozimi', 'org' => 'Tashkilot',
-    'photo' => 'Rasm', 'hero' => 'Fon surati', 'heroCredit' => 'Surat muallifi', 'icon' => 'Belgi', 'n' => 'Raqam',
+    'photo' => 'Rasm', 'hero' => 'Fon suratlari', 'credit' => 'Surat muallifi', 'icon' => 'Belgi', 'n' => 'Raqam',
     'roman' => 'Rim raqami', 'block' => 'Blok', 'number' => 'Raqam',
     'workingTitle' => 'Ishchi nomi', 'source' => 'Manba', 'publisher' => 'Nashr etuvchi',
     'document' => 'Hujjat', 'asOf' => 'Holat sanasi', 'id' => 'Kalit',
@@ -102,6 +102,16 @@ const SPEAKER_FIELDS = [
 ];
 /** Above this the chapter is a page of faces nobody reads to the end of. */
 const SPEAKER_MAX = 60;
+
+/**
+ * How many pictures one title card may carry.
+ *
+ * Declared up here with the speakers' own limits, and not beside the
+ * function that reads it, because a `const` at the foot of the file has not
+ * been reached when the POST above is handled — PHP hoists functions, not
+ * constants.
+ */
+const HERO_MAX = 8;
 
 function label_for(string $key): string
 {
@@ -635,21 +645,67 @@ function speaker_store_photo(array $config, array $file): string
 }
 
 /**
- * The photograph behind the title card, and the line crediting it.
+ * The pictures behind the title card, and the lines crediting them.
  *
- * This one is an ordinary override — `media.hero` is a field of the file —
- * so it is written the way every other edited field is and reverted from the
- * same page. What is different is that its value is a stem rather than
- * something somebody types, so it is set from an upload rather than a box.
+ * The card turns between several now, so what is stored is a list of
+ * `{photo, credit, illustrative}` and the whole list is written as one
+ * ordinary override at `media.hero`. Holding the list rather than a change
+ * to it is deliberate, and is what the speakers do: the build has its own
+ * list, and an operator who has arranged theirs must not have it rearranged
+ * by the next deploy.
+ *
+ * A string is still read, because a data file written before the card
+ * turned is still a data file.
  */
+function hero_list(array $merged): array
+{
+    $hero = $merged['media']['hero'] ?? null;
+    if ($hero === null || $hero === '') {
+        return [];
+    }
+    if (is_string($hero)) {
+        $hero = [['photo' => $hero]];
+    }
+    $out = [];
+    foreach ((array) $hero as $shot) {
+        if (is_string($shot)) {
+            $shot = ['photo' => $shot];
+        }
+        $photo = (string) ($shot['photo'] ?? '');
+        if ($photo === '') {
+            continue;
+        }
+        $out[] = [
+            'photo' => $photo,
+            'credit' => ($shot['credit'] ?? null) === null ? null : (string) $shot['credit'],
+            'illustrative' => (bool) ($shot['illustrative'] ?? false),
+        ];
+    }
+    return $out;
+}
+
 function site_hero_action(array $config, string $do, array $overrides, string $key): string
 {
     if ($key !== 'forum') {
         throw new RuntimeException('Bosh fon surati faqat forum saytida.');
     }
-    $current = (string) ($overrides['values']['media.hero'] ?? '');
 
-    if ($do === 'hero-set') {
+    /* The list as the site is publishing it — the build's, or the one this
+       page has already written over it. */
+    $base = site_base($config, $key);
+    $merged = site_merged(is_array($base) ? $base : [], $overrides, $key);
+    $list = hero_list($merged);
+
+    $at = isset($_POST['i']) ? (int) $_POST['i'] : -1;
+    $needsOne = in_array($do, ['hero-remove', 'hero-move', 'hero-credit'], true);
+    if ($needsOne && !isset($list[$at])) {
+        throw new RuntimeException('Bunday surat yoʻq.');
+    }
+
+    if ($do === 'hero-add') {
+        if (count($list) >= HERO_MAX) {
+            throw new RuntimeException('Suratlar soni ' . HERO_MAX . ' tadan oshmasin.');
+        }
         $file = $_FILES['photo'] ?? null;
         if (!is_array($file) || (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             throw new RuntimeException('Rasm yuklanmadi — fayl tanlanmagan yoki serverning chegarasidan katta.');
@@ -659,43 +715,44 @@ function site_hero_action(array $config, string $do, array $overrides, string $k
         }
         $bytes = (string) @file_get_contents((string) $file['tmp_name']);
         $stem = photos_store($config, $bytes, 'hero', 'hero');
-        $overrides['values']['media.hero'] = $stem;
-        /* The shipped picture is one made for the page and the card says so.
-           A photograph the organiser uploaded is a photograph, so the line
-           comes off with the same save rather than having to be found. */
-        $overrides['values']['media.heroIllustrative'] = false;
-        if ($current !== '' && $current !== $stem && photos_is_own($config, $current)) {
-            photos_delete($config, $current);
-        }
-        audit_log($config, 'hero.set', ['rasm' => $stem]);
-        $message = 'Bosh fon surati qoʻyildi.';
+        /* A photograph somebody uploaded is a photograph: it never carries
+           the "illustrative image" line the drawn picture carries. */
+        $list[] = ['photo' => $stem, 'credit' => null, 'illustrative' => false];
+        audit_log($config, 'hero.add', ['rasm' => $stem]);
+        $message = 'Surat qoʻshildi.';
     } elseif ($do === 'hero-credit') {
         $credit = app_str($_POST, 'credit', 160);
-        if ($credit === '') {
-            unset($overrides['values']['media.heroCredit']);
-        } else {
-            $overrides['values']['media.heroCredit'] = $credit;
-        }
-        audit_log($config, 'hero.credit', ['matn' => $credit]);
+        $list[$at]['credit'] = $credit === '' ? null : $credit;
+        audit_log($config, 'hero.credit', ['matn' => $credit, 'rasm' => $list[$at]['photo']]);
         $message = 'Surat muallifi saqlandi.';
+    } elseif ($do === 'hero-move') {
+        $to = $at + (($_POST['dir'] ?? '') === 'up' ? -1 : 1);
+        if ($to < 0 || $to >= count($list)) {
+            return '';
+        }
+        [$list[$at], $list[$to]] = [$list[$to], $list[$at]];
+        audit_log($config, 'hero.order', ['rasm' => $list[$to]['photo'], 'oʻrin' => $to + 1]);
+        $message = 'Tartib oʻzgartirildi.';
     } elseif ($do === 'hero-remove') {
-        unset($overrides['values']['media.hero'], $overrides['values']['media.heroIllustrative']);
-        /* The site ships a picture of its own. "Remove" has to mean removed,
-           so where the build names one the override says so with a null
-           rather than merely getting out of the way. */
-        $base = site_base($config, $key);
-        if (is_array($base) && ($base['media']['hero'] ?? null) !== null) {
-            $overrides['values']['media.hero'] = null;
+        $gone = $list[$at]['photo'];
+        array_splice($list, $at, 1);
+        /* Only a file this admin uploaded is deleted; the ones the build
+           ships are the build's and come back with the next deploy. */
+        if (photos_is_own($config, $gone)) {
+            photos_delete($config, $gone);
         }
-        if ($current !== '' && photos_is_own($config, $current)) {
-            photos_delete($config, $current);
-        }
-        audit_log($config, 'hero.remove', ['rasm' => $current]);
-        $message = 'Bosh fon surati olib tashlandi — chizma fon qaytdi.';
+        audit_log($config, 'hero.remove', ['rasm' => $gone]);
+        $message = count($list) === 0
+            ? 'Surat olib tashlandi — fon qoldi, surat yoʻq.'
+            : 'Surat olib tashlandi.';
     } else {
         throw new RuntimeException('Notaʼrif amal.');
     }
 
+    /* The whole list, as one value. An empty list is written as an empty
+       list rather than dropped: "removed" has to mean removed, and the
+       build names pictures of its own. */
+    $overrides['values']['media.hero'] = array_values($list);
     site_save_overrides($config, $key, $overrides);
     site_publish($config, $key);
     return $message;
@@ -1211,16 +1268,14 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
   <?php endif; ?>
 
 <?php elseif ($page === 'hero' && $key === 'forum'): ?>
-  <?php
-  $hero = (string) ($merged['media']['hero'] ?? '');
-  $credit = (string) ($merged['media']['heroCredit'] ?? '');
-  ?>
+  <?php $shots = hero_list($merged); ?>
   <nav class="crumbs"><a href="site.php?f=forum">Boʻlimlar</a> › Bosh sahifa foni</nav>
   <p class="muted lede">
     Saytning birinchi ekranida — nomi va sanasi turgan joyda — orqa fon surati.
-    Surat qoʻyilsa, chizma globus uning ortiga oʻtadi va xira koʻrinadi; surat olib tashlansa,
-    hammasi avvalgi holiga qaytadi. Eng yaxshisi — keng (gorizontal) surat, kamida 1200×600,
-    ideali 2000 piksel va undan keng.
+    Bir nechta surat qoʻysangiz, sayt ularni navbat bilan almashtirib turadi: har biri
+    toʻqqiz soniya turadi va bir-biriga yumshoq oʻtadi. Birinchi surat eng muhimi — sahifa
+    ochilganda koʻrinadigan oʻsha. Suratlar olib tashlansa, fon avvalgi tungi rangda qoladi.
+    Eng yaxshisi — keng (gorizontal) surat, kamida 1200×600, ideali 2000 piksel va undan keng.
   </p>
   <p class="warn">
     Faqat huquqi oʻzingizda boʻlgan suratni qoʻying: tashkilotchining oʻz surati, fotograf bilan
@@ -1228,45 +1283,80 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
   </p>
 
   <section class="shots">
-    <h2>Hozirgi fon</h2>
-    <?php if ($hero !== '' && photos_present($config, $hero)): ?>
-      <p><img class="hero-shot" src="<?= app_h(site_photo_url($config, $hero)) ?>" alt="" loading="lazy"></p>
-      <form method="post" class="inline" data-confirm="Fon surati olib tashlansinmi?">
-        <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
-        <input type="hidden" name="do" value="hero-remove">
-        <button class="btn btn--quiet" type="submit">Olib tashlash</button>
-      </form>
-    <?php else: ?>
-      <p class="muted">Surat yoʻq — saytda chizma globus va tungi fon turibdi.</p>
+    <h2>Hozirgi suratlar <span class="muted">(<?= count($shots) ?>)</span></h2>
+    <?php if ($shots === []): ?>
+      <p class="muted">Surat yoʻq — saytda faqat tungi fon turibdi.</p>
     <?php endif; ?>
+
+    <?php foreach ($shots as $i => $shot): ?>
+      <article class="hero-row">
+        <?php if (photos_present($config, $shot['photo'])): ?>
+          <img class="hero-shot" src="<?= app_h(site_photo_url($config, $shot['photo'])) ?>" alt="" loading="lazy">
+        <?php else: ?>
+          <p class="warn">Surat fayli topilmadi: <?= app_h($shot['photo']) ?></p>
+        <?php endif; ?>
+
+        <div class="hero-row__bar">
+          <span class="chip"><?= $i + 1 ?>-oʻrin<?= $i === 0 ? ' · birinchi koʻrinadi' : '' ?></span>
+          <?php if ($shot['illustrative']): ?>
+            <span class="chip">ramziy tasvir — saytda shunday yoziladi</span>
+          <?php endif; ?>
+          <?php if ($i > 0): ?>
+            <form method="post" class="inline">
+              <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+              <input type="hidden" name="do" value="hero-move">
+              <input type="hidden" name="i" value="<?= $i ?>">
+              <input type="hidden" name="dir" value="up">
+              <button class="btn btn--quiet" type="submit" title="Yuqoriga">↑</button>
+            </form>
+          <?php endif; ?>
+          <?php if ($i < count($shots) - 1): ?>
+            <form method="post" class="inline">
+              <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+              <input type="hidden" name="do" value="hero-move">
+              <input type="hidden" name="i" value="<?= $i ?>">
+              <input type="hidden" name="dir" value="down">
+              <button class="btn btn--quiet" type="submit" title="Pastga">↓</button>
+            </form>
+          <?php endif; ?>
+          <form method="post" class="inline" data-confirm="Shu surat olib tashlansinmi?">
+            <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+            <input type="hidden" name="do" value="hero-remove">
+            <input type="hidden" name="i" value="<?= $i ?>">
+            <button class="btn btn--quiet" type="submit">Olib tashlash</button>
+          </form>
+        </div>
+
+        <form method="post" class="editor">
+          <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
+          <input type="hidden" name="do" value="hero-credit">
+          <input type="hidden" name="i" value="<?= $i ?>">
+          <div class="fld">
+            <label for="credit<?= $i ?>">Suratning tagida chiqadigan yozuv</label>
+            <input id="credit<?= $i ?>" name="credit" type="text" maxlength="160"
+                   value="<?= app_h((string) ($shot['credit'] ?? '')) ?>"
+                   placeholder="Masalan: Surat — Central Asian Expo">
+            <small>Shu surat ekranda turganida chiqadi. Boʻsh qoldirilsa, hech narsa chiqmaydi.</small>
+          </div>
+          <div class="actions"><button type="submit">Saqlash</button></div>
+        </form>
+      </article>
+    <?php endforeach; ?>
 
     <?php if (!photos_can()): ?>
       <p class="warn"><?= app_h(photos_complaint_server()) ?></p>
+    <?php elseif (count($shots) >= HERO_MAX): ?>
+      <p class="muted">Suratlar soni eng koʻpi bilan <?= HERO_MAX ?> ta. Yangisini qoʻshish uchun avval bittasini olib tashlang.</p>
     <?php else: ?>
     <form method="post" enctype="multipart/form-data" class="shots__add">
       <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
-      <input type="hidden" name="do" value="hero-set">
-      <label for="heroimg"><?= $hero === '' ? 'Fon surati' : 'Suratni almashtirish' ?></label>
+      <input type="hidden" name="do" value="hero-add">
+      <label for="heroimg">Yangi surat qoʻshish</label>
       <input id="heroimg" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required>
       <button type="submit">Yuklash</button>
-      <small>JPEG, PNG yoki WebP. Eng kattasi <?= app_h(photos_say_size(PHOTO_MAX_BYTES)) ?>.</small>
+      <small>JPEG, PNG yoki WebP. Eng kattasi <?= app_h(photos_say_size(PHOTO_MAX_BYTES)) ?>. Roʻyxatning oxiriga qoʻshiladi.</small>
     </form>
     <?php endif; ?>
-  </section>
-
-  <section class="card card--form">
-    <h2>Surat muallifi</h2>
-    <form method="post" class="editor">
-      <input type="hidden" name="token" value="<?= app_h(admin_token()) ?>">
-      <input type="hidden" name="do" value="hero-credit">
-      <div class="fld">
-        <label for="credit">Suratning tagida chiqadigan yozuv</label>
-        <input id="credit" name="credit" type="text" maxlength="160" value="<?= app_h($credit) ?>"
-               placeholder="Masalan: Surat — Central Asian Expo">
-        <small>Boʻsh qoldirilsa, hech narsa chiqmaydi.</small>
-      </div>
-      <div class="actions"><button type="submit">Saqlash</button></div>
-    </form>
   </section>
 
 <?php elseif ($page === 'publish'): ?>
@@ -1355,7 +1445,8 @@ admin_head($config, $user, 'Saytni tahrirlash', 'site');
       </a>
       <a class="card card--link" href="site.php?f=forum&amp;page=hero">
         <b>Bosh sahifa foni</b>
-        <span><?= ($merged['media']['hero'] ?? null) ? 'surat qoʻyilgan' : 'surat yoʻq — chizma fon' ?></span>
+        <?php $shotCount = count(hero_list($merged ?? [])); ?>
+        <span><?= $shotCount ? $shotCount . ' ta surat — navbat bilan almashadi' : 'surat yoʻq — tungi fon' ?></span>
       </a>
     <?php endif; ?>
     <a class="card card--link" href="site.php?f=<?= app_h($key) ?>&amp;page=publish">

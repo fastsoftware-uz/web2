@@ -55,9 +55,13 @@ const AUDIT_LABELS = [
     'speaker.photo' => 'Spiker rasmi oʻzgardi',
     'speaker.order' => 'Spikerlar tartibi oʻzgardi',
     'speaker.remove' => 'Spiker oʻchirildi',
-    'hero.set' => 'Bosh sahifa foni qoʻyildi',
+    'hero.add' => 'Bosh sahifaga fon surati qoʻshildi',
     'hero.credit' => 'Fon surati muallifi yozildi',
-    'hero.remove' => 'Bosh sahifa foni olib tashlandi',
+    'hero.order' => 'Fon suratlari tartibi oʻzgartirildi',
+    'hero.remove' => 'Bosh sahifadan fon surati olib tashlandi',
+    /* Written by the admin before the title card turned between several
+       pictures; kept so an old log still reads as sentences. */
+    'hero.set' => 'Bosh sahifa foni qoʻyildi',
     'photo.add' => 'Rasm yuklandi',
     'photo.remove' => 'Rasm oʻchirildi',
     'photo.order' => 'Rasmlar tartibi oʻzgardi',

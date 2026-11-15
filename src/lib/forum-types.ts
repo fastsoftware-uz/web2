@@ -45,17 +45,29 @@ export interface ForumSpeaker {
 }
 
 /** Pictures that belong to the page itself rather than to a project. */
-export interface ForumMedia {
-  /** The photograph behind the title card; a stem under `photos/`. */
-  hero: string | null;
-  /** Whose photograph it is, printed under the title card when set. */
-  heroCredit: string | null;
+/** One of the pictures the title card turns between. */
+export interface ForumHeroShot {
+  /** The picture itself; a stem under `photos/`. */
+  photo: string;
+  /** Whose photograph it is, printed under the card while it is showing. */
+  credit?: string | null;
   /**
    * True while the picture is one made for this page rather than a
    * photograph of the venue. The card then says so, in the reader's own
    * language, so nobody takes it for the building they are coming to.
    */
-  heroIllustrative?: boolean;
+  illustrative?: boolean;
+}
+
+export interface ForumMedia {
+  /**
+   * The pictures behind the title card, in the order they come round.
+   *
+   * A string is accepted too: that is the shape the file had before the
+   * card turned between several, and a server may still be publishing one
+   * written by an older build. ChPrologue.vue reads both shapes.
+   */
+  hero: ForumHeroShot[] | string | null;
 }
 
 export interface ForumParticipant {

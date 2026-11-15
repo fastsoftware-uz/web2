@@ -1139,6 +1139,41 @@ main.wide { max-inline-size: 104rem; }
   gap: 0.3rem;
 }
 
+/* One of the title card's pictures: the preview, what it is, where it sits
+   in the turn, and the line printed under it. A row of its own rather than
+   a `.shot`, which is the small square a project's pictures are shown in
+   and would crop a 2200-pixel landscape to 110 by 80. */
+.hero-row {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+}
+.hero-row__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.hero-row .editor { margin: 0; }
+.hero-row .fld { margin: 0; }
+/* A save bar sticks to the foot of the window so that a long form can be
+   saved from wherever you are reading it. There are several short forms on
+   this page — one per picture — and three bars hovering at the bottom of
+   the window cover the very boxes they belong to. Here the button is just a
+   button under its own field. */
+.hero-row .actions {
+  position: static;
+  margin-top: 0.6rem;
+  padding: 0;
+  background: none;
+  border-top: 0;
+  box-shadow: none;
+}
+
 /* The title card's photograph, shown at the width the panel has rather than
    at the width of the file: it is a 2200-pixel picture and this is a
    preview. */

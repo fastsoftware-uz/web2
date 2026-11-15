@@ -392,12 +392,12 @@ function site_with_speakers(array $base, array $overrides, string $key): array
 }
 
 /**
- * Make sure the file has somewhere to put the title card's photograph.
+ * Make sure the file has somewhere to put the title card's pictures.
  *
  * `media.hero` is an ordinary override — a path with a value — and site_set()
  * writes only into paths that already exist, on purpose. A server running a
  * build from before this field existed would therefore refuse the upload and
- * list it as stale. One empty object costs nothing and means the admin works
+ * list it as stale. One empty list costs nothing and means the admin works
  * against the site that is installed rather than the one in the repository.
  */
 function site_with_media(array $base, string $key): array
@@ -406,10 +406,10 @@ function site_with_media(array $base, string $key): array
         return $base;
     }
     if (!isset($base['media']) || !is_array($base['media'])) {
-        $base['media'] = ['hero' => null, 'heroCredit' => null];
+        $base['media'] = ['hero' => []];
         return $base;
     }
-    $base['media'] += ['hero' => null, 'heroCredit' => null];
+    $base['media'] += ['hero' => []];
     return $base;
 }
 

@@ -17,7 +17,7 @@ uchun) va [`README.md`](README.md) (texnik tafsilotlar).
 | **Saytni tahrirlash → Boʻlimlar** | Sayt yozadigan har bir matn: sana, shahar, dastur, sessiyalar, aloqa, barchasi uch tilda |
 | **Saytni tahrirlash → Loyihalar** | 260 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
 | **Saytni tahrirlash → Spikerlar** | Forum spikerlari: ism, lavozim, rasm, tartib — saytning II bobi |
-| **Saytni tahrirlash → Bosh sahifa foni** | Birinchi ekrandagi orqa fon surati va uning muallifi |
+| **Saytni tahrirlash → Bosh sahifa foni** | Birinchi ekrandagi orqa fon suratlari: qoʻshish, tartib, muallif |
 | **Saytni tahrirlash → Nashr** | Qilingan oʻzgarishlar roʻyxati; har birini yoki hammasini asl holiga qaytarish |
 | **Loyiha qoʻshish** | Excel yoki CSV roʻyxatidan yangi loyihalar, rasmlari bilan — dublikat tekshiruvidan oʻtkazib |
 | **Jurnal** | Kim, qachon, nima qilgani. Oʻchirilmaydi va tahrirlanmaydi |
@@ -533,13 +533,28 @@ degan yozuv turadi — yaʼni bob boʻsh koʻrinmaydi.
 ## 9b. Bosh sahifa foni
 
 **Saytni tahrirlash → Bosh sahifa foni.** Saytning birinchi ekranida —
-forum nomi va sanasi turgan joyda — orqa fon surati.
+forum nomi va sanasi turgan joyda — orqa fon suratlari.
 
-- Surat qoʻyilsa: chizma globus uning ortiga oʻtadi va xira koʻrinadi,
-  tepasiga esa tungi rang qoʻyiladi — yozuvlar har qanday suratda ham oʻqiladi.
-- Surat olib tashlansa: hammasi avvalgi holiga qaytadi.
-- **Surat muallifi** — suratning tagida chiqadigan kichkina yozuv. Boʻsh
-  qoldirilsa, hech narsa chiqmaydi.
+Bu yerda bitta emas, **bir nechta surat** boʻladi (eng koʻpi 8 ta), va sayt
+ularni navbat bilan almashtirib turadi: har biri **toʻqqiz soniya** turadi,
+soʻng keyingisiga yumshoq oʻtadi va roʻyxat oxirida boshidan boshlanadi.
+
+- **Tartib muhim.** Roʻyxatdagi **birinchi** surat — sahifa ochilganda
+  koʻrinadigan oʻsha, demak eng yaxshisi birinchi turishi kerak. `↑` va `↓`
+  tugmalari bilan oʻrnini almashtiring.
+- **Yangi surat qoʻshish** — fayl tanlab «Yuklash». Surat roʻyxatning
+  oxiriga qoʻshiladi.
+- **Olib tashlash** — faqat oʻsha suratni roʻyxatdan chiqaradi; qolganlari
+  joyida qoladi. Hammasi olib tashlansa, fon avvalgi tungi rangda qoladi.
+- **Surat muallifi** — har bir suratning oʻziga tegishli kichkina yozuv;
+  faqat oʻsha surat ekranda turganida chiqadi. Boʻsh qoldirilsa, hech narsa
+  chiqmaydi.
+- Saytda bitta **ramziy tasvir** bor — u haqiqiy surat emas, shuning uchun
+  ekranda turganida tagida «Ramziy tasvir» deb yoziladi. Haqiqiy suratlar
+  yetarli boʻlsa, uni olib tashlashingiz mumkin.
+- Harakatni oʻchirgan (`prefers-reduced-motion`) foydalanuvchilarga va
+  brauzer boshqa oynada turganida suratlar almashmaydi — faqat birinchisi
+  koʻrinadi.
 
 Oʻlchami: keng (gorizontal), kamida 1200×600, ideali 2000 piksel va undan
 keng. Serverda WebP ga aylantiriladi.

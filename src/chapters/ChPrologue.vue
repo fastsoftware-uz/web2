@@ -12,12 +12,13 @@
  * type legible, and the words. The globe is still in site-2-classic, which is
  * a frozen snapshot and is not edited to follow a later decision.
  */
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ActionIcon from '../components/ActionIcon.vue';
 import ForumMark from '../components/ForumMark.vue';
-import { scrollToId, useChapterTimeline } from '../lib/motion';
+import type { ForumHeroShot } from '../lib/forum-types';
+import { canAnimate, scrollToId, useChapterTimeline } from '../lib/motion';
 import { eventDates, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
@@ -27,27 +28,110 @@ const root = ref<HTMLElement | null>(null);
 const event = computed(() => forum.value?.event);
 
 /**
- * The photograph behind the title card.
+ * The pictures behind the title card.
  *
- * Uploaded from the admin and recorded as a stem under `photos/`, exactly
+ * Uploaded from the admin and recorded as stems under `photos/`, exactly
  * like a project's pictures — so the venue can be changed, or a better frame
- * put up, without a build. Where there is none the card falls back to the
+ * put up, without a build. Where there are none the card falls back to the
  * stage's own night gradient, which is what it is painted on in any case.
+ *
+ * A bare string is accepted as well as a list: that is the shape the file
+ * had before the card turned between several pictures, and a server may
+ * still be publishing one written by an older build.
  */
-const heroPhoto = computed(() => forum.value?.media?.hero ?? null);
-const heroCredit = computed(() => forum.value?.media?.heroCredit ?? '');
+const shots = computed<ForumHeroShot[]>(() => {
+  const hero = forum.value?.media?.hero;
+  if (!hero) return [];
+  const list = Array.isArray(hero) ? hero : [{ photo: hero }];
+  return list.filter((shot) => typeof shot?.photo === 'string' && shot.photo !== '');
+});
+
+/**
+ * Which one is on screen.
+ *
+ * The client asked on 15 November 2026 for all of the venue pictures rather
+ * than a choice between them, so they come round in turn: nine seconds each,
+ * a second and a half of cross-fade, and back to the first. Nine because the
+ * card is the one screen a reader studies — the name, the date, two buttons —
+ * and a background that changes while they are still reading it is a
+ * distraction rather than a slideshow.
+ *
+ * Nothing turns for somebody who asked for reduced motion, or while the tab
+ * is in the background, or when there is only one picture to show.
+ */
+const SHOWN_MS = 9000;
+const current = ref(0);
+/**
+ * The second picture and the ones after it, held back until the first screen
+ * is drawn.
+ *
+ * The title card is this page's Largest Contentful Paint and the first
+ * picture is most of it. Three images in the markup are three requests the
+ * browser starts at once over the same connection, and the two nobody can
+ * see yet would be taking bandwidth from the one everybody can. So they are
+ * added after the page has loaded — long before the first nine seconds are
+ * up, and off the critical path entirely.
+ */
+const ready = ref(false);
+/* Rendered, not merely hidden: an <img> with `display: none` is still
+   fetched, so holding the others back means not writing them yet. */
+const shown = computed(() => (ready.value ? shots.value : shots.value.slice(0, 1)));
+let timer: number | undefined;
+
+function turning(): boolean {
+  return ready.value && shots.value.length > 1 && canAnimate() && !document.hidden;
+}
+
+function tick(): void {
+  current.value = (current.value + 1) % shots.value.length;
+}
+
+function retime(): void {
+  window.clearInterval(timer);
+  timer = turning() ? window.setInterval(tick, SHOWN_MS) : undefined;
+}
+
+function wake(): void {
+  retime();
+}
+
+onMounted(() => {
+  const start = () => {
+    ready.value = true;
+    retime();
+  };
+  if (document.readyState === 'complete') window.setTimeout(start, 600);
+  else window.addEventListener('load', () => window.setTimeout(start, 600), { once: true });
+  document.addEventListener('visibilitychange', wake);
+});
+
+onBeforeUnmount(() => {
+  window.clearInterval(timer);
+  document.removeEventListener('visibilitychange', wake);
+});
+
+/* A picture removed from the admin while the page is open must not leave the
+   card pointing past the end of the list. */
+watch(shots, (list) => {
+  if (current.value >= list.length) current.value = 0;
+  retime();
+});
+
 /**
  * What the small line under the buttons says.
  *
- * Whoever the picture belongs to, if the organiser has said so. Otherwise,
- * while the card is carrying the image this repository ships, the fact that
- * it is an image and not a photograph of the venue — in the reader's own
+ * It belongs to the picture that is showing, and changes with it: whoever
+ * the photograph belongs to, if the organiser has said so, and otherwise —
+ * while the card is carrying the image this repository ships — the fact that
+ * it is an image and not a photograph of the venue, in the reader's own
  * language, because somebody deciding where to travel should not have to
  * guess which building they are looking at.
  */
 const heroNote = computed(() => {
-  if (heroCredit.value) return heroCredit.value;
-  return forum.value?.media?.heroIllustrative ? t('prologue.heroNote') : '';
+  const shot = shots.value[current.value];
+  if (!shot) return '';
+  if (shot.credit) return shot.credit;
+  return shot.illustrative ? t('prologue.heroNote') : '';
 });
 const dates = computed(() => eventDates());
 
@@ -91,22 +175,24 @@ useChapterTimeline(
            for the 2200 and spent 175 kB on a picture it draws at a third of
            that. 1100 covers every phone and most laptops. -->
       <img
-        v-if="heroPhoto"
+        v-for="(shot, i) in shown"
+        :key="shot.photo"
         class="prologue__photo"
-        :src="`photos/${heroPhoto}-full.webp`"
+        :class="{ 'is-on': i === current }"
+        :src="`photos/${shot.photo}-full.webp`"
         :srcset="
-          `photos/${heroPhoto}-thumb.webp 320w,` +
-          `photos/${heroPhoto}-card.webp 1100w,` +
-          `photos/${heroPhoto}-full.webp 2200w`
+          `photos/${shot.photo}-thumb.webp 320w,` +
+          `photos/${shot.photo}-card.webp 1100w,` +
+          `photos/${shot.photo}-full.webp 2200w`
         "
         sizes="100vw"
         alt=""
-        fetchpriority="high"
+        :fetchpriority="i === 0 ? 'high' : 'low'"
         decoding="async"
       />
       <!-- Night over the photograph, so the wordmark keeps its contrast
            whatever was uploaded. Decoration; announced as nothing. -->
-      <div v-if="heroPhoto" class="prologue__scrim" aria-hidden="true" />
+      <div v-if="shots.length" class="prologue__scrim" aria-hidden="true" />
     </div>
 
     <div class="shell prologue__content">
@@ -176,6 +262,10 @@ useChapterTimeline(
         </button>
       </div>
 
+      <!-- The line belongs to whichever picture is showing, so it is swapped
+           as they turn. `aria-live` is deliberately absent: it is a caption
+           on decoration, and a reader who is being read the page should not
+           be interrupted every nine seconds to be told so. -->
       <p v-if="heroNote" class="prologue__credit">{{ heroNote }}</p>
 
       <button type="button" class="prologue__scroll prologue__reveal" @click="scrollToId('programme')">
@@ -222,6 +312,23 @@ useChapterTimeline(
   block-size: 100%;
   object-fit: cover;
   object-position: 50% 55%;
+  /* They are stacked, and the one whose turn it is fades up over the one
+     before it. Opacity only — nothing moves, nothing is scaled — so the
+     browser hands the whole thing to the compositor and the fade costs no
+     layout. 1.6s because the pictures are of the same place from different
+     sides, and a quick cut between them reads as a glitch. */
+  opacity: 0;
+  transition: opacity 1.6s ease-in-out;
+}
+.prologue__photo.is-on {
+  opacity: 1;
+}
+/* Nothing fades for somebody who asked for reduced motion; the card holds
+   the first picture, which is what the timer does as well. */
+@media (prefers-reduced-motion: reduce) {
+  .prologue__photo {
+    transition: none;
+  }
 }
 .prologue__scrim {
   position: absolute;
