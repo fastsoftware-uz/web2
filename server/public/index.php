@@ -369,8 +369,16 @@ if (!$authed):
       <input id="cap" name="captcha" type="text" inputmode="latin" autocomplete="off"
              autocapitalize="characters" spellcheck="false" required maxlength="8">
     <?php else: ?>
+      <?php
+      /*
+       * The sum is written out in words and the answer is checked as a
+       * number — "sakkiz" is not 8 to strcasecmp. The field says which is
+       * wanted rather than letting somebody find out by being refused.
+       */
+      ?>
       <label for="cap">Tekshiruv: <?= app_h((string) $challenge['words']) ?> nechchi?</label>
       <input id="cap" name="captcha" type="text" inputmode="numeric" autocomplete="off" required maxlength="4">
+      <small class="hint">Javobni raqam bilan yozing.</small>
     <?php endif; ?>
 
     <?php if ($error === 'bad'): ?>
