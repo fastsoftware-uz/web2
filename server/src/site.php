@@ -129,19 +129,21 @@ function site_overrides(array $config, string $key): array
         'updated_count' => (int) ($data['updated_count'] ?? 0),
     ];
     /*
-     * `speakers` only when the file has one, and no default.
+     * The speaker list, and whether it is the operator's.
      *
      * Having a list of one's own and having an empty list mean opposite
-     * things to site_with_speakers(): no list means the speakers the build
-     * ships stand, an empty list means the operator removed them all. A
-     * default of `[]` collapses the two — and it did: site_publish() writes
-     * this array straight back, so the first publish on a fresh
-     * installation invented an empty list and the build's speakers
-     * disappeared from the site.
+     * things to site_with_speakers(): no list of my own means the speakers
+     * the build ships stand, an empty list means the operator removed them
+     * all and a deploy must not hand them back. The list alone cannot tell
+     * the two apart, and an installation that has been publishing since
+     * before the build shipped any speakers already has `speakers: []`
+     * written into this file — site_publish() writes the array back
+     * verbatim, so the empty default the old code handed it was saved. So
+     * the answer is a flag of its own, written only by site_save_speakers()
+     * when somebody arranges the list through the admin.
      */
-    if (is_array($data['speakers'] ?? null)) {
-        $out['speakers'] = array_values($data['speakers']);
-    }
+    $out['speakers'] = is_array($data['speakers'] ?? null) ? array_values($data['speakers']) : [];
+    $out['speakers_set'] = ($data['speakers_set'] ?? false) === true;
     return $out;
 }
 
@@ -389,11 +391,11 @@ function site_with_added(array $base, array $overrides, string $key): array
  *
  * The build may ship speakers of its own — it did not for the first month,
  * and then four were added to the data file — and those stand until the
- * operator arranges a list of their own. Which is why this asks whether the
- * overlay *has* a list rather than whether the list is empty: an operator
+ * operator arranges a list of their own. Which is why this asks whether
+ * they have arranged one rather than whether the list is empty: an operator
  * who has deliberately removed every speaker must not have the build's four
- * handed back to them on the next save. See site_overrides(), which is
- * careful not to invent the key.
+ * handed back to them on the next save. See site_overrides() for why that
+ * question needs a flag of its own.
  *
  * Appending it before the overrides are applied is what makes
  * `speakers.<id>.role.uz` a path site_set() can find, so a speaker is
@@ -404,10 +406,10 @@ function site_with_speakers(array $base, array $overrides, string $key): array
     if ($key !== 'forum') {
         return $base;
     }
-    if (!array_key_exists('speakers', $overrides)) {
+    if (!($overrides['speakers_set'] ?? false)) {
         return $base;
     }
-    $base['speakers'] = array_values($overrides['speakers']);
+    $base['speakers'] = array_values($overrides['speakers'] ?? []);
     return $base;
 }
 
@@ -445,8 +447,8 @@ function site_with_media(array $base, string $key): array
 function site_speakers(array $config): array
 {
     $overrides = site_overrides($config, 'forum');
-    if (array_key_exists('speakers', $overrides)) {
-        return array_values($overrides['speakers']);
+    if ($overrides['speakers_set'] ?? false) {
+        return array_values($overrides['speakers'] ?? []);
     }
     $base = site_base($config, 'forum');
     $shipped = is_array($base) ? ($base['speakers'] ?? null) : null;
@@ -458,6 +460,8 @@ function site_save_speakers(array $config, array $list): void
 {
     $overrides = site_overrides($config, 'forum');
     $overrides['speakers'] = array_values($list);
+    /* From here on the list is theirs, empty or not. */
+    $overrides['speakers_set'] = true;
     site_save_overrides($config, 'forum', $overrides);
 }
 
