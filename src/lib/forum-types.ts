@@ -126,12 +126,28 @@ export interface ProgrammeHall {
   seats: number | null;
 }
 
-/** A named slot inside a long item — the media campus runs 3.1, a break, 3.3. */
+/**
+ * A named slot inside a long item.
+ *
+ * Two documents fill these in and they say different amounts. The leaflet's
+ * media campus is three titles, numbered 3.1, a break, 3.3 — no hours of
+ * their own. ICCA's education programme for 26 November is an hour-by-hour
+ * timetable with the people who run each hour, inside what the leaflet knew
+ * only as one all-day block. So everything but the title is optional, and
+ * what is printed follows what the source actually said.
+ */
 export interface ProgrammePart {
   /** "3.1" — the leaflet's own numbering, which skips 3.2. */
   n?: string;
+  /** Where the source gives the part its own hours. */
+  start?: string;
+  end?: string;
   kind?: 'break';
   title: I18nText;
+  /** Who runs it, where the source names them. */
+  by?: I18nText;
+  /** One line of detail the title cannot carry. */
+  note?: I18nText;
 }
 
 export interface DayItem {

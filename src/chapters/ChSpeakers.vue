@@ -38,6 +38,23 @@ const speakers = computed<ForumSpeaker[]>(() =>
 );
 
 /** The first letter of each of the first two words — "O S", not "ОЛЬГА". */
+/**
+ * The ones with a portrait, and the ones without, in that order.
+ *
+ * One grid could not hold both. A card with a photograph is three times the
+ * height of a card without one, and a CSS grid makes every card in a row as
+ * tall as the tallest: one portrait among three names left three cards
+ * three-quarters empty, and letting each card keep its own height left a
+ * hole beside the portrait instead. Grouping them is the one arrangement
+ * that reads as a decision rather than a bug.
+ *
+ * Inside each group the organiser's own order is untouched, and when every
+ * speaker has a portrait the second group is empty and this is one grid
+ * again — which is where it is headed as the pictures arrive.
+ */
+const pictured = computed(() => speakers.value.filter((s) => s.photo));
+const listed = computed(() => speakers.value.filter((s) => !s.photo));
+
 function initials(speaker: ForumSpeaker): string {
   return tr(speaker.name)
     .split(/\s+/)
@@ -77,28 +94,39 @@ useChapterTimeline(
 
       <p v-if="speakers.length === 0" class="speakers__empty">{{ t('speakers.empty') }}</p>
 
-      <ul v-else class="speakers__grid">
-        <li v-for="speaker in speakers" :key="speaker.id" class="speakers__card card">
-          <div class="speakers__frame">
-            <img
-              v-if="speaker.photo"
-              class="speakers__photo"
-              :src="`photos/${speaker.photo}-full.webp`"
-              :srcset="`photos/${speaker.photo}-thumb.webp 220w, photos/${speaker.photo}-full.webp 720w`"
-              sizes="(max-width: 40rem) 45vw, 17rem"
-              :alt="describe(speaker)"
-              width="720"
-              height="860"
-              loading="lazy"
-              decoding="async"
-            />
-            <span v-else class="speakers__initials" aria-hidden="true">{{ initials(speaker) }}</span>
-          </div>
-          <h3 class="speakers__name">{{ tr(speaker.name) }}</h3>
-          <p v-if="tr(speaker.role)" class="speakers__role">{{ tr(speaker.role) }}</p>
-          <p v-if="tr(speaker.org)" class="speakers__org">{{ tr(speaker.org) }}</p>
-        </li>
-      </ul>
+      <template v-else>
+        <ul v-if="pictured.length" class="speakers__grid">
+          <li v-for="speaker in pictured" :key="speaker.id" class="speakers__card card">
+            <div class="speakers__frame">
+              <img
+                class="speakers__photo"
+                :src="`photos/${speaker.photo}-full.webp`"
+                :srcset="`photos/${speaker.photo}-thumb.webp 220w, photos/${speaker.photo}-full.webp 720w`"
+                sizes="(max-width: 40rem) 45vw, 17rem"
+                :alt="describe(speaker)"
+                width="720"
+                height="860"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+            <h3 class="speakers__name">{{ tr(speaker.name) }}</h3>
+            <p v-if="tr(speaker.role)" class="speakers__role">{{ tr(speaker.role) }}</p>
+            <p v-if="tr(speaker.org)" class="speakers__org">{{ tr(speaker.org) }}</p>
+          </li>
+        </ul>
+
+        <ul v-if="listed.length" class="speakers__grid speakers__grid--plain">
+          <li v-for="speaker in listed" :key="speaker.id" class="speakers__card card speakers__card--plain">
+            <div class="speakers__frame">
+              <span class="speakers__initials" aria-hidden="true">{{ initials(speaker) }}</span>
+            </div>
+            <h3 class="speakers__name">{{ tr(speaker.name) }}</h3>
+            <p v-if="tr(speaker.role)" class="speakers__role">{{ tr(speaker.role) }}</p>
+            <p v-if="tr(speaker.org)" class="speakers__org">{{ tr(speaker.org) }}</p>
+          </li>
+        </ul>
+      </template>
     </div>
   </section>
 </template>
@@ -121,6 +149,10 @@ useChapterTimeline(
 .speakers__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  /* Each card is as tall as what is in it. Without this, one card with a
+     portrait stretched the three beside it to the height of a photograph
+     and left them three-quarters empty. */
+  align-items: start;
   gap: clamp(1rem, 2vw, 1.75rem);
   margin-block-start: clamp(2rem, 4vw, 3rem);
   padding: 0;
@@ -132,6 +164,62 @@ useChapterTimeline(
   flex-direction: column;
   gap: 0.35rem;
   padding: 1rem 1.15rem 1.35rem;
+}
+
+/*
+ * A card for somebody whose portrait has not arrived.
+ *
+ * With four speakers and one portrait missing, an empty arch the size of a
+ * photograph reads as a picture still loading. With thirty-three of them it
+ * reads as a page that failed — which is what the chapter looked like on 17
+ * November 2026, when the forum's own programme added thirty-four names and
+ * one picture.
+ *
+ * So a card with no portrait keeps the arch and shrinks it to a medallion
+ * beside the name: still the same shape, still the initials, but a mark on
+ * a card rather than a hole in one. Cards with photographs are left exactly
+ * as they were, which is the point — they now stand out instead of being
+ * lost in a grid of blanks.
+ */
+/* The named list under the portraits: narrower columns, because none of
+   these cards is carrying a picture that needs the width. */
+.speakers__grid--plain {
+  grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
+  margin-block-start: clamp(1rem, 2vw, 1.75rem);
+}
+
+.speakers__card--plain {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  gap: 0.2rem 0.7rem;
+}
+.speakers__card--plain .speakers__frame {
+  inline-size: 2.9rem;
+  aspect-ratio: 5 / 6;
+  margin-block-end: 0;
+}
+.speakers__card--plain .speakers__initials {
+  font-size: 0.95rem;
+}
+/* The mark and the name share the top line; everything under it runs the
+   full width of the card. A role or an organisation set in a column three
+   centimetres narrower than the card breaks after every second word, which
+   is how this looked at first. */
+.speakers__card--plain .speakers__name {
+  align-self: center;
+  min-inline-size: 0;
+  /* Two columns at 390px leave about 165px for a name, and
+     "Muhammadsiddiq" is wider than that on its own. Long names break
+     rather than push the card past its own edge. */
+  overflow-wrap: anywhere;
+}
+.speakers__card--plain .speakers__role,
+.speakers__card--plain .speakers__org {
+  grid-column: 1 / -1;
+}
+.speakers__card--plain .speakers__role {
+  margin-block-start: 0.3rem;
 }
 
 /* The portrait stands in the same pointed arch a project's photograph does;

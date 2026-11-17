@@ -521,7 +521,10 @@ hech narsa oʻchmaydi va qaytib kelmaydi.
 - **Yangi spiker** — pastdagi forma: ism familiya, lavozimi, tashkiloti va
   rasm. Ism kamida bitta tilda yozilsin; ruscha yoki inglizchasi boʻsh
   qolsa, sayt oʻzbekchasini koʻrsatadi.
-- **↑ ↓** — tartib. Saytdagi tartib shu yerdagidek boʻladi.
+- **↑ ↓** — tartib. Saytdagi tartib shu yerdagidek boʻladi; faqat bitta
+  istisno bor: **rasmi bor spikerlar yuqorida**, katta kartalarda koʻrsatiladi,
+  rasmi yoʻqlari esa ularning tagidagi roʻyxatda. Har ikki guruh ichida tartib
+  — siz qoʻygan tartib. Hammasining rasmi boʻlsa, roʻyxat yana yagona boʻladi.
 - **×** — oʻchirish. Rasmi ham birga oʻchadi.
 - Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon va rasm.
 

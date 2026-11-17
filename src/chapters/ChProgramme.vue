@@ -73,8 +73,10 @@ const kindLabel = (item: DayItem) =>
     ? t('programme.kinds.sessionN', { n: item.n })
     : t(`programme.kinds.${item.kind}`);
 
-const hours = (item: { start: string; end?: string }) =>
-  item.end ? `${item.start}–${item.end}` : item.start;
+/* Takes a part as well as an item, and a part may have no hours at all —
+   the leaflet's own numbered parts do not. */
+const hours = (item: { start?: string; end?: string }) =>
+  item.end ? `${item.start}–${item.end}` : (item.start ?? '');
 
 useChapterTimeline(
   () => root.value,
@@ -142,14 +144,26 @@ useChapterTimeline(
                 <template v-if="item.kind !== 'break'">
                   <p class="slot__kind">{{ kindLabel(item) }}</p>
                   <h4 class="slot__title">{{ tr(item.title) }}</h4>
+                  <!-- What runs inside a long item. The leaflet gives these
+                       numbers and nothing else; ICCA's own programme for the
+                       26th gives each one an hour and the people running it,
+                       so each line prints whatever its source knew. -->
                   <ol v-if="item.parts?.length" class="slot__parts">
                     <li
                       v-for="(part, j) in item.parts"
                       :key="j"
-                      :class="{ 'slot__part--break': part.kind === 'break' }"
+                      :class="{
+                        'slot__part--break': part.kind === 'break',
+                        'slot__part--timed': !!part.start,
+                      }"
                     >
-                      <span v-if="part.n" class="slot__partN">{{ part.n }}</span>
-                      {{ tr(part.title) }}
+                      <span v-if="part.start" class="slot__partTime">{{ hours(part) }}</span>
+                      <span class="slot__partBody">
+                        <span v-if="part.n" class="slot__partN">{{ part.n }}</span>
+                        {{ tr(part.title) }}
+                        <span v-if="part.note" class="slot__partNote">{{ tr(part.note) }}</span>
+                        <span v-if="part.by" class="slot__partBy">{{ tr(part.by) }}</span>
+                      </span>
                     </li>
                   </ol>
                 </template>
@@ -353,14 +367,29 @@ h2 {
   /* The left edge carries the hour the way the leaflet's cards do. */
   border-inline-start: 3px solid var(--accent-soft);
 }
+/*
+ * Lunch, and the coffee breaks.
+ *
+ * They used to be a hairline strip between two cards — half the height of
+ * everything around them and set in the dimmest ink on the page, which is
+ * the one thing a reader scanning for "when do we eat" cannot find. The
+ * client asked for them bigger on 17 November 2026.
+ *
+ * Now they are cards like the sessions, at the full width of the column:
+ * the same padding, the same corner, a washed background so the eye still
+ * reads them as a pause rather than a session, and a dashed left edge
+ * instead of the solid accent the sessions carry.
+ */
 .slot__item--break {
-  padding-block: 0.5rem;
-  border: none;
-  border-block: 1px dashed var(--hairline);
-  border-radius: 0;
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.75rem;
+  gap: 0.3rem 0.75rem;
+  padding: 0.7rem 1rem;
+  border: 1px dashed var(--hairline);
+  border-inline-start: 3px dashed var(--accent-soft);
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
 }
 .slot__time {
   margin: 0;
@@ -387,12 +416,14 @@ h2 {
 .slot__break {
   margin: 0;
   font-family: var(--font-body);
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--ink-dim);
+  /* Was 0.85rem, below everything it sits between. A pause in the day is
+     not a footnote to it. */
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink-soft);
 }
 .slot__item--break .slot__time {
-  color: var(--ink-dim);
+  color: var(--ink-soft);
 }
 
 .slot__parts {
@@ -408,6 +439,27 @@ h2 {
   padding-inline-start: 0.9rem;
   border-inline-start: 1px solid var(--hairline);
 }
+/* A part with hours of its own reads as a timetable: the hour in a column
+   the eye can run down, the rest beside it. `ch` rather than `rem` so the
+   column is exactly as wide as "09:00–10:00" in whatever the body face
+   turns out to be. */
+.slot__part--timed {
+  display: grid;
+  grid-template-columns: 10.5ch minmax(0, 1fr);
+  gap: 0.1rem 0.7rem;
+  padding-block: 0.15rem;
+}
+.slot__partTime {
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+.slot__partBody {
+  display: block;
+  min-inline-size: 0;
+}
 .slot__part--break {
   color: var(--ink-dim);
   font-size: 0.8rem;
@@ -416,6 +468,29 @@ h2 {
   margin-inline-end: 0.3rem;
   font-variant-numeric: tabular-nums;
   color: var(--accent-soft);
+}
+/* Who runs the hour, and the one line of detail the title cannot carry.
+   Both sit under the title rather than beside it: a name wrapped into the
+   middle of a session title reads as part of the title. */
+.slot__partNote,
+.slot__partBy {
+  display: block;
+  margin-block-start: 0.15rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: var(--ink-dim);
+}
+.slot__partBy {
+  color: var(--accent-soft);
+}
+
+/* On a phone the column for the hour would leave the title eight characters
+   wide, so the hour goes on its own line above it. */
+@media (max-width: 56rem) {
+  .slot__part--timed {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.1rem;
+  }
 }
 
 /* ------------------------------------------- the all-day hall and the zone */
