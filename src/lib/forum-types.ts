@@ -355,8 +355,39 @@ export interface ForumData {
 
 export const FORUM_URL = 'data/forum-2026.json';
 
+/**
+ * Always ask whether this file has changed.
+ *
+ * Everything else the page loads is named with a content hash — a new build
+ * is a new filename, so a stale copy can never be served. This file is the
+ * one exception: its name never changes, and it has to be that way, because
+ * the admin rewrites it between builds and a deploy is not required for an
+ * edit to appear.
+ *
+ * Which is exactly what bit us. The server sends no `Cache-Control` for it,
+ * and a response with no freshness information is cached *heuristically* —
+ * browsers keep it for a fraction of how long it had already been
+ * unchanged. On 17 November 2026 that meant a reader who had opened the
+ * page before got the new JavaScript, the new stylesheet and the new
+ * layout, over a day-old portfolio and a four-name speaker list. It looked
+ * for all the world like the deploy had not happened.
+ *
+ * `cache: 'no-cache'` does not mean "do not cache" — it means "revalidate
+ * before using". The browser still keeps the file and still sends
+ * `If-None-Match`; when nothing has changed the server answers 304 with no
+ * body, which costs one round trip and no bandwidth. When something has
+ * changed, the reader gets it. That is the only correct behaviour for a
+ * file whose whole purpose is to change without a build.
+ */
 export async function loadForum(signal?: AbortSignal): Promise<ForumData> {
-  const res = await fetch(FORUM_URL, { signal: signal ?? null });
+  /* index.html starts this request while it is still being parsed — see
+     `forumFacts` in vite.config.ts. Taken once: a Response body can only be
+     read once, so a retry after a failure makes its own request. */
+  const early = (window as unknown as { __forum?: Promise<Response> }).__forum;
+  if (early) delete (window as unknown as { __forum?: Promise<Response> }).__forum;
+  const res = early
+    ? await early
+    : await fetch(FORUM_URL, { signal: signal ?? null, cache: 'no-cache' });
   if (!res.ok) throw new Error(`forum-2026.json responded ${res.status}`);
   return (await res.json()) as ForumData;
 }

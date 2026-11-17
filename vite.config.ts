@@ -76,9 +76,21 @@ function preloadFonts() {
  * Everything on the page comes out of `data/forum-2026.json`, and the fetch
  * for it cannot begin until the bundle has been downloaded, parsed and run —
  * which on a throttled phone put the title card's own first line nearly two
- * seconds behind the first paint. The preload starts that download while the
+ * seconds behind the first paint. So the request is started here, while the
  * HTML is still being parsed, in parallel with the script instead of behind
  * it. Only on the site's own page: the registration page does not read it.
+ *
+ * This was a `<link rel="preload" as="fetch">` until 17 November 2026. It
+ * had to stop being one. The file is the single thing the site loads whose
+ * name never changes — everything else carries a content hash — and the
+ * server sends it with no `Cache-Control`, so browsers cache it
+ * heuristically and a reader who had been to the page before was served a
+ * day-old copy under the new build's JavaScript. The fix is to revalidate
+ * (`cache: 'no-cache'`, see loadForum), and a preload link cannot express
+ * that: the preloaded response and the revalidating fetch are different
+ * requests, so the page would have downloaded 800 kB twice.
+ *
+ * An inline fetch can say it, and hands the app the very same promise.
  */
 function forumFacts() {
   /* The site's own copy, not the monorepo's: `npm run export` writes this
@@ -101,8 +113,15 @@ function forumFacts() {
         html: filled,
         tags: [
           {
-            tag: 'link',
-            attrs: { rel: 'preload', as: 'fetch', href: 'data/forum-2026.json' },
+            tag: 'script',
+            /* Deliberately not a module: a module is deferred, and deferred
+               is exactly the wait this is here to remove. The promise is
+               given a no-op catch so a failure before the app wakes up is
+               not an unhandled rejection in the console; loadForum attaches
+               the handlers that matter to the same promise. */
+            children:
+              "try{var p=fetch('data/forum-2026.json',{cache:'no-cache'});" +
+              'p.catch(function(){});window.__forum=p}catch(e){}',
             injectTo: 'head-prepend' as const,
           },
         ],

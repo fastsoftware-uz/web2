@@ -424,6 +424,35 @@ curl -sI -H "Accept-Encoding: gzip" https://<domen>/data/forum-2026.json | grep 
 Keyin 7.3 dagi `nginx -t` va `reload`, soʻng yuqoridagi `curl` ni yana bir
 marta ishlatib tasdiqlang.
 
+### 7.2b. Maʼlumot fayli keshda qolib ketmasligi uchun
+
+Sayt bitta faylni — `data/forum-2026.json` — nomi oʻzgarmagan holda qayta
+yozadi: adminkadagi har bir oʻzgarish oʻsha faylga tushadi. Qolgan hamma
+fayl (JavaScript, uslublar) nomida xesh bor, yaʼni yangisi butunlay boshqa
+fayl boʻladi.
+
+17.11.2026 da shu narsa muammo tugʻdirdi: server bu faylga **hech qanday
+`Cache-Control` sarlavhasi yubormayotgan edi**, brauzerlar esa sarlavhasiz
+javobni **taxminiy** muddatga keshlaydi. Natijada avval saytga kirgan
+foydalanuvchi yangi dizaynni koʻrdi-yu, maʼlumotni eskisini koʻrdi —
+spikerlar roʻyxati va kun tartibi yangilanmagandek tuyuldi.
+
+Sayt tomonidan tuzatildi (fayl endi har safar «oʻzgardimi?» deb soʻraydi),
+lekin serverda ham aytib qoʻygan maʼqul. Oʻsha `server { }` blokiga:
+
+```nginx
+    location = /data/forum-2026.json {
+        add_header Cache-Control "no-cache" always;
+    }
+
+    location = /data/content.json {
+        add_header Cache-Control "no-cache" always;
+    }
+```
+
+`no-cache` — «keshlama» degani emas, «ishlatishdan oldin soʻra» degani:
+fayl oʻzgarmagan boʻlsa server 304 qaytaradi va hech narsa yuklanmaydi.
+
 ### 7.3. Tekshirish va qoʻllash
 
 ```sh

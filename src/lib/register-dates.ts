@@ -19,7 +19,9 @@ const FORUM_URL = '../data/forum-2026.json';
 /** "2026-11-25/2026-11-27", or null if the file is missing or malformed. */
 export async function fetchEventRange(signal?: AbortSignal): Promise<string | null> {
   try {
-    const res = await fetch(FORUM_URL, { signal: signal ?? null });
+    /* Revalidated, for the reason in forum-types.ts: the file's name never
+       changes and the admin rewrites it between builds. */
+    const res = await fetch(FORUM_URL, { signal: signal ?? null, cache: 'no-cache' });
     if (!res.ok) return null;
     const data = (await res.json()) as { event?: { dateStart?: unknown; dateEnd?: unknown } };
     const { dateStart, dateEnd } = data.event ?? {};

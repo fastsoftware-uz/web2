@@ -149,10 +149,6 @@ useChapterTimeline(
 .speakers__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-  /* Each card is as tall as what is in it. Without this, one card with a
-     portrait stretched the three beside it to the height of a photograph
-     and left them three-quarters empty. */
-  align-items: start;
   gap: clamp(1rem, 2vw, 1.75rem);
   margin-block-start: clamp(2rem, 4vw, 3rem);
   padding: 0;
@@ -186,6 +182,11 @@ useChapterTimeline(
 .speakers__grid--plain {
   grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
   margin-block-start: clamp(1rem, 2vw, 1.75rem);
+  /* Only here. A grid makes every card in a row as tall as the tallest,
+     which is right for the portraits above — they are the same shape and
+     stand in a row — and wrong for these, where one three-line role would
+     put two inches of white under every name beside it. */
+  align-items: start;
 }
 
 .speakers__card--plain {
