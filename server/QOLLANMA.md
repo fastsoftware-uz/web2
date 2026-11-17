@@ -529,9 +529,11 @@ hech narsa oʻchmaydi va qaytib kelmaydi.
 - Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon, rasm va
   **«Rasm oʻrnidagi belgi»**.
 - **Rasm oʻrnidagi belgi** — spikerning surati hali yoʻq boʻlsa, saytda
-  uning oʻrnida chizma belgi turadi: «Erkak», «Ayol» yoki «Belgilanmagan»
-  (oddiy figura). Surat yuklansa, belgi koʻrinmaydi. Bu maydon ism boʻyicha
-  oʻzi aniqlanmaydi — har doim siz tanlaysiz.
+  uning oʻrnida chizma belgi turadi. Uch tanlov bor: «Belgilanmagan»,
+  «Erkak» va «Ayol». Hozir saytdagi hamma spiker **bitta oddiy figura**
+  bilan turibdi (18.11.2026 dagi qaror); «Ayol» belgisi — sochli figura —
+  kerak boʻlsa shu roʻyxatdan tanlanadi. Surat yuklansa, belgi koʻrinmaydi.
+  Bu maydon ism boʻyicha oʻzi aniqlanmaydi — har doim siz tanlaysiz.
 
 **Saytda nechta koʻrinadi.** Spikerlar bobida avval **8 tasi** chiqadi
 (rasmi borlar birinchi), qolganlari esa «Barcha spikerlar» tugmasi ostida
