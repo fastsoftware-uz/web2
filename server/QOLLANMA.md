@@ -526,7 +526,17 @@ hech narsa oʻchmaydi va qaytib kelmaydi.
   rasmi yoʻqlari esa ularning tagidagi roʻyxatda. Har ikki guruh ichida tartib
   — siz qoʻygan tartib. Hammasining rasmi boʻlsa, roʻyxat yana yagona boʻladi.
 - **×** — oʻchirish. Rasmi ham birga oʻchadi.
-- Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon va rasm.
+- Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon, rasm va
+  **«Rasm oʻrnidagi belgi»**.
+- **Rasm oʻrnidagi belgi** — spikerning surati hali yoʻq boʻlsa, saytda
+  uning oʻrnida chizma belgi turadi: «Erkak», «Ayol» yoki «Belgilanmagan»
+  (oddiy figura). Surat yuklansa, belgi koʻrinmaydi. Bu maydon ism boʻyicha
+  oʻzi aniqlanmaydi — har doim siz tanlaysiz.
+
+**Saytda nechta koʻrinadi.** Spikerlar bobida avval **8 tasi** chiqadi
+(rasmi borlar birinchi), qolganlari esa «Barcha spikerlar» tugmasi ostida
+turadi. Tugma bosilsa hammasi ochiladi. Roʻyxat uzun boʻlsa ham bob bitta
+ekranga sigʻadi.
 
 > **Oʻchirish qaytmaydi.** «Nashr → Hammasini asl holiga qaytarish» tugmasi
 > spikerlar roʻyxatiga tegmaydi: u tahrirlangan matnlarni qaytaradi, qoʻlda

@@ -99,6 +99,8 @@ const en = {
     lead: 'Who speaks at the forum. The list grows as the organising committee confirms the programme.',
     empty: 'The speaker list has not been published yet.',
     photoAlt: '{name}, {role}',
+    more: 'Show all speakers ({n} more)',
+    less: 'Show fewer',
   },
   themes: {
     filter: 'Show the projects',
@@ -356,6 +358,8 @@ const uz: Messages = {
     lead: 'Forumda kim soʻzga chiqadi. Roʻyxat tashkiliy qoʻmita dasturni tasdiqlagani sari toʻldirib boriladi.',
     empty: 'Spikerlar roʻyxati hali eʼlon qilinmagan.',
     photoAlt: '{name}, {role}',
+    more: 'Barcha spikerlar ({n} ta yana)',
+    less: 'Qisqartirish',
   },
   themes: {
     filter: 'Loyihalarni koʻrsatish',
@@ -587,6 +591,8 @@ const ru: Messages = {
     lead: 'Кто выступает на форуме. Список пополняется по мере утверждения программы организационным комитетом.',
     empty: 'Список спикеров пока не опубликован.',
     photoAlt: '{name}, {role}',
+    more: 'Показать всех спикеров (ещё {n})',
+    less: 'Свернуть',
   },
   themes: {
     filter: 'Показать проекты',

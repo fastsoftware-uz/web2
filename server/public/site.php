@@ -104,6 +104,19 @@ const SPEAKER_FIELDS = [
 const SPEAKER_MAX = 60;
 
 /**
+ * The figure drawn in place of a portrait, until one arrives.
+ *
+ * Not worked out from the name — a name is not evidence, and a list of
+ * international guests is where that kind of guess goes wrong. The empty
+ * value is the default and is drawn as a plain figure.
+ */
+const SPEAKER_ICONS = [
+    '' => 'Belgilanmagan',
+    'man' => 'Erkak',
+    'woman' => 'Ayol',
+];
+
+/**
  * How many pictures one title card may carry.
  *
  * Declared up here with the speakers' own limits, and not beside the
@@ -446,6 +459,7 @@ function speaker_blank(): array
         $record[$field] = ['uz' => '', 'ru' => '', 'en' => ''];
     }
     $record['photo'] = null;
+    $record['icon'] = null;
     return $record;
 }
 
@@ -505,6 +519,19 @@ function speaker_fields(?array $speaker): void
         }
         echo '</fieldset>';
     }
+
+    /* The figure that stands in for a portrait. One row, not a fieldset:
+       it is one answer rather than the same answer in three languages. */
+    $icon = (string) ($speaker['icon'] ?? '');
+    echo '<div class="fld"><label for="icon">Rasm oʻrnidagi belgi</label>';
+    echo '<select id="icon" name="icon">';
+    foreach (SPEAKER_ICONS as $value => $label) {
+        echo '<option value="' . app_h($value) . '"' . ($value === $icon ? ' selected' : '') . '>'
+            . app_h($label) . '</option>';
+    }
+    echo '</select>';
+    echo '<small>Spikerning surati boʻlmasa, saytda shu belgi chiqadi. '
+        . 'Surat yuklansa, belgi koʻrinmaydi.</small></div>';
 }
 
 /**
@@ -540,6 +567,11 @@ function site_speaker_action(array $config, string $do, string $key): string
         foreach (array_keys(SPEAKER_FIELDS) as $field) {
             $fields[$field] = speaker_posted($field);
         }
+        $icon = (string) ($_POST['icon'] ?? '');
+        if (!array_key_exists($icon, SPEAKER_ICONS)) {
+            throw new RuntimeException('Belgi notoʻgʻri tanlangan.');
+        }
+        $fields['icon'] = $icon === '' ? null : $icon;
         if (trim(implode('', $fields['name'])) === '') {
             throw new RuntimeException('Ism familiya boʻsh — hech boʻlmaganda bitta tilda yozing.');
         }

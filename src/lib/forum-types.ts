@@ -36,12 +36,23 @@ export interface ForumTheme {
  * overwrite what they typed. `photo` is a stem under `photos/`, the same
  * contract a project's pictures use.
  */
+/**
+ * Which figure stands in the arch when there is no portrait.
+ *
+ * `null` is the default and is drawn as the plain figure. It is a field
+ * rather than something worked out from the name: a name is not evidence
+ * of anything, and a list of international guests is exactly where that
+ * kind of guess goes wrong. The admin sets it.
+ */
+export type SpeakerIcon = 'woman' | 'man' | null;
+
 export interface ForumSpeaker {
   id: string;
   name: I18nText;
   role: I18nText;
   org: I18nText;
   photo: string | null;
+  icon?: SpeakerIcon;
 }
 
 /** One of the pictures the title card turns between. */
