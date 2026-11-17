@@ -182,11 +182,20 @@ useChapterTimeline(
 .speakers__grid--plain {
   grid-template-columns: repeat(auto-fill, minmax(13.5rem, 1fr));
   margin-block-start: clamp(1rem, 2vw, 1.75rem);
-  /* Only here. A grid makes every card in a row as tall as the tallest,
-     which is right for the portraits above — they are the same shape and
-     stand in a row — and wrong for these, where one three-line role would
-     put two inches of white under every name beside it. */
-  align-items: start;
+  /*
+   * Every one of these cards is the same size.
+   *
+   * Letting each keep its own height was worse than the problem it solved:
+   * a role runs from one line to four, so the cards came out between 151
+   * and 263 pixels tall and the grid read as rubble. Matching them row by
+   * row was better and still not right — the rows then disagreed with each
+   * other. `1fr` on the auto-placed rows settles it: every row takes the
+   * height of the tallest, so the whole block is one lattice.
+   *
+   * It costs white space under the shortest cards. That is the trade, and
+   * on a page whose other grids are all even it is the right way round.
+   */
+  grid-auto-rows: 1fr;
 }
 
 .speakers__card--plain {
