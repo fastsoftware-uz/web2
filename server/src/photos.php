@@ -175,7 +175,7 @@ function photos_store(array $config, string $bytes, string $hint = '', string $s
     $image = photos_upright($image, $bytes);
 
     $dir = photos_dir($config);
-    if (!is_dir($dir) && !@mkdir($dir, 0o770, true) && !is_dir($dir)) {
+    if (!is_dir($dir) && !@mkdir($dir, 0o775, true) && !is_dir($dir)) {
         imagedestroy($image);
         throw new RuntimeException('Rasmlar papkasini yaratib boʻlmadi: ' . $dir);
     }
@@ -192,7 +192,14 @@ function photos_store(array $config, string $bytes, string $hint = '', string $s
             if (!$ok) {
                 throw new RuntimeException('Rasmni saqlab boʻlmadi: ' . $path);
             }
-            @chmod($path, 0o640);
+            /* 644, not 640: these are pictures whose whole purpose is to be
+               served to the public from the web root, so there is nothing
+               here to keep from being read — and the deploy's last step runs
+               as whichever account the deploy key belongs to, which is not
+               the one PHP-FPM runs as. A photograph it cannot read is a
+               photograph that stays deleted after every deploy. See
+               photos_sync(). */
+            @chmod($path, 0o644);
         }
     } finally {
         imagedestroy($image);
@@ -299,17 +306,34 @@ function photos_scale(GdImage $image, int $width): GdImage
  * Never deletes from the web root: a stem the site no longer mentions is a
  * file nothing fetches, and a deploy clears it anyway.
  *
- * @return array{copied:int,failed:int}
+ * Two accounts run this. PHP-FPM does, on every upload, and it owns what it
+ * finds. The deploy does, as its last step over SSH, under whatever account
+ * the deploy key belongs to — and if that account cannot read the directory
+ * the photographs are kept in, this used to return "copied nothing" and the
+ * deploy went on to report success over a site whose uploaded portraits had
+ * all turned into empty frames. `blocked` is that case, said out loud.
+ *
+ * The owner also relaxes what it owns on the way past, so an installation
+ * made before this was understood repairs itself the next time anybody
+ * uploads anything.
+ *
+ * @return array{copied:int,failed:int,blocked:bool}
  */
 function photos_sync(array $config): array
 {
     $from = photos_dir($config);
     if (!is_dir($from)) {
-        return ['copied' => 0, 'failed' => 0];
+        return ['copied' => 0, 'failed' => 0, 'blocked' => false];
     }
+    if (!is_readable($from)) {
+        return ['copied' => 0, 'failed' => 0, 'blocked' => true];
+    }
+    /* Only the owner succeeds; everybody else fails silently, which is the
+       behaviour wanted. */
+    @chmod($from, 0o775);
     $to = photos_site_dir($config);
     if (!is_dir($to) && !@mkdir($to, 0o775, true) && !is_dir($to)) {
-        return ['copied' => 0, 'failed' => 1];
+        return ['copied' => 0, 'failed' => 1, 'blocked' => false];
     }
 
     $copied = 0;
@@ -320,6 +344,7 @@ function photos_sync(array $config): array
         }
         $src = $from . '/' . $name;
         $dst = $to . '/' . $name;
+        @chmod($src, 0o644);
         if (is_file($dst) && filesize($dst) === filesize($src) && filemtime($dst) >= filemtime($src)) {
             continue;
         }
@@ -333,7 +358,7 @@ function photos_sync(array $config): array
             $failed++;
         }
     }
-    return ['copied' => $copied, 'failed' => $failed];
+    return ['copied' => $copied, 'failed' => $failed, 'blocked' => false];
 }
 
 /**

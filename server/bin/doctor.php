@@ -251,6 +251,22 @@ if (!is_dir($siteDir)) {
 
     /* Adminkadan yuklangan rasmlar: asli data/ da, nusxasi sayt ichida. */
     $sitePhotos = photos_site_dir($config);
+    /*
+     * Before anything is counted: can this account even read them?
+     *
+     * The deploy's last step runs as the deploy key's account, not as
+     * PHP-FPM, and a photographs directory it cannot read made every check
+     * below count zero and say nothing — while every deploy quietly left the
+     * organiser's own portraits as empty frames on the site.
+     */
+    $ownDir = photos_dir($config);
+    if (is_dir($ownDir) && !is_readable($ownDir)) {
+        say(
+            'bad',
+            'Yuklangan rasmlar papkasi oʻqilmaydi',
+            $ownDir . ' — bir marta: chmod 755 ' . $ownDir . ' && chmod 644 ' . $ownDir . '/*.webp',
+        );
+    }
     $usage = photos_usage($config);
     if ($usage['count'] > 0) {
         if (!is_dir($sitePhotos)) {

@@ -54,9 +54,32 @@ const speakers = computed<ForumSpeaker[]>(() =>
  * pressing anything, and a face is worth more there than a figure. Inside
  * each half the organiser's own order is untouched.
  */
+/**
+ * Portraits the browser could not fetch.
+ *
+ * A portrait uploaded from the admin lives on the organiser's server, is
+ * copied into the web root on every publish, and on 19 November 2026 eight
+ * of them were not: the deploy's last step could not read the directory
+ * they are kept in, so the cards drew empty frames with the alt text
+ * hanging out of the top of them. The server side is fixed, and so is
+ * this, because a picture that is not there is not a rare condition on a
+ * list the organiser is still filling in — it is Tuesday.
+ *
+ * A card whose picture fails falls back to exactly what a card with no
+ * picture shows. Keyed by speaker, not by address, so one failure does not
+ * take the figure off anybody else.
+ */
+const missing = ref(new Set<string>());
+const shows = (speaker: ForumSpeaker): boolean =>
+  Boolean(speaker.photo) && !missing.value.has(speaker.id);
+function lost(speaker: ForumSpeaker): void {
+  /* A new Set, or the computed order above never hears about it. */
+  missing.value = new Set(missing.value).add(speaker.id);
+}
+
 const ordered = computed(() => [
-  ...speakers.value.filter((s) => s.photo),
-  ...speakers.value.filter((s) => !s.photo),
+  ...speakers.value.filter((s) => shows(s)),
+  ...speakers.value.filter((s) => !shows(s)),
 ]);
 
 /**
@@ -123,7 +146,7 @@ useChapterTimeline(
           >
             <div class="speakers__frame">
               <img
-                v-if="speaker.photo"
+                v-if="shows(speaker)"
                 class="speakers__photo"
                 :src="`photos/${speaker.photo}-full.webp`"
                 :srcset="`photos/${speaker.photo}-thumb.webp 220w, photos/${speaker.photo}-full.webp 720w`"
@@ -133,6 +156,7 @@ useChapterTimeline(
                 height="860"
                 loading="lazy"
                 decoding="async"
+                @error="lost(speaker)"
               />
               <!-- No portrait yet: a drawn figure, and the initials under
                    it so the card still says who it belongs to at a

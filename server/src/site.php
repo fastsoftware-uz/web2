@@ -666,6 +666,7 @@ function site_publish(array $config, string $key): array
         'added' => count($overrides['added']),
         'photos' => $photos['copied'],
         'photos_failed' => $photos['failed'],
+        'photos_blocked' => $photos['blocked'] ?? false,
         'stale' => $stale,
         'base' => $note,
         'file' => $published,

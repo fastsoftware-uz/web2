@@ -43,6 +43,30 @@ foreach (SITE_FILES as $key => $meta) {
             $note,
             $result['file'],
         );
+        /* The photographs uploaded from the admin, put back into the web
+           root the deploy has just emptied. Said out loud: this step used to
+           report nothing at all, and an installation where the deploy
+           account could not read them deployed green for a fortnight with
+           empty frames where the organiser's own portraits had been. */
+        if (($result['photos_blocked'] ?? false) === true) {
+            $failed++;
+            fwrite(
+                STDERR,
+                "  XATO: adminkadan yuklangan rasmlar papkasi oʻqilmadi — ular saytdan yoʻqoladi.
+"
+                . "       Serverda bir marta: chmod 755 <data>/photos && chmod 644 <data>/photos/*.webp
+"
+                . "       (toʻliq yoʻlni 'php server/bin/doctor.php' aytadi)
+",
+            );
+        } elseif ((int) $result['photos'] > 0 || (int) $result['photos_failed'] > 0) {
+            echo sprintf(
+                "  rasmlar: %d ta koʻchirildi%s
+",
+                (int) $result['photos'],
+                (int) $result['photos_failed'] ? sprintf(', %d ta koʻchirilmadi', (int) $result['photos_failed']) : '',
+            );
+        }
         if ($result['stale'] !== []) {
             // A path the organiser edited that the new build no longer has.
             // Not fatal — the rest is published — but somebody should know.

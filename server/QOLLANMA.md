@@ -558,6 +558,21 @@ yaxshi chiqadi — sayt uni gumbazsimon ramkaga soladi. Rasm yoʻq boʻlsa,
 ramkada chizma belgi va ismning bosh harflari turadi: roʻyxat baribir butun
 koʻrinadi.
 
+> **Rasm koʻrinmay qolsa.** Agar yuklagan rasmingiz saytda chiqmasa — ramka
+> boʻsh tursa — serverda bir marta quyidagini bajarish kerak (buni dasturchi
+> yoki server administratori qiladi):
+>
+> ```
+> php server/bin/doctor.php      # qaysi papka ekanini aytadi
+> chmod 755 <data>/photos && chmod 644 <data>/photos/*.webp
+> ```
+>
+> Sababi: sayt yangilanganda rasmlar qaytadan joyiga koʻchiriladi, va
+> koʻchirayotgan hisob oʻsha papkani oʻqiy olmasa, rasmlar yoʻqoladi.
+> 19.11.2026 dan buyon bunday holat **xato sifatida** aytiladi; ilgari
+> jimgina oʻtib ketardi. Yangi yuklangan rasm bu kamchilikni oʻzi
+> tuzatadi.
+
 > **Sayt yangilanganda kelgan suratlar.** Tashkilotchi yangi spiker suratini
 > yuborsa, u sayt bilan birga keladi. Roʻyxat sizniki boʻlsa ham, **rasmi
 > yoʻq** spikerga shunday kelgan surat oʻzi ulanadi — ism yoki ichki raqam
