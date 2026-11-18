@@ -555,7 +555,15 @@ ekranga sigʻadi.
 
 **Rasm.** Portret, kamida 320×320. Kvadrat yoki tik (vertikal) rasm eng
 yaxshi chiqadi — sayt uni gumbazsimon ramkaga soladi. Rasm yoʻq boʻlsa,
-ramkada ismning bosh harflari turadi: roʻyxat baribir butun koʻrinadi.
+ramkada chizma belgi va ismning bosh harflari turadi: roʻyxat baribir butun
+koʻrinadi.
+
+> **Sayt yangilanganda kelgan suratlar.** Tashkilotchi yangi spiker suratini
+> yuborsa, u sayt bilan birga keladi. Roʻyxat sizniki boʻlsa ham, **rasmi
+> yoʻq** spikerga shunday kelgan surat oʻzi ulanadi — ism yoki ichki raqam
+> boʻyicha. Siz yuklagan suratga, ismga, lavozimga va tartibga tegilmaydi.
+> Agar biror spikerda **«Rasmni olib tashlash»** tugmasini bossangiz, uning
+> rasmi boshqa qaytmaydi — bu sizning qaroringiz deb hisoblanadi.
 
 Roʻyxat boʻsh boʻlsa, saytda «Spikerlar roʻyxati hali eʼlon qilinmagan»
 degan yozuv turadi — yaʼni bob boʻsh koʻrinmaydi.

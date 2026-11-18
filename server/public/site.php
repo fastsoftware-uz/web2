@@ -609,6 +609,8 @@ function site_speaker_action(array $config, string $do, string $key): string
         }
         $old = (string) ($list[$at]['photo'] ?? '');
         $list[$at]['photo'] = speaker_store_photo($config, $file);
+        /* They want a portrait here after all. */
+        unset($list[$at]['photoOff']);
         /* The replaced portrait is nobody's any more: it was uploaded here,
            it is on no other card, and leaving it would grow the data
            directory by one file per correction for ever. */
@@ -620,6 +622,11 @@ function site_speaker_action(array $config, string $do, string $key): string
     } elseif ($do === 'speaker-photo-remove') {
         $old = (string) ($list[$at]['photo'] ?? '');
         $list[$at]['photo'] = null;
+        /* Said once and remembered: without this, a portrait the site was
+           built with comes straight back on the next request, because an
+           entry with no portrait is otherwise a gap to be filled. See
+           site_speakers_with_shipped_photos(). */
+        $list[$at]['photoOff'] = true;
         if ($old !== '' && photos_is_own($config, $old)) {
             photos_delete($config, $old);
         }

@@ -409,8 +409,119 @@ function site_with_speakers(array $base, array $overrides, string $key): array
     if (!($overrides['speakers_set'] ?? false)) {
         return $base;
     }
-    $base['speakers'] = array_values($overrides['speakers'] ?? []);
+    $base['speakers'] = site_speakers_with_shipped_photos(
+        array_values($overrides['speakers'] ?? []),
+        is_array($base['speakers'] ?? null) ? $base['speakers'] : [],
+    );
     return $base;
+}
+
+/**
+ * Portraits that arrive with a deploy, for people who have none.
+ *
+ * The operator's list stands over the build's — that is what the overlay is
+ * for, and a deploy must never undo an evening's work in the admin. But
+ * "this speaker has no portrait yet" is a gap, not an arrangement: the
+ * organiser keeps sending photographs, they are prepared and shipped with
+ * the site, and without this they would sit in the site's own photo folder
+ * while the card beside them went on drawing a figure.
+ *
+ * So a speaker the operator's list carries **without** a portrait is given
+ * the one the build ships for them. Nothing else is touched: their name,
+ * their title, their place in the order and a portrait uploaded from the
+ * admin all stay exactly as they are.
+ *
+ * Matched by id first. Then, only where both sides are unambiguous, by
+ * name: a speaker removed in the admin and typed in again gets a new id,
+ * and the photograph the build carries for them is unmistakably theirs. A
+ * name that appears twice on either side is left alone rather than guessed
+ * at.
+ *
+ * A portrait the operator has taken off is not put back: «Rasmni olib
+ * tashlash» writes `photoOff` on the speaker, and that is the one thing
+ * here that says "no portrait" deliberately. Uploading one clears it.
+ */
+function site_speakers_with_shipped_photos(array $list, array $shipped): array
+{
+    if (!$list || !$shipped) {
+        return $list;
+    }
+
+    $byId = [];
+    /** @var array<string,string|false> $byName — false once a name repeats. */
+    $byName = [];
+    foreach ($shipped as $one) {
+        $photo = is_array($one) ? ($one['photo'] ?? null) : null;
+        if (!is_string($photo) || $photo === '') {
+            continue;
+        }
+        $id = (string) ($one['id'] ?? '');
+        if ($id !== '') {
+            $byId[$id] = $photo;
+        }
+        foreach (site_speaker_names($one) as $name) {
+            $byName[$name] = array_key_exists($name, $byName) ? false : $photo;
+        }
+    }
+
+    /* A name the operator's own list uses twice is ambiguous from this side
+       too, and is taken out of the running before anything is filled in. */
+    $seen = [];
+    foreach ($list as $one) {
+        foreach (site_speaker_names(is_array($one) ? $one : []) as $name) {
+            $seen[$name] = ($seen[$name] ?? 0) + 1;
+        }
+    }
+
+    foreach ($list as $i => $one) {
+        if (!is_array($one)) {
+            continue;
+        }
+        $photo = $one['photo'] ?? null;
+        if (is_string($photo) && $photo !== '') {
+            continue;
+        }
+        if (!empty($one['photoOff'])) {
+            continue;
+        }
+        $id = (string) ($one['id'] ?? '');
+        if ($id !== '' && isset($byId[$id])) {
+            $list[$i]['photo'] = $byId[$id];
+            continue;
+        }
+        foreach (site_speaker_names($one) as $name) {
+            if (($seen[$name] ?? 0) === 1 && !empty($byName[$name])) {
+                $list[$i]['photo'] = $byName[$name];
+                break;
+            }
+        }
+    }
+
+    return $list;
+}
+
+/**
+ * The names a speaker can be recognised by, folded for comparison.
+ *
+ * Case and the spacing around it only; nothing is transliterated. Two
+ * people whose names differ by an apostrophe are two people as far as this
+ * is concerned, which is the safe way round.
+ */
+function site_speaker_names(array $speaker): array
+{
+    $names = [];
+    foreach (['uz', 'ru', 'en'] as $lang) {
+        $value = $speaker['name'][$lang] ?? null;
+        if (!is_string($value)) {
+            continue;
+        }
+        $value = trim(preg_replace('/\s+/u', ' ', $value) ?? '');
+        if ($value === '') {
+            continue;
+        }
+        $names[] = function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
+    }
+    return array_values(array_unique($names));
 }
 
 /**
@@ -446,13 +557,19 @@ function site_with_media(array $base, string $key): array
  */
 function site_speakers(array $config): array
 {
+    $base = site_base($config, 'forum');
+    $shipped = is_array($base) && is_array($base['speakers'] ?? null) ? $base['speakers'] : [];
+
     $overrides = site_overrides($config, 'forum');
     if ($overrides['speakers_set'] ?? false) {
-        return array_values($overrides['speakers'] ?? []);
+        /* The same filling-in the site gets, so the page the operator edits
+           shows the portraits the page they publish is showing. */
+        return site_speakers_with_shipped_photos(
+            array_values($overrides['speakers'] ?? []),
+            $shipped,
+        );
     }
-    $base = site_base($config, 'forum');
-    $shipped = is_array($base) ? ($base['speakers'] ?? null) : null;
-    return is_array($shipped) ? array_values($shipped) : [];
+    return array_values($shipped);
 }
 
 /** Put the whole list back, in the order it is given. */
