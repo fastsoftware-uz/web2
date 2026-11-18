@@ -19,6 +19,7 @@ import ActionIcon from '../components/ActionIcon.vue';
 import ForumMark from '../components/ForumMark.vue';
 import type { ForumHeroShot } from '../lib/forum-types';
 import { canAnimate, scrollToId, useChapterTimeline } from '../lib/motion';
+import { registerUrl } from '../lib/register-link';
 import { eventDates, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
@@ -26,6 +27,8 @@ const { forum } = useStore();
 const root = ref<HTMLElement | null>(null);
 
 const event = computed(() => forum.value?.event);
+/** The forum's own registration page; see lib/register-link.ts. */
+const registerHref = computed(() => registerUrl(forum.value));
 
 /**
  * The pictures behind the title card.
@@ -255,11 +258,20 @@ useChapterTimeline(
           <ActionIcon name="down" class="prologue__nudge" />
         </button>
 
-        <button type="button" class="btn prologue__register" @click="scrollToId('epilogue')">
+        <!-- Registration is on the forum's own registration page, so this is
+             a link and not a button: it opens in a new tab on a middle click
+             like any other link, and the reader can see where it goes before
+             pressing it. -->
+        <a
+          class="btn prologue__register"
+          :href="registerHref"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           <ActionIcon name="enquiry" />
           <span>{{ t('nav.register') }}</span>
           <ActionIcon name="right" class="prologue__onward" />
-        </button>
+        </a>
       </div>
 
       <!-- The line belongs to whichever picture is showing, so it is swapped

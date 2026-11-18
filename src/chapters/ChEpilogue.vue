@@ -3,20 +3,24 @@
  * Epilogue — registration, what the forum expects to come of it, who will be
  * in the room, and the contacts.
  *
- * The form here used to be a three-step enquiry wizard of its own, asking who
- * you are, which direction interests you and how to reach you. It is now the
- * registration form, the same component the registration page uses: the forum
- * wants the same nine answers from everybody, and one form asked in two
- * places is a better answer than two forms asking overlapping things. A
- * reader who arrives from a project brings it with them — see RegisterForm.
+ * There was a form here — first an enquiry wizard of its own, then the same
+ * registration form the site's own /register/ page used. On 18 November 2026
+ * the client asked for the site to stop taking registrations and to send
+ * people to the forum's own registration page instead, so what stands here
+ * now is the chapter's heading, the dates, and the way out to that page.
+ *
+ * The form component and the backend that received it are untouched, and so
+ * is everybody who registered through them: turning `registration.external`
+ * off in the data file puts the form back. See lib/register-link.ts.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 import ForumMark from '../components/ForumMark.vue';
-import RegisterForm from '../components/RegisterForm.vue';
+import ActionIcon from '../components/ActionIcon.vue';
 import { MESSAGES, type Lang } from '../lib/register-copy';
-import { enquirySubject, eventDates, setLang, tr, useStore } from '../lib/state';
+import { registerHost, registerUrl } from '../lib/register-link';
+import { eventDates, setLang, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
 const { content, forum, lang } = useStore();
@@ -32,6 +36,10 @@ const reg = computed(() => MESSAGES[lang.value as Lang]);
 const regDates = computed(() =>
   reg.value.dates.replace('{dates}', eventDates() || reg.value.defaultDates),
 );
+
+/** The forum's registration page, and the host named in the line above it. */
+const registerHref = computed(() => registerUrl(forum.value));
+const awayLine = computed(() => reg.value.away.replace('{host}', registerHost(forum.value)));
 
 const org = computed(() => content.value?.organization);
 const contact = computed(() => forum.value?.contact);
@@ -63,20 +71,21 @@ const outcomes = computed(() => forum.value?.outcomes);
       <h2>{{ reg.title }}</h2>
 
       <div class="epilogue__grid">
-        <!-- The registration page's form, in the chapter a reader reaches by
-             reading rather than by arriving. Same component, same endpoint;
-             only the heading level and what sits above it differ. -->
-        <RegisterForm
-          class="epilogue__register"
-          :lang="(lang as Lang)"
-          :subject="enquirySubject"
-          heading-tag="h3"
-        >
-          <template #intro>
-            <p class="epilogue__regDates">{{ regDates }}</p>
-            <p class="epilogue__regLead">{{ reg.lead }}</p>
-          </template>
-        </RegisterForm>
+        <!-- Where the form was. The card is the same card; what is in it is
+             the dates, one sentence saying where registration happens, and
+             the link there. -->
+        <div class="epilogue__register">
+          <p class="epilogue__regDates">{{ regDates }}</p>
+          <h3 class="epilogue__regTitle">{{ reg.title }}</h3>
+          <p class="epilogue__regLead">{{ awayLine }}</p>
+          <p class="epilogue__regGo">
+            <a class="btn btn--solid" :href="registerHref" target="_blank" rel="noopener noreferrer">
+              <span>{{ reg.submit }}</span>
+              <ActionIcon name="right" />
+            </a>
+          </p>
+          <p class="epilogue__regNote">{{ reg.awayNote }}</p>
+        </div>
 
         <address v-if="contact" class="contacts">
           <p class="contacts__org">
@@ -220,9 +229,12 @@ h2 {
   }
 }
 
-/* The chapter's own frame for the shared form: a card on the stage, the way
-   the wizard it replaced sat. The form brings its own insides. */
+/* The chapter's own card on the stage, the way the form it replaced sat.
+   `align-self: start`, which the form never needed: nine questions filled the
+   column beside the contacts, and five lines leave a card two screens tall
+   with nothing in the bottom two thirds of it. */
 .epilogue__register {
+  align-self: start;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   border: 1px solid var(--hairline);
   border-radius: 1rem;
@@ -232,10 +244,27 @@ h2 {
   color: var(--gold);
   font-size: 0.95rem;
 }
+.epilogue__regTitle {
+  margin-block-start: 0.35rem;
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+}
 .epilogue__regLead {
-  margin-block-start: 0.5rem;
+  margin-block-start: 0.75rem;
   color: var(--ink-soft);
   max-inline-size: 34rem;
+}
+.epilogue__regGo {
+  margin-block-start: 1.5rem;
+}
+.epilogue__regGo .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.epilogue__regNote {
+  margin-block-start: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--ink-dim);
 }
 
 .contacts {

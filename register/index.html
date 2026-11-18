@@ -8,7 +8,7 @@
     <title>Roʻyxatdan oʻtish — Tourism Investment Forum 2026</title>
     <meta
       name="description"
-      content="Birinchi xalqaro turizm investitsiya forumi, Toshkent, 25–27 noyabr 2026. Mehmon yoki spiker sifatida roʻyxatdan oʻting."
+      content="Birinchi xalqaro turizm investitsiya forumi, Toshkent, 25–27 noyabr 2026. Roʻyxatdan oʻtish forumning rasmiy roʻyxat sahifasida."
     />
 
     <!-- `../`: this page is served as a directory — /register/ rather than
@@ -19,25 +19,112 @@
     <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
     <meta name="theme-color" content="#1D3577" />
 
-    <!-- A form behind a public URL has nothing to offer a search engine and
-         everything to lose by being indexed with half-typed queries in it. -->
+    <!--
+      This page used to be the site's registration form, its own Vite entry
+      with components/RegisterForm.vue inside it. On 18 November 2026 the
+      organiser asked for the site to stop taking registrations and to send
+      people to the forum's own registration page instead.
+
+      It is a forwarding page rather than a deleted one: the address has been
+      printed, sent and linked to, and a link that has been given out should
+      land somewhere rather than on a 404.
+
+      Nothing is bundled here any more — the form, Vue and the rest are gone
+      from this entry, which is why the forwarding is written inline. The
+      address comes out of the same data file the site reads, so the operator
+      can change it from the admin; the one built in is used if the file is
+      slow, missing or older than this page.
+    -->
     <meta name="robots" content="noindex, follow" />
 
     <style>
-      /* The page's own ground, before the stylesheet arrives: the form is on
-         the cobalt stage and a white flash before it would be the first thing
-         a visitor sees. */
-      html { background: #1d3577; }
+      /* The page's own ground: it is on screen for a moment at most, and a
+         white flash before a dark page is the whole of what a visitor would
+         remember of it. */
+      html {
+        background: #1d3577;
+        color: #f4ecdd;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      body {
+        margin: 0;
+        min-height: 100svh;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        text-align: center;
+      }
+      p {
+        max-width: 32rem;
+        line-height: 1.6;
+      }
+      a {
+        color: #e4bb7d;
+      }
     </style>
   </head>
   <body>
-    <div id="register"></div>
-    <noscript>
-      <p style="padding: 2rem; font-family: system-ui, sans-serif; color: #fff; background: #1d3577">
-        Roʻyxatdan oʻtish uchun JavaScript kerak. Yoqib, sahifani yangilang —
-        yoki bevosita yozing: <a href="mailto:investforum@uzbektourism.uz" style="color: #e4bb7d">investforum@uzbektourism.uz</a>
+    <main>
+      <p>
+        Roʻyxatdan oʻtish forumning rasmiy roʻyxat sahifasida olib boriladi.
+        Yoʻnaltirilmoqda…
       </p>
+      <p>
+        <a id="go" href="https://titf.uz/en/online-registration">
+          Roʻyxatdan oʻtish sahifasini ochish
+        </a>
+      </p>
+    </main>
+
+    <script>
+      (function () {
+        var fallback = 'https://titf.uz/en/online-registration';
+        var sent = false;
+
+        function safe(url) {
+          /* Only http(s). The address travels through the admin, and a
+             `javascript:` one written into `href` is the way a text field in
+             an operator's form turns into script running on this page. */
+          return typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
+        }
+
+        function go(url) {
+          if (sent) return;
+          sent = true;
+          var target = safe(url) || fallback;
+          document.getElementById('go').href = target;
+          location.replace(target);
+        }
+
+        /* The data file, if it answers quickly; otherwise the address this
+           page was built with. Either way the reader is not left reading a
+           sentence that says they are being forwarded. */
+        var timer = setTimeout(function () {
+          go(fallback);
+        }, 1500);
+
+        try {
+          fetch('../data/forum-2026.json', { cache: 'no-cache' })
+            .then(function (res) {
+              return res.ok ? res.json() : null;
+            })
+            .then(function (data) {
+              clearTimeout(timer);
+              go(data && data.registration && data.registration.url);
+            })
+            .catch(function () {
+              clearTimeout(timer);
+              go(fallback);
+            });
+        } catch (e) {
+          clearTimeout(timer);
+          go(fallback);
+        }
+      })();
+    </script>
+
+    <noscript>
+      <meta http-equiv="refresh" content="0; url=https://titf.uz/en/online-registration" />
     </noscript>
-    <script type="module" src="/src/register/main.ts"></script>
   </body>
 </html>

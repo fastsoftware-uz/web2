@@ -39,6 +39,7 @@ $user = admin_boot($config, 'site.edit');
 const SECTION_LABEL = [
     'meta' => 'Sozlamalar',
     'event' => 'Tadbir: sana, shahar, joy',
+    'registration' => 'Roʻyxatdan oʻtish havolasi',
     'intro' => 'Kirish',
     'goals' => 'Maqsadlar',
     'themes' => 'Yoʻnalishlar',
@@ -80,6 +81,7 @@ const FIELD_LABEL = [
     'place' => 'Joylashuv', 'statusNote' => 'Holat izohi', 'label' => 'Nomi',
     'value' => 'Qiymati', 'sheets' => 'Manba varaqlari', 'photos' => 'Rasmlar',
     'issues' => 'Izohlar', 'featured' => 'Birinchi oʻringa',
+    'external' => 'Boshqa saytda', 'url' => 'Havola',
     'uz' => 'Oʻzbekcha', 'ru' => 'Ruscha', 'en' => 'Inglizcha',
 ];
 

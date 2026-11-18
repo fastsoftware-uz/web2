@@ -124,6 +124,10 @@ export function scrollToId(id: string, onArrival?: () => void): void {
  *
  * `preventScroll` matters: focusing an element normally scrolls it into view,
  * which would undo the position the smooth scroll just settled on.
+ *
+ * Nothing calls this while registration is handled on the forum's own page —
+ * there is no form in the epilogue to put a cursor in. It is kept for the
+ * day `registration.external` is turned off again; see register-link.ts.
  */
 export function openEnquiry(): void {
   scrollToId('epilogue', () => {

@@ -42,11 +42,17 @@ Litsenziyalar va atributlar: `CREDITS.md`.
 
 ## Roʻyxatdan oʻtish va adminka
 
-`/register/` — alohida sahifa, alohida bundle (GSAP ham, three.js ham
-yoʻq; manbada `register/index.html`). U `POST /api/register` ga yuboradi; shu endpoint va uni oʻqish uchun
-adminka `server/` ichida — PHP + nginx, Alpine Linux uchun. Oʻrnatish
-yoʻriqnomasi: `server/README.md`, adminkadan foydalanish qoʻllanmasi:
-`server/QOLLANMA.md`.
+18.11.2026 dan saytning oʻz roʻyxat formasi olib qoʻyildi: saytdagi har bir
+«Roʻyxatdan oʻtish» tugmasi forumning oʻz roʻyxat sahifasini ochadi. Manzil
+maʼlumot faylida — `registration.url` — va adminkadan oʻzgartiriladi
+(`server/QOLLANMA.md` §9c). Eski manzil `/register/` oʻchirilmadi: u
+oʻsha sahifaga yoʻnaltiradi.
+
+Forma, uning `POST /api/register` endpointi va shu paytgacha kelgan barcha
+arizalar oʻz joyida — `registration.external` ni oʻchirish formani qaytaradi.
+Endpoint va uni oʻqish uchun adminka `server/` ichida — PHP + nginx, Alpine
+Linux uchun. Oʻrnatish yoʻriqnomasi: `server/README.md`, adminkadan
+foydalanish qoʻllanmasi: `server/QOLLANMA.md`.
 
 Adminka faqat arizalarni emas, saytning oʻzini ham boshqaradi: sana, shahar,
 dastur, aloqa, matnlar va 83 ta loyiha — hammasi uch tilda. Oʻzgartirilgan

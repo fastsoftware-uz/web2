@@ -28,12 +28,12 @@ import StatBars, { type BarRow } from '../components/StatBars.vue';
 import type { Project } from '../lib/forum-types';
 import { formatMoney, millionWord } from '../lib/money';
 import { sheetValue } from '../lib/sheet-values';
-import { openEnquiry, scrollToId, useChapterTimeline } from '../lib/motion';
+import { scrollToId, useChapterTimeline } from '../lib/motion';
+import { registerUrl } from '../lib/register-link';
 import {
   bandOf,
   clearFilters,
   eventDates,
-  enquirySubject,
   filters,
   openProject,
   openProjectId,
@@ -255,19 +255,20 @@ function stepProject(delta: number): void {
 }
 
 /**
- * From the sheet to the enquiry form, carrying the project.
+ * From the sheet to registration.
  *
- * Closing and scrolling cannot happen in the same tick: the sheet releases the
- * page scroll in a watcher, and a scroll asked for before that has run is
- * swallowed by the lock.
+ * The button used to carry the project into the site's own form, which filled
+ * "which project" in for the reader. Since 18 November 2026 registration is
+ * on the forum's own page, which knows nothing about this portfolio, so the
+ * project is left behind and the sheet closes behind the reader rather than
+ * sitting open under a new tab.
  */
 async function enquire(): Promise<void> {
   const project = selected.value;
   if (!project) return;
-  enquirySubject.value = { id: project.id, title: title(project), segment: project.segment };
   replaceProject(null);
   await nextTick();
-  openEnquiry();
+  window.open(registerUrl(forum.value), '_blank', 'noopener,noreferrer');
 }
 
 /**

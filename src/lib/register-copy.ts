@@ -32,6 +32,15 @@ export type Copy = {
   title: string;
   lead: string;
   /**
+   * The lines shown where the form used to be.
+   *
+   * Registration moved to the forum's own page on 18 November 2026. `away`
+   * says so, `awayNote` says the link leaves this site, and the button
+   * keeps the label it has always had — see `submit`.
+   */
+  away: string;
+  awayNote: string;
+  /**
    * The line under the title, as a template: `{dates}` is filled from the
    * data file, which the admin edits, and falls back to `defaultDates`.
    */
@@ -100,6 +109,8 @@ export const MESSAGES: Record<Lang, Copy> = {
     back: 'Saytga qaytish',
     title: 'Roʻyxatdan oʻtish',
     lead: 'Mehmon yoki spiker sifatida. Ikkalasidan ham bir xil maʼlumot soʻraladi.',
+    away: 'Roʻyxatdan oʻtish forumning oʻz roʻyxat sahifasida — {host} — olib boriladi. Quyidagi tugma oʻsha sahifani ochadi.',
+    awayNote: 'Havola yangi oynada ochiladi.',
     dates: '{dates} · Toshkent',
     defaultDates: '25–27 noyabr 2026',
     roleLabel: 'Ishtirok turi',
@@ -166,6 +177,8 @@ export const MESSAGES: Record<Lang, Copy> = {
     back: 'Вернуться на сайт',
     title: 'Регистрация',
     lead: 'Как гость или как спикер. У обоих спрашивается одно и то же.',
+    away: 'Регистрация проходит на собственной странице регистрации форума — {host}. Кнопка ниже откроет её.',
+    awayNote: 'Ссылка откроется в новой вкладке.',
     dates: '{dates} · Ташкент',
     defaultDates: '25–27 ноября 2026',
     roleLabel: 'Тип участия',
@@ -231,6 +244,8 @@ export const MESSAGES: Record<Lang, Copy> = {
     back: 'Back to the site',
     title: 'Registration',
     lead: 'As a visitor, an investor, a VIP guest or a speaker. All four are asked the same questions.',
+    away: 'Registration is handled on the forum’s own registration page, {host}. The button below opens it.',
+    awayNote: 'The link opens in a new tab.',
     dates: '{dates} · Tashkent',
     defaultDates: '25–27 November 2026',
     roleLabel: 'Taking part as',

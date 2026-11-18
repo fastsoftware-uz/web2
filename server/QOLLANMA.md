@@ -18,6 +18,7 @@ uchun) va [`README.md`](README.md) (texnik tafsilotlar).
 | **Saytni tahrirlash → Loyihalar** | 260 ta investitsiya loyihasi: nomi, izohi, raqamlari, saytdan yashirish va qaytarish |
 | **Saytni tahrirlash → Spikerlar** | Forum spikerlari: ism, lavozim, rasm, tartib — saytning II bobi |
 | **Saytni tahrirlash → Bosh sahifa foni** | Birinchi ekrandagi orqa fon suratlari: qoʻshish, tartib, muallif |
+| **Saytni tahrirlash → Roʻyxatdan oʻtish havolasi** | «Roʻyxatdan oʻtish» tugmalari qaysi sahifani ochishi |
 | **Saytni tahrirlash → Nashr** | Qilingan oʻzgarishlar roʻyxati; har birini yoki hammasini asl holiga qaytarish |
 | **Loyiha qoʻshish** | Excel yoki CSV roʻyxatidan yangi loyihalar, rasmlari bilan — dublikat tekshiruvidan oʻtkazib |
 | **Jurnal** | Kim, qachon, nima qilgani. Oʻchirilmaydi va tahrirlanmaydi |
@@ -105,6 +106,12 @@ php /var/www/forum/server/bin/unlock.php
 ---
 
 ## 2. Roʻyxatdan oʻtganlar
+
+> **18.11.2026 dan:** sayt endi oʻzi ariza qabul qilmaydi — saytdagi barcha
+> «Roʻyxatdan oʻtish» tugmalari forumning oʻz roʻyxat sahifasini ochadi
+> (§9c). Bu sahifa oʻz joyida qoladi: shu paytgacha kelgan **barcha arizalar,
+> ularning holati, CSV yuklash va e-biletlar** hech oʻzgarmadi. Agar
+> saytning oʻz formasi qaytarilsa, yangi arizalar yana shu yerga tushadi.
 
 Kirgach birinchi koʻradigan sahifangiz. Yuqorida bir qator raqam, uch guruhga
 ajratilgan — chiziqchalar guruhlarni ajratib turadi:
@@ -510,8 +517,9 @@ lekin bu loyihada koʻrinmaydi.
 
 Saytning **II bobi — «Forum spikerlari»** — toʻliq shu yerdan boshqariladi.
 
-Saytda hozir **4 ta spiker** bor — ular tashkilotchining oʻz roʻyxatidan
-olinib, sayt bilan birga keladi. Siz bu yerda birinchi marta biror
+Saytda hozir **38 ta spiker** bor — ular tashkilotchining oʻz hujjatlaridan
+olinib, sayt bilan birga keladi. Shulardan **18 tasida surat bor**;
+qolganlarida surat oʻrnida chizilgan belgi turadi (pastga qarang). Siz bu yerda birinchi marta biror
 oʻzgartirish kiritganingizdan soʻng roʻyxat **butunlay sizniki** boʻladi:
 undan keyin sayt yangilansa ham sizning roʻyxatingiz oʻz holicha qoladi,
 hech narsa oʻchmaydi va qaytib kelmaydi.
@@ -573,9 +581,11 @@ soʻng keyingisiga yumshoq oʻtadi va roʻyxat oxirida boshidan boshlanadi.
 - **Surat muallifi** — har bir suratning oʻziga tegishli kichkina yozuv;
   faqat oʻsha surat ekranda turganida chiqadi. Boʻsh qoldirilsa, hech narsa
   chiqmaydi.
-- Saytda bitta **ramziy tasvir** bor — u haqiqiy surat emas, shuning uchun
-  ekranda turganida tagida «Ramziy tasvir» deb yoziladi. Haqiqiy suratlar
-  yetarli boʻlsa, uni olib tashlashingiz mumkin.
+- Hozir roʻyxatda **2 ta surat** bor — ikkalasi ham CAEx binosining oʻz
+  surati. Uchinchisi — chizilgan **ramziy tasvir** — 18.11.2026 da buyurtmachi
+  talabiga koʻra olib tashlandi va fayli buyurtmachiga qaytarildi.
+- Agar kelajakda yana ramziy tasvir qoʻyilsa, ekranda turganida tagida
+  «Ramziy tasvir» deb yozilishi kerak — buni sayt oʻzi qiladi.
 - Harakatni oʻchirgan (`prefers-reduced-motion`) foydalanuvchilarga va
   brauzer boshqa oynada turganida suratlar almashmaydi — faqat birinchisi
   koʻrinadi.
@@ -587,6 +597,34 @@ keng. Serverda WebP ga aylantiriladi.
 > tashkilotchining oʻz surati, fotograf bilan kelishilgani yoki litsenziyasi
 > aniq boʻlgani. Internetdan olingan surat — hatto binoning oʻzi boʻlsa ham —
 > bu yerga yaramaydi.
+
+---
+
+## 9c. Roʻyxatdan oʻtish havolasi
+
+**Saytni tahrirlash → Roʻyxatdan oʻtish havolasi.**
+
+18.11.2026 dan saytning oʻz roʻyxat formasi olib qoʻyildi. Saytdagi har bir
+«Roʻyxatdan oʻtish» tugmasi — yuqoridagi panelda, birinchi ekranda, loyiha
+kartochkasida va oxirgi bobda — forumning oʻz roʻyxat sahifasini **yangi
+oynada** ochadi:
+
+```
+https://titf.uz/en/online-registration
+```
+
+Bu yerda ikkita maydon bor:
+
+- **Havola** — qaysi sahifa ochilishi. Oʻzgartirsangiz, saqlash bilan birga
+  saytdagi hamma tugma yangi manzilga oʻtadi; qayta qurish shart emas.
+  Faqat `https://` yoki `http://` bilan boshlanadigan manzil qabul qilinadi.
+- **Boshqa saytda** — belgilangan boʻlsa, tugmalar tashqariga yoʻnaltiradi.
+  Belgini olib tashlasangiz, saytning oʻz formasi qaytadi (u hamon joyida
+  turibdi) va yangi arizalar yana §2 dagi roʻyxatga tushadi.
+
+Saytning eski manzili — `/register/` — oʻchirilmadi: unga kirgan odam
+oʻsha havolaga yoʻnaltiriladi. Chop etilgan varaqalarda yoki QR kodda eski
+manzil qolgan boʻlsa ham ishlaydi.
 
 ---
 

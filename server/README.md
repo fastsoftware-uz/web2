@@ -83,7 +83,7 @@ npm run server                                          # builds site 2, then se
 | | |
 |---|---|
 | Site | http://127.0.0.1:8787/ |
-| Registration | http://127.0.0.1:8787/register/ |
+| Registration | http://127.0.0.1:8787/register/ — forwards to the forum's own page since 18 Nov 2026 |
 | Admin | http://127.0.0.1:8787/admin/ |
 | E-ticket | http://127.0.0.1:8787/ticket/&lt;number&gt; |
 | Health | http://127.0.0.1:8787/api/health |
@@ -215,6 +215,12 @@ cp -r site-2-silkroad/dist/. /var/www/forum/public/   # the built site
 and `data/` — the output of `npm run build:2`. The registration page is a
 directory rather than a `.html` file so that its address reads `/register/`;
 `try_files $uri $uri/` below is what serves it.
+
+Since 18 November 2026 that page is a forwarding page: the site's own form was
+taken down and every "register" on the site opens the forum's own registration
+page instead, at the address in `registration.url` in the data file. The
+`/api/register` endpoint, the guest list, the CSV export and the e-tickets are
+all untouched — see `QOLLANMA.md` §9c for the switch back.
 
 After this first copy, every later one is the deploy workflow's job — see
 **Automatic deploy** below.

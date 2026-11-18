@@ -19,14 +19,15 @@ import { useI18n } from 'vue-i18n';
 
 import ActionIcon from './ActionIcon.vue';
 import ForumMark from './ForumMark.vue';
-import { lockPageScroll, openEnquiry, scrollToId, unlockPageScroll } from '../lib/motion';
+import { lockPageScroll, scrollToId, unlockPageScroll } from '../lib/motion';
+import { registerUrl } from '../lib/register-link';
 import { setLang, useStore } from '../lib/state';
 import { LANGS, type Lang } from '../lib/shared/content-types';
 
 const props = defineProps<{ chapters: { id: string; key: string }[] }>();
 
 const { t } = useI18n();
-const { lang } = useStore();
+const { lang, forum } = useStore();
 
 /** The sections the bar links to, and the chapter each one lands on. */
 const NAV = [
@@ -74,10 +75,9 @@ const onStage = computed(() => STAGES.has(activeId.value ?? ''));
  * So before the portfolio the bar offers the portfolio, and from the
  * portfolio onwards it offers registration. One button, always the next step.
  *
- * It scrolls to the last chapter rather than opening the registration page:
- * the reader is already most of the way down the page, and the chapter now
- * carries the same form. The page is a click away in the bar for anybody who
- * arrived to register and nothing else.
+ * The second of the two is a link rather than a button, because registration
+ * is now on the forum's own page and leaving the site is something a reader
+ * should be able to see coming — and middle-click, and open in a tab.
  */
 const PORTFOLIO_INDEX = computed(() => props.chapters.findIndex((c) => c.id === 'portfolio'));
 const seenPortfolio = computed(
@@ -85,8 +85,20 @@ const seenPortfolio = computed(
 );
 const barAction = computed(() =>
   seenPortfolio.value
-    ? { id: 'epilogue', key: 'nav.register', short: 'nav.register', icon: 'enquiry' }
-    : { id: 'portfolio', key: 'nav.ctaProjects', short: 'nav.ctaProjects', icon: 'portfolio' },
+    ? {
+        id: 'epilogue',
+        key: 'nav.register',
+        short: 'nav.register',
+        icon: 'enquiry',
+        href: registerHref.value,
+      }
+    : {
+        id: 'portfolio',
+        key: 'nav.ctaProjects',
+        short: 'nav.ctaProjects',
+        icon: 'portfolio',
+        href: null,
+      },
 );
 
 /**
@@ -194,20 +206,21 @@ onBeforeUnmount(() => {
 });
 
 /**
- * The registration page, carrying the language the reader is using.
+ * Where "Roʻyxatdan oʻtish" goes.
  *
- * Relative, so it keeps working under whatever base path the site is served
- * from — /web2/ on Pages today, / on the organiser's own server tomorrow.
+ * It used to be this site's own page, `./register/`, carrying the language
+ * the reader was using. Since 18 November 2026 the forum registers people on
+ * its own registration page, so this is somebody else's address and the
+ * language goes with the reader rather than with the link. See
+ * lib/register-link.ts; `./register/` still exists and forwards there, for
+ * anybody holding the old link.
  */
-const registerHref = computed(() => `./register/?lang=${lang.value}`);
+const registerHref = computed(() => registerUrl(forum.value));
 
 
 function go(id: string) {
   menuOpen.value = false;
-  // The enquiry is the one destination that is a form rather than a reading,
-  // so arriving there means putting the cursor in it.
-  if (id === 'epilogue') openEnquiry();
-  else scrollToId(id);
+  scrollToId(id);
 }
 
 function choose(code: Lang) {
@@ -289,16 +302,34 @@ function choose(code: Lang) {
            in the menu at that width.
 
            And hidden once the call to action beside it has itself become
-           registration: the last chapter now carries the same form, so from
-           the portfolio onwards these two were the same offer twice. Before
-           that point this is the quick way in for somebody who came to
-           register and not to read. -->
-      <a v-if="!seenPortfolio" class="reg-link" :href="registerHref">{{ t('nav.register') }}</a>
+           registration: from the portfolio onwards the two were the same
+           offer twice. Before that point this is the quick way out to the
+           registration page for somebody who came to register and not to
+           read. -->
+      <a
+        v-if="!seenPortfolio"
+        class="reg-link"
+        :href="registerHref"
+        target="_blank"
+        rel="noopener noreferrer"
+      >{{ t('nav.register') }}</a>
 
       <!-- Two labels, one shown at a time: "Qiziqishni bildirish" is 159px
            wide and the bar runs out of room for it below about 370px, where
            a short form says the same thing beside the same icon. -->
-      <button type="button" class="bar__cta" :aria-label="t(barAction.key)" @click="go(barAction.id)">
+      <a
+        v-if="barAction.href"
+        class="bar__cta"
+        :href="barAction.href"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="t(barAction.key)"
+      >
+        <ActionIcon :name="barAction.icon" />
+        <span class="bar__ctaLong" aria-hidden="true">{{ t(barAction.key) }}</span>
+        <span class="bar__ctaShort" aria-hidden="true">{{ t(barAction.short) }}</span>
+      </a>
+      <button v-else type="button" class="bar__cta" :aria-label="t(barAction.key)" @click="go(barAction.id)">
         <ActionIcon :name="barAction.icon" />
         <span class="bar__ctaLong" aria-hidden="true">{{ t(barAction.key) }}</span>
         <span class="bar__ctaShort" aria-hidden="true">{{ t(barAction.short) }}</span>
@@ -355,7 +386,9 @@ function choose(code: Lang) {
           {{ t('menu.close') }}
         </button>
         <p class="overlay__register">
-          <a class="btn btn--solid" :href="registerHref">{{ t('nav.register') }}</a>
+          <a class="btn btn--solid" :href="registerHref" target="_blank" rel="noopener noreferrer">
+            {{ t('nav.register') }}
+          </a>
         </p>
         <ol>
           <li v-for="(chapter, i) in chapters" :key="chapter.id">
@@ -633,6 +666,9 @@ function choose(code: Lang) {
   font-weight: 700;
   white-space: nowrap;
   cursor: pointer;
+  /* It is an <a> when it offers registration and a <button> when it offers
+     the portfolio; the link must not arrive underlined. */
+  text-decoration: none;
   transition: background-color 0.18s, color 0.18s;
 }
 @media (hover: hover) {

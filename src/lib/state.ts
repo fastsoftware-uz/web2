@@ -150,6 +150,8 @@ window.addEventListener('popstate', () => {
  * to scroll to the bottom and describe it again from memory. This hands the
  * form what they were looking at.
  */
+/* Which project a reader came to the form from. Unused while the form is
+   not mounted — see register-link.ts — and kept for the same reason. */
 export const enquirySubject = ref<{ id: string; title: string; segment: string | null } | null>(
   null,
 );

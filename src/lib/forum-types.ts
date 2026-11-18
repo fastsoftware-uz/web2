@@ -330,6 +330,12 @@ export interface ForumData {
     generated_by: string;
   };
   event: ForumEvent;
+  /**
+   * Where the registration buttons go. Optional, because a data file built
+   * before 18 November 2026 does not have it and the page still has to
+   * work — see register-link.ts for what is done without it.
+   */
+  registration?: { external: boolean; url: string };
   intro: { purpose: I18nText; paragraphs: I18nText[]; source: string };
   goals: I18nText[];
   themes: ForumTheme[];
