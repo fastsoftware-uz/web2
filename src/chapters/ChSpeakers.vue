@@ -162,7 +162,7 @@ useChapterTimeline(
                    it so the card still says who it belongs to at a
                    glance. -->
               <template v-else>
-                <SpeakerMark :kind="speaker.icon ?? null" />
+                <SpeakerMark />
                 <span class="speakers__initials" aria-hidden="true">{{ initials(speaker) }}</span>
               </template>
             </div>

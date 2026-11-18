@@ -69,7 +69,7 @@ const FIELD_LABEL = [
     'subtitle' => 'Izoh', 'purpose' => 'Maqsadi', 'paragraphs' => 'Paragraflar',
     'note' => 'Eslatma', 'items' => 'Bandlar', 'topics' => 'Mavzular',
     'who' => 'Kim', 'category' => 'Toifa', 'role' => 'Lavozimi', 'org' => 'Tashkilot',
-    'photo' => 'Rasm', 'hero' => 'Fon suratlari', 'credit' => 'Surat muallifi', 'icon' => 'Belgi', 'n' => 'Raqam',
+    'photo' => 'Rasm', 'hero' => 'Fon suratlari', 'credit' => 'Surat muallifi', 'n' => 'Raqam',
     'roman' => 'Rim raqami', 'block' => 'Blok', 'number' => 'Raqam',
     'workingTitle' => 'Ishchi nomi', 'source' => 'Manba', 'publisher' => 'Nashr etuvchi',
     'document' => 'Hujjat', 'asOf' => 'Holat sanasi', 'id' => 'Kalit',
@@ -118,19 +118,6 @@ const SPEAKER_FIELDS = [
  * plausible list and still a ceiling.
  */
 const SPEAKER_MAX = 200;
-
-/**
- * The figure drawn in place of a portrait, until one arrives.
- *
- * Not worked out from the name — a name is not evidence, and a list of
- * international guests is where that kind of guess goes wrong. The empty
- * value is the default and is drawn as a plain figure.
- */
-const SPEAKER_ICONS = [
-    '' => 'Belgilanmagan',
-    'man' => 'Erkak',
-    'woman' => 'Ayol',
-];
 
 /**
  * How many pictures one title card may carry.
@@ -475,7 +462,6 @@ function speaker_blank(): array
         $record[$field] = ['uz' => '', 'ru' => '', 'en' => ''];
     }
     $record['photo'] = null;
-    $record['icon'] = null;
     return $record;
 }
 
@@ -536,18 +522,11 @@ function speaker_fields(?array $speaker): void
         echo '</fieldset>';
     }
 
-    /* The figure that stands in for a portrait. One row, not a fieldset:
-       it is one answer rather than the same answer in three languages. */
-    $icon = (string) ($speaker['icon'] ?? '');
-    echo '<div class="fld"><label for="icon">Rasm oʻrnidagi belgi</label>';
-    echo '<select id="icon" name="icon">';
-    foreach (SPEAKER_ICONS as $value => $label) {
-        echo '<option value="' . app_h($value) . '"' . ($value === $icon ? ' selected' : '') . '>'
-            . app_h($label) . '</option>';
-    }
-    echo '</select>';
-    echo '<small>Spikerning surati boʻlmasa, saytda shu belgi chiqadi. '
-        . 'Surat yuklansa, belgi koʻrinmaydi.</small></div>';
+    /* There was a third control here: which figure stands in for a missing
+       portrait, a woman, a man or the default. The site draws one figure
+       for everybody now — see SpeakerMark.vue — so the control is gone
+       rather than left to set something nothing reads. A value stored by
+       it on an older record is harmless and is ignored. */
 }
 
 /**
@@ -583,11 +562,6 @@ function site_speaker_action(array $config, string $do, string $key): string
         foreach (array_keys(SPEAKER_FIELDS) as $field) {
             $fields[$field] = speaker_posted($field);
         }
-        $icon = (string) ($_POST['icon'] ?? '');
-        if (!array_key_exists($icon, SPEAKER_ICONS)) {
-            throw new RuntimeException('Belgi notoʻgʻri tanlangan.');
-        }
-        $fields['icon'] = $icon === '' ? null : $icon;
         if (trim(implode('', $fields['name'])) === '') {
             throw new RuntimeException('Ism familiya boʻsh — hech boʻlmaganda bitta tilda yozing.');
         }

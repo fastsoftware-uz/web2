@@ -63,6 +63,36 @@ function tracksOf(d: ProgrammeDay | null, side: boolean) {
 const halls = computed(() => tracksOf(day.value, false));
 const sideHalls = computed(() => tracksOf(day.value, true));
 
+/**
+ * How many cards a hall shows before the rest fold away.
+ *
+ * The halls stand side by side and a grid row is as tall as its tallest
+ * column, so one long hall decides the height of the others. On 26 November
+ * ICCA runs twelve cards in Avicenna while the hall beside it runs four: the
+ * day was a screen of timetable next to two screens of nothing, which is
+ * what the client pointed at on 19 November 2026.
+ *
+ * Six, because that is a little above what the other halls run and the fold
+ * therefore only ever catches the hall that is actually long. Every card
+ * stays in the markup — a crawler reads the whole day, and the button has
+ * nothing to fetch.
+ */
+const FOLD = 6;
+
+/** Which hall columns the reader has opened, by day and hall. */
+const opened = ref(new Set<string>());
+const trackKey = (hall: string) => `${chosen.value}:${hall}`;
+const isOpen = (hall: string) => opened.value.has(trackKey(hall));
+function toggleTrack(hall: string): void {
+  const next = new Set(opened.value);
+  const key = trackKey(hall);
+  if (!next.delete(key)) next.add(key);
+  opened.value = next;
+}
+/** How many cards the fold is holding back, or 0 when it holds none. */
+const folded = (track: { hall: string; items: DayItem[] }) =>
+  isOpen(track.hall) ? 0 : Math.max(0, track.items.length - FOLD);
+
 const hallMeta = (hall: ProgrammeHall) =>
   hall.seats === null
     ? t('programme.hallArea', { area: hall.area })
@@ -138,7 +168,10 @@ useChapterTimeline(
                 v-for="(item, i) in track.items"
                 :key="`${item.start}-${i}`"
                 class="slot__item"
-                :class="{ 'slot__item--break': item.kind === 'break' }"
+                :class="{
+                  'slot__item--break': item.kind === 'break',
+                  'slot__item--folded': i >= FOLD && !isOpen(track.hall),
+                }"
               >
                 <p class="slot__time">{{ hours(item) }}</p>
                 <template v-if="item.kind !== 'break'">
@@ -175,6 +208,32 @@ useChapterTimeline(
                 <h4 v-else class="slot__break">{{ tr(item.title) }}</h4>
               </li>
             </ol>
+
+            <!-- Only the hall that is long gets a button, and it says how
+                 much is behind it. `aria-expanded` carries the state; the
+                 visible word stays the thing pressing it does next. -->
+            <button
+              v-if="track.items.length > FOLD"
+              type="button"
+              class="btn slot__more"
+              :aria-expanded="isOpen(track.hall)"
+              @click="toggleTrack(track.hall)"
+            >
+              {{
+                isOpen(track.hall)
+                  ? t('programme.less')
+                  : t('programme.more', { n: folded(track) })
+              }}
+              <svg
+                viewBox="0 0 24 24"
+                width="15"
+                height="15"
+                aria-hidden="true"
+                :class="{ 'is-up': isOpen(track.hall) }"
+              >
+                <path d="M12 4v15m0 0-6-6m6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" />
+              </svg>
+            </button>
           </section>
         </div>
 
@@ -365,6 +424,30 @@ h2 {
   gap: 0.6rem;
   margin-block-start: 0.8rem;
 }
+/* The button that opens the rest of a long hall. It sits under its own
+   column, in the column's width, so it reads as belonging to that hall
+   rather than to the grid. */
+.slot__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  inline-size: 100%;
+  margin-block-start: 0.6rem;
+  font-size: 0.8rem;
+}
+.slot__more svg {
+  transition: rotate 0.25s ease;
+}
+.slot__more svg.is-up {
+  rotate: 180deg;
+}
+@media (prefers-reduced-motion: reduce) {
+  .slot__more svg {
+    transition: none;
+  }
+}
+
 .slot__item {
   padding: 0.85rem 1rem;
   border: 1px solid var(--hairline);
@@ -385,6 +468,16 @@ h2 {
  * reads them as a pause rather than a session, and a dashed left edge
  * instead of the solid accent the sessions carry.
  */
+/* Folded away, not removed: the card stays in the markup so the whole day
+   is readable to a crawler and to a reader who presses the button.
+   `!important` because a break card sets its own `display`, and which of
+   two single-class rules wins is otherwise the order they are written in —
+   a hidden card that reappears because it happens to be a coffee break is
+   not a rule anybody should have to remember. */
+.slot__item--folded {
+  display: none !important;
+}
+
 .slot__item--break {
   display: flex;
   flex-wrap: wrap;

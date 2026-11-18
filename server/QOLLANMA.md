@@ -536,12 +536,11 @@ hech narsa oʻchmaydi va qaytib kelmaydi.
 - **×** — oʻchirish. Rasmi ham birga oʻchadi.
 - Ism ustiga bossangiz — toʻliq tahrir: uch tilda uchta maydon, rasm va
   **«Rasm oʻrnidagi belgi»**.
-- **Rasm oʻrnidagi belgi** — spikerning surati hali yoʻq boʻlsa, saytda
-  uning oʻrnida chizma belgi turadi. Uch tanlov bor: «Belgilanmagan»,
-  «Erkak» va «Ayol». Hozir saytdagi hamma spiker **bitta oddiy figura**
-  bilan turibdi (18.11.2026 dagi qaror); «Ayol» belgisi — sochli figura —
-  kerak boʻlsa shu roʻyxatdan tanlanadi. Surat yuklansa, belgi koʻrinmaydi.
-  Bu maydon ism boʻyicha oʻzi aniqlanmaydi — har doim siz tanlaysiz.
+- **Rasm oʻrnidagi belgi** — bunday maydon endi yoʻq. Surati boʻlmagan
+  spikerning oʻrnida saytda **bitta oddiy figura** turadi, hammasida bir
+  xil. Ilgari uch tanlov bor edi («Belgilanmagan», «Erkak», «Ayol»);
+  19.11.2026 da olib tashlandi, chunki buyurtmachi hamma uchun bitta
+  belgini soʻradi. Surat yuklansa, figura koʻrinmaydi.
 
 **Saytda nechta koʻrinadi.** Spikerlar bobida avval **8 tasi** chiqadi
 (rasmi borlar birinchi), qolganlari esa «Barcha spikerlar» tugmasi ostida
