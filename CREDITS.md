@@ -69,15 +69,24 @@ speaker with the page it came from recorded beside it:
 | Bobur Rakhimov | `spk-rakhimov` | weproject.media |
 | Mikhail Shamshidov | `spk-shamshidov` | institutetourism.com |
 
+Two more were found by searching for the speakers who still had none, on
+19 November 2026, and only two: the test was being certain of the person,
+not finding a picture.
+
+| Speaker | File | Where the picture came from |
+|---|---|---|
+| Sharon Ashton | `spk-ashton` | iccaworld.org, the team portrait at the address its other portraits are at |
+| Larry Kasanoff | `spk-kasanoff` | thresholdentertainment.com, the portrait its team page gives its chairman — the same picture his own site and his speaking agency use |
+
 These are not this project's own work and are not licensed for anything
 beyond this site. They are published at the client's instruction, as
 photographs of people the client is announcing as speakers at the client's
 own event; if a rights holder objects, the file and its row come out
-together. Two further pictures in that bundle were **not** published: one
+together. One further picture in that bundle was **not** published: the one
 captioned "A. Bakanov", which comes from a 2022 article about a different
-hotel and has not been confirmed to be the speaker of that name, and one
-captioned "Larry Kasanoff", which is a film still of somebody who does not
-appear to be him.
+hotel and has not been confirmed to be the speaker of that name. A second,
+captioned "Larry Kasanoff", was a film still of somebody who does not appear
+to be him; it is replaced by the portrait in the table below.
 
 Any further portrait is uploaded by the organiser, and a card without one
 carries a drawn figure and the initials of the person's name under the same

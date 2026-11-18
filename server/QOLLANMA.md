@@ -548,6 +548,11 @@ hech narsa oʻchmaydi va qaytib kelmaydi.
 turadi. Tugma bosilsa hammasi ochiladi. Roʻyxat uzun boʻlsa ham bob bitta
 ekranga sigʻadi.
 
+> **Nechtagacha.** Roʻyxatga **200 tagacha** spiker kiritish mumkin. Ilgari
+> chegara 60 ta edi va 19.11.2026 da koʻtarildi — forum roʻyxati undan uzun
+> chiqdi. Saytdagi bob baribir 8 tasini koʻrsatib boshlaydi, qolgani tugma
+> ostida, shuning uchun roʻyxatning uzunligi oʻquvchiga ogʻirlik qilmaydi.
+
 > **Oʻchirish qaytmaydi.** «Nashr → Hammasini asl holiga qaytarish» tugmasi
 > spikerlar roʻyxatiga tegmaydi: u tahrirlangan matnlarni qaytaradi, qoʻlda
 > kiritilgan roʻyxatni emas. Shuning uchun notoʻgʻri oʻchirilgan spikerni

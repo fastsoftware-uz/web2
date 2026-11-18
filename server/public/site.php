@@ -102,8 +102,22 @@ const SPEAKER_FIELDS = [
     'role' => ['label' => 'Lavozimi', 'max' => 200],
     'org' => ['label' => 'Tashkilot', 'max' => 200],
 ];
-/** Above this the chapter is a page of faces nobody reads to the end of. */
-const SPEAKER_MAX = 60;
+/**
+ * A ceiling, not a target.
+ *
+ * It was sixty, on the reasoning that a longer chapter is a page of faces
+ * nobody reads to the end of. That reasoning was about the reader and the
+ * number was about the operator, and on 19 November 2026 the operator ran
+ * into it with fifty-nine names typed in and more to come — which is the
+ * forum's list being longer than somebody guessed, not a mistake to stop
+ * them making. The chapter already opens on eight with the rest behind a
+ * button, so its length costs a reader nothing.
+ *
+ * What the number is still for: a form that posts a thousand times is a
+ * data file that stops being a data file. Two hundred is far past any
+ * plausible list and still a ceiling.
+ */
+const SPEAKER_MAX = 200;
 
 /**
  * The figure drawn in place of a portrait, until one arrives.

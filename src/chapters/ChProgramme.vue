@@ -144,6 +144,11 @@ useChapterTimeline(
                 <template v-if="item.kind !== 'break'">
                   <p class="slot__kind">{{ kindLabel(item) }}</p>
                   <h4 class="slot__title">{{ tr(item.title) }}</h4>
+                  <!-- An item that is its own card rather than a line inside
+                       one says the same two things a line does: what kind of
+                       session it is, and who is running it. -->
+                  <p v-if="item.note" class="slot__note">{{ tr(item.note) }}</p>
+                  <p v-if="item.by" class="slot__by">{{ tr(item.by) }}</p>
                   <!-- What runs inside a long item. The leaflet gives these
                        numbers and nothing else; ICCA's own programme for the
                        26th gives each one an hour and the people running it,
@@ -472,6 +477,19 @@ h2 {
 /* Who runs the hour, and the one line of detail the title cannot carry.
    Both sit under the title rather than beside it: a name wrapped into the
    middle of a session title reads as part of the title. */
+/* The same two lines under a card's own title, a size up from the ones
+   inside a card because here they are the card's only body. */
+.slot__note,
+.slot__by {
+  margin-block-start: 0.3rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--ink-dim);
+}
+.slot__by {
+  color: var(--accent-soft);
+}
+
 .slot__partNote,
 .slot__partBy {
   display: block;

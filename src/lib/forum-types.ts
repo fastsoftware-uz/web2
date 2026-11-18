@@ -173,10 +173,21 @@ export interface DayItem {
     | 'award'
     | 'closing'
     | 'hackathon'
-    | 'b2b';
+    | 'b2b'
+    /* ICCA's day on the 26th, which the leaflet knew only as one block and
+       the association's own programme sets out hour by hour. */
+    | 'registration'
+    | 'keynote'
+    | 'training'
+    | 'workshop'
+    | 'networking';
   /** The session's number within its hall, as the leaflet prints it. */
   n?: number;
   title: I18nText;
+  /** What the session is, where the source says more than the title does. */
+  note?: I18nText;
+  /** Who runs it, where the source names them. */
+  by?: I18nText;
   parts?: ProgrammePart[];
 }
 
