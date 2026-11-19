@@ -28,12 +28,13 @@ import StatBars, { type BarRow } from '../components/StatBars.vue';
 import type { Project } from '../lib/forum-types';
 import { formatMoney, millionWord } from '../lib/money';
 import { sheetValue } from '../lib/sheet-values';
-import { scrollToId, useChapterTimeline } from '../lib/motion';
-import { registerUrl } from '../lib/register-link';
+import { openEnquiry, scrollToId, useChapterTimeline } from '../lib/motion';
+import { registersElsewhere, registerUrl } from '../lib/register-link';
 import {
   bandOf,
   clearFilters,
   eventDates,
+  enquirySubject,
   filters,
   openProject,
   openProjectId,
@@ -255,20 +256,27 @@ function stepProject(delta: number): void {
 }
 
 /**
- * From the sheet to registration.
+ * From the sheet to the enquiry form, carrying the project.
  *
- * The button used to carry the project into the site's own form, which filled
- * "which project" in for the reader. Since 18 November 2026 registration is
- * on the forum's own page, which knows nothing about this portfolio, so the
- * project is left behind and the sheet closes behind the reader rather than
- * sitting open under a new tab.
+ * Closing and scrolling cannot happen in the same tick: the sheet releases the
+ * page scroll in a watcher, and a scroll asked for before that has run is
+ * swallowed by the lock.
+ *
+ * While registration is taken somewhere else there is no form to carry it
+ * to — that page knows nothing about this portfolio — so the project is
+ * left behind and a tab opens instead.
  */
 async function enquire(): Promise<void> {
   const project = selected.value;
   if (!project) return;
+  const away = registersElsewhere(forum.value);
+  if (!away) {
+    enquirySubject.value = { id: project.id, title: title(project), segment: project.segment };
+  }
   replaceProject(null);
   await nextTick();
-  window.open(registerUrl(forum.value), '_blank', 'noopener,noreferrer');
+  if (away) window.open(registerUrl(forum.value), '_blank', 'noopener,noreferrer');
+  else openEnquiry();
 }
 
 /**

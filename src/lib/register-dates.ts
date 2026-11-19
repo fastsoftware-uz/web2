@@ -16,6 +16,30 @@ import type { Lang } from './shared/content-types';
 /** `../`: the page is served as /register/, so the data is one level up. */
 const FORUM_URL = '../data/forum-2026.json';
 
+/**
+ * Where the forum is registering people, if the file says anywhere.
+ *
+ * Null when it does not say — an older file, or no file at all — and the
+ * page then does what it has always done: show its form.
+ */
+export async function fetchRegistrationAway(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const res = await fetch(FORUM_URL, { signal: signal ?? null, cache: 'no-cache' });
+    if (!res.ok) return null;
+    const data = (await res.json()) as {
+      registration?: { external?: unknown; url?: unknown };
+    };
+    const reg = data.registration;
+    if (!reg || reg.external !== true) return null;
+    /* Only http(s): the address comes through the admin, and `location` is
+       no safer a place to put a `javascript:` URL than an href is. */
+    const url = typeof reg.url === 'string' ? reg.url : '';
+    return /^https?:\/\//i.test(url) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 /** "2026-11-25/2026-11-27", or null if the file is missing or malformed. */
 export async function fetchEventRange(signal?: AbortSignal): Promise<string | null> {
   try {

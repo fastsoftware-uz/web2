@@ -1,19 +1,20 @@
 /**
  * Where "Roʻyxatdan oʻtish" sends a reader.
  *
- * The forum takes its registrations on its own registration page. The site's
- * form was taken down on 18 November 2026 at the organiser's asking, and
- * every button that said "register" now opens that page instead.
+ * Normally to this site's own registration page, `./register/`, carrying
+ * the language they are reading in. The data file can send them somewhere
+ * else instead — `registration.external` with `registration.url` — which is
+ * what happened for a day, 18 to 19 November 2026, while the forum was
+ * registering people on titf.uz.
  *
- * The address comes out of the data file — `registration.url` — so the
- * operator can change it from the admin without a deploy. FALLBACK is what
- * is used in the seconds before the file lands, if an older file is being
- * served, or if the fetch fails altogether: a registration button that does
- * nothing is worse than one that goes to the address this build knew.
+ * Both directions are live, because the switch is the organiser's and they
+ * have used it twice. FALLBACK is the address this build knew, for the
+ * seconds before the data file lands and if it never does: a registration
+ * button that goes nowhere is worse than one that goes somewhere stale.
  *
- * Only http(s) is accepted. The value travels through the admin, and a
- * `javascript:` address in an `href` the page writes is the one way a text
- * field in an operator's form turns into script running on the site.
+ * Only http(s) is accepted for the outside address. It travels through the
+ * admin, and a `javascript:` URL in an `href` the page writes is the one
+ * way a text field in an operator's form turns into script on the site.
  */
 import type { ForumData } from './forum-types';
 
@@ -40,12 +41,26 @@ export function registerUrl(forum?: Pick<ForumData, 'registration'> | null): str
 /**
  * Whether registration happens somewhere else.
  *
- * Absent from an older data file, and the answer there is yes: the form it
- * was built with is no longer in the page, so the only honest thing a
- * registration button can do is send the reader onward.
+ * Absent from a data file older than 18 November 2026, and the answer there
+ * is no: those builds had the form and nothing else.
  */
 export function registersElsewhere(forum?: Pick<ForumData, 'registration'> | null): boolean {
-  return forum?.registration?.external !== false;
+  return forum?.registration?.external === true;
+}
+
+/**
+ * The address a registration button should carry.
+ *
+ * This site's own page while registration is taken here, and relative, so
+ * it keeps working under whatever base path the site is served from —
+ * /web2/ on Pages, / on the organiser's own server. The outside address
+ * when the data file says registration has moved.
+ */
+export function registerHref(
+  forum: Pick<ForumData, 'registration'> | null | undefined,
+  lang: string,
+): string {
+  return registersElsewhere(forum) ? registerUrl(forum) : `./register/?lang=${lang}`;
 }
 
 /** The host, for the line that tells a reader where they are being sent. */

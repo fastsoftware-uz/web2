@@ -3,24 +3,27 @@
  * Epilogue — registration, what the forum expects to come of it, who will be
  * in the room, and the contacts.
  *
- * There was a form here — first an enquiry wizard of its own, then the same
- * registration form the site's own /register/ page used. On 18 November 2026
- * the client asked for the site to stop taking registrations and to send
- * people to the forum's own registration page instead, so what stands here
- * now is the chapter's heading, the dates, and the way out to that page.
+ * The form here used to be a three-step enquiry wizard of its own, asking who
+ * you are, which direction interests you and how to reach you. It is now the
+ * registration form, the same component the registration page uses: the forum
+ * wants the same nine answers from everybody, and one form asked in two
+ * places is a better answer than two forms asking overlapping things. A
+ * reader who arrives from a project brings it with them — see RegisterForm.
  *
- * The form component and the backend that received it are untouched, and so
- * is everybody who registered through them: turning `registration.external`
- * off in the data file puts the form back. See lib/register-link.ts.
+ * Beside it, the card that stands where the form does while the data file
+ * says registration has moved somewhere else. It was what this chapter
+ * showed for a day, 18 to 19 November 2026; the switch is the organiser's
+ * and both sides of it are live. See lib/register-link.ts.
  */
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
-import ForumMark from '../components/ForumMark.vue';
 import ActionIcon from '../components/ActionIcon.vue';
+import ForumMark from '../components/ForumMark.vue';
+import RegisterForm from '../components/RegisterForm.vue';
 import { MESSAGES, type Lang } from '../lib/register-copy';
-import { registerHost, registerUrl } from '../lib/register-link';
-import { eventDates, setLang, tr, useStore } from '../lib/state';
+import { registerHost, registersElsewhere, registerUrl } from '../lib/register-link';
+import { enquirySubject, eventDates, setLang, tr, useStore } from '../lib/state';
 
 const { t } = useI18n();
 const { content, forum, lang } = useStore();
@@ -37,7 +40,8 @@ const regDates = computed(() =>
   reg.value.dates.replace('{dates}', eventDates() || reg.value.defaultDates),
 );
 
-/** The forum's registration page, and the host named in the line above it. */
+/** Set while registration is taken somewhere else; see register-link.ts. */
+const away = computed(() => registersElsewhere(forum.value));
 const registerHref = computed(() => registerUrl(forum.value));
 const awayLine = computed(() => reg.value.away.replace('{host}', registerHost(forum.value)));
 
@@ -71,10 +75,26 @@ const outcomes = computed(() => forum.value?.outcomes);
       <h2>{{ reg.title }}</h2>
 
       <div class="epilogue__grid">
-        <!-- Where the form was. The card is the same card; what is in it is
-             the dates, one sentence saying where registration happens, and
-             the link there. -->
-        <div class="epilogue__register">
+        <!-- The registration page's form, in the chapter a reader reaches by
+             reading rather than by arriving. Same component, same endpoint;
+             only the heading level and what sits above it differ. -->
+        <RegisterForm
+          v-if="!away"
+          class="epilogue__register epilogue__register--form"
+          :lang="(lang as Lang)"
+          :subject="enquirySubject"
+          heading-tag="h3"
+        >
+          <template #intro>
+            <p class="epilogue__regDates">{{ regDates }}</p>
+            <p class="epilogue__regLead">{{ reg.lead }}</p>
+          </template>
+        </RegisterForm>
+
+        <!-- And the same card with the way out, for when registration is
+             somewhere else: the dates, one sentence saying where it happens,
+             and the link there. -->
+        <div v-else class="epilogue__register">
           <p class="epilogue__regDates">{{ regDates }}</p>
           <h3 class="epilogue__regTitle">{{ reg.title }}</h3>
           <p class="epilogue__regLead">{{ awayLine }}</p>
@@ -234,7 +254,6 @@ h2 {
    column beside the contacts, and five lines leave a card two screens tall
    with nothing in the bottom two thirds of it. */
 .epilogue__register {
-  align-self: start;
   padding: clamp(1.5rem, 4vw, 2.5rem);
   border: 1px solid var(--hairline);
   border-radius: 1rem;
@@ -243,6 +262,11 @@ h2 {
 .epilogue__regDates {
   color: var(--gold);
   font-size: 0.95rem;
+}
+/* `align-self: start` for the short card only: nine questions fill the
+   column beside the contacts, five lines leave two thirds of it empty. */
+.epilogue__register:not(.epilogue__register--form) {
+  align-self: start;
 }
 .epilogue__regTitle {
   margin-block-start: 0.35rem;

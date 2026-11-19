@@ -5,11 +5,10 @@
  * the scroll machinery, so it carries neither GSAP nor three.js, and a reader
  * who came to register waits for a form rather than for a globe.
  *
- * Nothing loads this at the moment. On 18 November 2026 register/index.html
- * became a forwarding page to the forum's own registration page and stopped
- * referencing this entry, so the form is built nowhere. It is kept whole —
- * entry, page and RegisterForm — because the switch back is one line in the
- * data file and one `<script>` tag here; see lib/register-link.ts.
+ * For a day, 18 to 19 November 2026, register/index.html was a forwarding
+ * page and did not load this at all. It does again. The page now forwards
+ * from inside the app instead, when the data file says registration has
+ * moved — see RegisterApp.vue and lib/register-link.ts.
  */
 import { createApp } from 'vue';
 

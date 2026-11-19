@@ -83,7 +83,7 @@ npm run server                                          # builds site 2, then se
 | | |
 |---|---|
 | Site | http://127.0.0.1:8787/ |
-| Registration | http://127.0.0.1:8787/register/ — forwards to the forum's own page since 18 Nov 2026 |
+| Registration | http://127.0.0.1:8787/register/ |
 | Admin | http://127.0.0.1:8787/admin/ |
 | E-ticket | http://127.0.0.1:8787/ticket/&lt;number&gt; |
 | Health | http://127.0.0.1:8787/api/health |
@@ -216,11 +216,12 @@ and `data/` — the output of `npm run build:2`. The registration page is a
 directory rather than a `.html` file so that its address reads `/register/`;
 `try_files $uri $uri/` below is what serves it.
 
-Since 18 November 2026 that page is a forwarding page: the site's own form was
-taken down and every "register" on the site opens the forum's own registration
-page instead, at the address in `registration.url` in the data file. The
-`/api/register` endpoint, the guest list, the CSV export and the e-tickets are
-all untouched — see `QOLLANMA.md` §9c for the switch back.
+`registration.external` in the data file moves registration off the site
+altogether: every "register" then opens the address in `registration.url`,
+and this page forwards there rather than 404ing, so a printed link still
+works. It was on for a day, 18 to 19 November 2026. The `/api/register`
+endpoint, the guest list, the CSV export and the e-tickets are untouched
+either way — see `QOLLANMA.md` §9c.
 
 After this first copy, every later one is the deploy workflow's job — see
 **Automatic deploy** below.

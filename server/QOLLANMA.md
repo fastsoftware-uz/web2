@@ -107,12 +107,6 @@ php /var/www/forum/server/bin/unlock.php
 
 ## 2. Roʻyxatdan oʻtganlar
 
-> **18.11.2026 dan:** sayt endi oʻzi ariza qabul qilmaydi — saytdagi barcha
-> «Roʻyxatdan oʻtish» tugmalari forumning oʻz roʻyxat sahifasini ochadi
-> (§9c). Bu sahifa oʻz joyida qoladi: shu paytgacha kelgan **barcha arizalar,
-> ularning holati, CSV yuklash va e-biletlar** hech oʻzgarmadi. Agar
-> saytning oʻz formasi qaytarilsa, yangi arizalar yana shu yerga tushadi.
-
 Kirgach birinchi koʻradigan sahifangiz. Yuqorida bir qator raqam, uch guruhga
 ajratilgan — chiziqchalar guruhlarni ajratib turadi:
 
@@ -631,27 +625,26 @@ keng. Serverda WebP ga aylantiriladi.
 
 **Saytni tahrirlash → Roʻyxatdan oʻtish havolasi.**
 
-18.11.2026 dan saytning oʻz roʻyxat formasi olib qoʻyildi. Saytdagi har bir
-«Roʻyxatdan oʻtish» tugmasi — yuqoridagi panelda, birinchi ekranda, loyiha
-kartochkasida va oxirgi bobda — forumning oʻz roʻyxat sahifasini **yangi
-oynada** ochadi:
+**Hozir roʻyxatdan oʻtish saytning oʻzida.** Saytdagi har bir «Roʻyxatdan
+oʻtish» tugmasi — yuqoridagi panelda, birinchi ekranda, loyiha kartochkasida
+va oxirgi bobda — saytning oʻz formasini ochadi, arizalar esa §2 dagi
+roʻyxatga tushadi.
 
-```
-https://titf.uz/en/online-registration
-```
+Bu yerdagi ikkita maydon roʻyxatni **boshqa saytga** koʻchirish uchun:
 
-Bu yerda ikkita maydon bor:
+- **Boshqa saytda** — belgilansa, saytning formasi olib qoʻyiladi va hamma
+  tugma pastdagi havolani yangi oynada ochadi. `/register/` sahifasi ham
+  oʻsha yerga yoʻnaltiradi, yaʼni chop etilgan varaqa yoki QR koddagi eski
+  manzil ishlashda davom etadi. Belgini olib tashlasangiz forma qaytadi.
+- **Havola** — qaysi sahifa ochilishi (masalan
+  `https://titf.uz/en/online-registration`). Saqlash bilan birga saytdagi
+  hamma tugma yangi manzilga oʻtadi; qayta qurish shart emas. Faqat
+  `https://` yoki `http://` bilan boshlanadigan manzil qabul qilinadi.
 
-- **Havola** — qaysi sahifa ochilishi. Oʻzgartirsangiz, saqlash bilan birga
-  saytdagi hamma tugma yangi manzilga oʻtadi; qayta qurish shart emas.
-  Faqat `https://` yoki `http://` bilan boshlanadigan manzil qabul qilinadi.
-- **Boshqa saytda** — belgilangan boʻlsa, tugmalar tashqariga yoʻnaltiradi.
-  Belgini olib tashlasangiz, saytning oʻz formasi qaytadi (u hamon joyida
-  turibdi) va yangi arizalar yana §2 dagi roʻyxatga tushadi.
-
-Saytning eski manzili — `/register/` — oʻchirilmadi: unga kirgan odam
-oʻsha havolaga yoʻnaltiriladi. Chop etilgan varaqalarda yoki QR kodda eski
-manzil qolgan boʻlsa ham ishlaydi.
+Belgi qaysi holatda boʻlishidan qatʼi nazar, **kelgan arizalar, ularning
+holati, CSV yuklash va e-biletlar** oʻz joyida qoladi — ular hech qachon
+oʻchmaydi. 18.11.2026 da belgi bir kunga yoqilgan, 19.11.2026 da yana
+oʻchirilgan edi.
 
 ---
 

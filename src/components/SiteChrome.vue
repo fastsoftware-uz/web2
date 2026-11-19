@@ -19,8 +19,8 @@ import { useI18n } from 'vue-i18n';
 
 import ActionIcon from './ActionIcon.vue';
 import ForumMark from './ForumMark.vue';
-import { lockPageScroll, scrollToId, unlockPageScroll } from '../lib/motion';
-import { registerUrl } from '../lib/register-link';
+import { lockPageScroll, openEnquiry, scrollToId, unlockPageScroll } from '../lib/motion';
+import { registerHref as registerAddress, registersElsewhere } from '../lib/register-link';
 import { setLang, useStore } from '../lib/state';
 import { LANGS, type Lang } from '../lib/shared/content-types';
 
@@ -75,9 +75,12 @@ const onStage = computed(() => STAGES.has(activeId.value ?? ''));
  * So before the portfolio the bar offers the portfolio, and from the
  * portfolio onwards it offers registration. One button, always the next step.
  *
- * The second of the two is a link rather than a button, because registration
- * is now on the forum's own page and leaving the site is something a reader
- * should be able to see coming — and middle-click, and open in a tab.
+ * It scrolls to the last chapter rather than opening the registration page:
+ * the reader is already most of the way down the page, and the chapter
+ * carries the same form. The page is a click away in the bar for anybody who
+ * arrived to register and nothing else. When registration is somewhere else
+ * there is no form to scroll to, so it becomes a link instead — one a reader
+ * can see coming, middle-click, and open in a tab.
  */
 const PORTFOLIO_INDEX = computed(() => props.chapters.findIndex((c) => c.id === 'portfolio'));
 const seenPortfolio = computed(
@@ -90,7 +93,9 @@ const barAction = computed(() =>
         key: 'nav.register',
         short: 'nav.register',
         icon: 'enquiry',
-        href: registerHref.value,
+        /* While the form is in the last chapter, the bar scrolls to it;
+           when registration is elsewhere, it is a link out. */
+        href: away.value ? registerHref.value : null,
       }
     : {
         id: 'portfolio',
@@ -208,19 +213,22 @@ onBeforeUnmount(() => {
 /**
  * Where "Roʻyxatdan oʻtish" goes.
  *
- * It used to be this site's own page, `./register/`, carrying the language
- * the reader was using. Since 18 November 2026 the forum registers people on
- * its own registration page, so this is somebody else's address and the
- * language goes with the reader rather than with the link. See
- * lib/register-link.ts; `./register/` still exists and forwards there, for
- * anybody holding the old link.
+ * This site's own page, carrying the language the reader is using — unless
+ * the data file says registration has moved, in which case it is somebody
+ * else's address and the language goes with the reader rather than with the
+ * link. See lib/register-link.ts.
  */
-const registerHref = computed(() => registerUrl(forum.value));
+const registerHref = computed(() => registerAddress(forum.value, lang.value));
+/** A link that leaves the site opens in a tab and says so; ours does not. */
+const away = computed(() => registersElsewhere(forum.value));
 
 
 function go(id: string) {
   menuOpen.value = false;
-  scrollToId(id);
+  // The enquiry is the one destination that is a form rather than a reading,
+  // so arriving there means putting the cursor in it.
+  if (id === 'epilogue') openEnquiry();
+  else scrollToId(id);
 }
 
 function choose(code: Lang) {
@@ -310,8 +318,8 @@ function choose(code: Lang) {
         v-if="!seenPortfolio"
         class="reg-link"
         :href="registerHref"
-        target="_blank"
-        rel="noopener noreferrer"
+        :target="away ? '_blank' : undefined"
+        :rel="away ? 'noopener noreferrer' : undefined"
       >{{ t('nav.register') }}</a>
 
       <!-- Two labels, one shown at a time: "Qiziqishni bildirish" is 159px
@@ -386,7 +394,12 @@ function choose(code: Lang) {
           {{ t('menu.close') }}
         </button>
         <p class="overlay__register">
-          <a class="btn btn--solid" :href="registerHref" target="_blank" rel="noopener noreferrer">
+          <a
+            class="btn btn--solid"
+            :href="registerHref"
+            :target="away ? '_blank' : undefined"
+            :rel="away ? 'noopener noreferrer' : undefined"
+          >
             {{ t('nav.register') }}
           </a>
         </p>

@@ -28,7 +28,7 @@ import RegisterForm from '../components/RegisterForm.vue';
  */
 import lockupWhite from '../assets/forum-lockup-compact-white.svg?raw';
 import { LANG_NAMES, MESSAGES, type Lang } from '../lib/register-copy';
-import { fetchEventRange, sayRange } from '../lib/register-dates';
+import { fetchEventRange, fetchRegistrationAway, sayRange } from '../lib/register-dates';
 
 const LANG_KEY = 'iu-lang';
 const LANGS: Lang[] = ['uz', 'ru', 'en'];
@@ -86,6 +86,16 @@ function applyHead(): void {
 
 onMounted(async () => {
   applyHead();
+  /* If the forum has moved its registration elsewhere, this page's job is to
+     get out of the way. The address has been printed and linked to, so it
+     forwards rather than 404s — and it asks the data file rather than being
+     rebuilt, because the switch is the organiser's to make from the admin.
+     `replace`, so the back button does not land here again. */
+  const away = await fetchRegistrationAway();
+  if (away) {
+    location.replace(away);
+    return;
+  }
   range.value = await fetchEventRange();
   // Again, because the description quotes them and the first pass could not.
   applyHead();
