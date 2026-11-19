@@ -401,8 +401,12 @@ function site_with_added(array $base, array $overrides, string $key): array
  * `speakers.<id>.role.uz` a path site_set() can find, so a speaker is
  * editable from the generic editor as well as from their own page.
  */
-function site_with_speakers(array $base, array $overrides, string $key): array
-{
+function site_with_speakers(
+    array $base,
+    array $overrides,
+    string $key,
+    ?array $config = null,
+): array {
     if ($key !== 'forum') {
         return $base;
     }
@@ -412,6 +416,7 @@ function site_with_speakers(array $base, array $overrides, string $key): array
     $base['speakers'] = site_speakers_with_shipped_photos(
         array_values($overrides['speakers'] ?? []),
         is_array($base['speakers'] ?? null) ? $base['speakers'] : [],
+        $config,
     );
     return $base;
 }
@@ -440,12 +445,29 @@ function site_with_speakers(array $base, array $overrides, string $key): array
  * A portrait the operator has taken off is not put back: «Rasmni olib
  * tashlash» writes `photoOff` on the speaker, and that is the one thing
  * here that says "no portrait" deliberately. Uploading one clears it.
+ *
+ * With `$config`, a portrait whose files are nowhere on this installation
+ * counts as no portrait. That is for one case and it is not theoretical:
+ * three portraits uploaded from the admin were being lost from the web root
+ * on every deploy, so the cards pointed at pictures that answered 404, and
+ * the organiser sent the same three photographs to be shipped with the site
+ * instead. Without this they would have lost to the broken reference.
+ * Passed by site_publish() and by nothing else — the admin's own list has
+ * to go on showing what it actually holds, so that a missing picture reads
+ * as a missing picture there rather than quietly becoming another one.
  */
-function site_speakers_with_shipped_photos(array $list, array $shipped): array
-{
+function site_speakers_with_shipped_photos(
+    array $list,
+    array $shipped,
+    ?array $config = null,
+): array {
     if (!$list || !$shipped) {
         return $list;
     }
+    if ($config !== null) {
+        require_once __DIR__ . '/photos.php';
+    }
+
 
     $byId = [];
     /** @var array<string,string|false> $byName — false once a name repeats. */
@@ -479,7 +501,12 @@ function site_speakers_with_shipped_photos(array $list, array $shipped): array
         }
         $photo = $one['photo'] ?? null;
         if (is_string($photo) && $photo !== '') {
-            continue;
+            if ($config === null || photos_present($config, $photo)) {
+                continue;
+            }
+            /* The reference is to a picture this installation does not
+               have. Fall through and let the build's own portrait stand in
+               for it; the operator's record is not touched. */
         }
         if (!empty($one['photoOff'])) {
             continue;
@@ -583,10 +610,15 @@ function site_save_speakers(array $config, array $list): void
 }
 
 /** base + added + speakers + overrides, as the site will read it. */
-function site_merged(array $base, array $overrides, string $key, array &$stale = []): array
-{
+function site_merged(
+    array $base,
+    array $overrides,
+    string $key,
+    array &$stale = [],
+    ?array $config = null,
+): array {
     $data = site_with_media(
-        site_with_speakers(site_with_added($base, $overrides, $key), $overrides, $key),
+        site_with_speakers(site_with_added($base, $overrides, $key), $overrides, $key, $config),
         $key,
     );
 
@@ -631,7 +663,7 @@ function site_publish(array $config, string $key): array
     }
     $overrides = site_overrides($config, $key);
     $stale = [];
-    $merged = site_merged($base, $overrides, $key, $stale);
+    $merged = site_merged($base, $overrides, $key, $stale, $config);
 
     $published = site_published_file($config, $key);
     site_write_json($published, $merged);
