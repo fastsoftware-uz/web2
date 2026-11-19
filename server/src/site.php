@@ -144,6 +144,19 @@ function site_overrides(array $config, string $key): array
      */
     $out['speakers'] = is_array($data['speakers'] ?? null) ? array_values($data['speakers']) : [];
     $out['speakers_set'] = ($data['speakers_set'] ?? false) === true;
+    /*
+     * Speakers the operator has taken off, by id.
+     *
+     * The other half of the same answer. A deploy must not hand back
+     * somebody they removed — but it must hand over somebody the organiser
+     * has just added, and a list that only ever says "these are mine"
+     * cannot do both. This says which absences are deliberate; every other
+     * absence is a name that has arrived since.
+     */
+    $out['speakers_removed'] = array_values(array_filter(
+        array_map('strval', is_array($data['speakers_removed'] ?? null) ? $data['speakers_removed'] : []),
+        static fn($id) => $id !== '',
+    ));
     return $out;
 }
 
@@ -413,12 +426,61 @@ function site_with_speakers(
     if (!($overrides['speakers_set'] ?? false)) {
         return $base;
     }
+    $shipped = is_array($base['speakers'] ?? null) ? $base['speakers'] : [];
     $base['speakers'] = site_speakers_with_shipped_photos(
-        array_values($overrides['speakers'] ?? []),
-        is_array($base['speakers'] ?? null) ? $base['speakers'] : [],
+        site_speakers_with_new_arrivals(
+            array_values($overrides['speakers'] ?? []),
+            $shipped,
+            $overrides['speakers_removed'] ?? [],
+        ),
+        $shipped,
         $config,
     );
     return $base;
+}
+
+/**
+ * Speakers who have arrived since the operator took the list over.
+ *
+ * The overlay owns the list — nothing a deploy does may undo an evening in
+ * the admin. But the organiser goes on sending names: eighteen arrived on
+ * 19 November 2026 alone, and without this they would have sat in the
+ * build while the site showed the list as it was the week before, with the
+ * client reading it back as "eighteen people missing".
+ *
+ * So a speaker the build ships whose id is in neither the operator's list
+ * nor their record of removals is appended to the end of it. Removals are
+ * remembered precisely so this cannot hand back somebody taken off on
+ * purpose, and the operator's order, wording and portraits are untouched;
+ * a new name simply arrives last, where they can move it.
+ */
+function site_speakers_with_new_arrivals(array $list, array $shipped, array $removed): array
+{
+    if (!$shipped) {
+        return $list;
+    }
+    $have = [];
+    foreach ($list as $one) {
+        $id = is_array($one) ? (string) ($one['id'] ?? '') : '';
+        if ($id !== '') {
+            $have[$id] = true;
+        }
+    }
+    foreach ($removed as $id) {
+        $have[(string) $id] = true;
+    }
+    foreach ($shipped as $one) {
+        if (!is_array($one)) {
+            continue;
+        }
+        $id = (string) ($one['id'] ?? '');
+        if ($id === '' || isset($have[$id])) {
+            continue;
+        }
+        $list[] = $one;
+        $have[$id] = true;
+    }
+    return $list;
 }
 
 /**
@@ -593,10 +655,14 @@ function site_speakers(array $config): array
 
     $overrides = site_overrides($config, 'forum');
     if ($overrides['speakers_set'] ?? false) {
-        /* The same filling-in the site gets, so the page the operator edits
-           shows the portraits the page they publish is showing. */
+        /* The same arrivals and the same filling-in the site gets, so the
+           page the operator edits shows the page they publish. */
         return site_speakers_with_shipped_photos(
-            array_values($overrides['speakers'] ?? []),
+            site_speakers_with_new_arrivals(
+                array_values($overrides['speakers'] ?? []),
+                $shipped,
+                $overrides['speakers_removed'] ?? [],
+            ),
             $shipped,
         );
     }

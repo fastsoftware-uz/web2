@@ -580,6 +580,13 @@ koʻrinadi.
 > jimgina oʻtib ketardi. Yangi yuklangan rasm bu kamchilikni oʻzi
 > tuzatadi.
 
+> **Sayt yangilanganda kelgan yangi spikerlar.** Tashkilotchi yangi spiker
+> yuborsa, u sayt bilan birga keladi va roʻyxatingizning **oxiriga**
+> qoʻshiladi — oʻzingiz tartiblagan qism oʻz holicha qoladi, faqat yangi
+> ism pastga tushadi, keyin uni istagan joyingizga koʻchirasiz. Siz **×**
+> bilan oʻchirgan spiker esa qaytib kelmaydi: oʻchirish eslab qolinadi.
+> (19.11.2026 dan.)
+
 > **Sayt yangilanganda kelgan suratlar.** Tashkilotchi yangi spiker suratini
 > yuborsa, u sayt bilan birga keladi. Roʻyxat sizniki boʻlsa ham, **rasmi
 > yoʻq** spikerga shunday kelgan surat oʻzi ulanadi — ism yoki ichki raqam

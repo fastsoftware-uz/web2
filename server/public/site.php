@@ -651,6 +651,14 @@ function site_speaker_action(array $config, string $do, string $key): string
                 unset($overrides['values'][$path]);
             }
         }
+        /* Remembered, so the next deploy does not hand them back. The
+           deploy hands over names that have arrived since, and the only
+           way to tell an arrival from somebody taken off on purpose is to
+           have written the second one down. See
+           site_speakers_with_new_arrivals(). */
+        if (!in_array($id, $overrides['speakers_removed'], true)) {
+            $overrides['speakers_removed'][] = $id;
+        }
         site_save_overrides($config, 'forum', $overrides);
         audit_log($config, 'speaker.remove', ['ism' => speaker_name($gone)], $id);
         $message = 'Spiker oʻchirildi.';
