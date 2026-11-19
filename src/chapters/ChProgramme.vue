@@ -50,14 +50,25 @@ const hallsById = computed(() => {
 
 /**
  * The day's halls, split the way the leaflet prints them: the seated
- * conference halls in a grid, and the one that runs a single all-day activity
- * — it is given a floor area and no seat count — as a strip under it.
+ * conference halls in a grid, and the one that runs a single all-day
+ * activity — it is given a floor area and no seat count — as a strip
+ * under it.
+ *
+ * "One all-day activity" is the test, not the missing seat count alone.
+ * Amir Temur has no seat count in the leaflet and ran one thing a day,
+ * until 25 November got four sessions moved into it; a hall with a
+ * timetable belongs in the grid whatever the leaflet says about its
+ * chairs.
  */
 function tracksOf(d: ProgrammeDay | null, side: boolean) {
   if (!d) return [];
   return d.tracks
     .map((track) => ({ ...track, room: hallsById.value.get(track.hall) }))
-    .filter((track) => track.room && (track.room.seats === null) === side);
+    .filter((track) => {
+      if (!track.room) return false;
+      const strip = track.room.seats === null && track.items.length < 2;
+      return strip === side;
+    });
 }
 
 const halls = computed(() => tracksOf(day.value, false));

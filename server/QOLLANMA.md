@@ -556,6 +556,15 @@ yaxshi chiqadi — sayt uni gumbazsimon ramkaga soladi. Rasm yoʻq boʻlsa,
 ramkada chizma belgi va ismning bosh harflari turadi: roʻyxat baribir butun
 koʻrinadi.
 
+> **«Rasm juda katta» desa.** Yuklash chegarasi uch joyda turadi va eng
+> kichigi gʻolib boʻladi: nginx (`client_max_body_size`), PHP
+> (`upload_max_filesize`) va `.env` dagi `UPLOAD_MAX_MB`. Loyiha hujjatida
+> uchalasi ham **32 MB** deb yozilgan, lekin serverga eski sozlama
+> oʻrnatilgan boʻlsa nginx 2 MB da qolishi mumkin — oʻshanda katta rasm
+> yuklanmaydi. Serverda: `nginx -T | grep client_max_body_size` →
+> `32m` boʻlsin → `nginx -s reload`. `php server/bin/doctor.php` PHP
+> tomonini oʻzи aytadi.
+
 > **Rasm koʻrinmay qolsa.** Agar yuklagan rasmingiz saytda chiqmasa — ramka
 > boʻsh tursa — serverda bir marta quyidagini bajarish kerak (buni dasturchi
 > yoki server administratori qiladi):

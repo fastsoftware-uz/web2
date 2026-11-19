@@ -33,6 +33,22 @@ require_once __DIR__ . '/../src/audit.php';
 $problems = 0;
 $warnings = 0;
 
+/** "32M" → bytes. ini_get returns php's shorthand, not a number. */
+function php_bytes(string $value): int
+{
+    $value = trim($value);
+    if ($value === '') {
+        return 0;
+    }
+    $n = (int) $value;
+    return match (strtolower(substr($value, -1))) {
+        'g' => $n * 1024 * 1024 * 1024,
+        'm' => $n * 1024 * 1024,
+        'k' => $n * 1024,
+        default => $n,
+    };
+}
+
 function say(string $state, string $what, string $detail = ''): void
 {
     global $problems, $warnings;
@@ -248,6 +264,33 @@ if (!is_dir($siteDir)) {
         $overrides = site_overrides($config, $key);
         say('ok', $meta['file'], count($overrides['values']) . ' ta o\'zgartirish saqlangan');
     }
+
+    /*
+     * Yuklash чегараси. Uchta joyda turadi va uchtasi ham rozi boʻlishi
+     * kerak: nginx `client_max_body_size`, PHP `upload_max_filesize` va
+     * `.env` dagi UPLOAD_MAX_MB. Eng kichigi gʻolib — 19.11.2026 da jonli
+     * serverda nginx 2 MB da turgani uchun loyiha rasmlari yuklanmagan,
+     * va hech bir joyda buni aytmagan.
+     */
+    $askedMb = max(1, (int) ($config['upload_max_mb'] ?? 32));
+    $phpMb = (int) round(php_bytes(ini_get('upload_max_filesize')) / 1048576);
+    $postMb = (int) round(php_bytes(ini_get('post_max_size')) / 1048576);
+    $worst = min($askedMb, $phpMb ?: $askedMb, $postMb ?: $askedMb);
+    say(
+        $worst >= $askedMb ? 'ok' : 'warn',
+        'Yuklash chegarasi: ' . $worst . ' MB',
+        $worst >= $askedMb
+            ? '.env UPLOAD_MAX_MB=' . $askedMb . ', php upload_max_filesize=' . $phpMb
+              . 'M, post_max_size=' . $postMb . 'M — nginx client_max_body_size ham shuncha boʻlsin'
+            : 'php.ini chegarasi .env dagidan kichik: upload_max_filesize=' . $phpMb
+              . 'M, post_max_size=' . $postMb . 'M, .env=' . $askedMb . 'M',
+    );
+    say(
+        'info',
+        'nginx chegarasini bu yerdan koʻrib boʻlmaydi',
+        'serverda tekshiring: `nginx -T | grep client_max_body_size` — /api/ va /admin/ uchun '
+            . $askedMb . 'm boʻlsin, keyin `nginx -s reload`',
+    );
 
     /* Adminkadan yuklangan rasmlar: asli data/ da, nusxasi sayt ichida. */
     $sitePhotos = photos_site_dir($config);
