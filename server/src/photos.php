@@ -395,6 +395,22 @@ function photos_delete(array $config, string $stem): bool
 }
 
 /**
+ * Can a browser fetch this picture right now?
+ *
+ * Only the web root counts. A photograph that exists in the admin's own
+ * directory and not in the site's is a photograph the page asks for and
+ * does not get — which is the state three portraits were in for days,
+ * because the copy that puts them back after a deploy was failing. Call it
+ * after photos_sync(), or the answer is "no" for every upload in the
+ * moments after a deploy has emptied the web root.
+ */
+function photos_served(array $config, string $stem): bool
+{
+    return photos_stem_ok($stem)
+        && is_file(photos_site_dir($config) . '/' . $stem . '-full.webp');
+}
+
+/**
  * Does the site actually have both files for this stem?
  *
  * Used by the editor to mark a reference the build no longer carries — a

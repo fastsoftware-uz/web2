@@ -446,15 +446,19 @@ function site_with_speakers(
  * tashlash» writes `photoOff` on the speaker, and that is the one thing
  * here that says "no portrait" deliberately. Uploading one clears it.
  *
- * With `$config`, a portrait whose files are nowhere on this installation
- * counts as no portrait. That is for one case and it is not theoretical:
- * three portraits uploaded from the admin were being lost from the web root
- * on every deploy, so the cards pointed at pictures that answered 404, and
- * the organiser sent the same three photographs to be shipped with the site
+ * With `$config`, a portrait a browser cannot actually fetch counts as no
+ * portrait. That is for one case and it is not theoretical: three portraits
+ * uploaded from the admin were not being put back into the web root after a
+ * deploy, so the cards pointed at pictures that answered 404, and the
+ * organiser sent the same three photographs to be shipped with the site
  * instead. Without this they would have lost to the broken reference.
- * Passed by site_publish() and by nothing else — the admin's own list has
- * to go on showing what it actually holds, so that a missing picture reads
- * as a missing picture there rather than quietly becoming another one.
+ *
+ * The test is the web root and nothing else, because the web root is what
+ * the page fetches from — which is why site_publish() puts the uploaded
+ * photographs back *before* it merges rather than after. Passed by
+ * site_publish() and by nothing else: the admin's own list has to go on
+ * showing what it actually holds, so that a missing picture reads as a
+ * missing picture where somebody can do something about it.
  */
 function site_speakers_with_shipped_photos(
     array $list,
@@ -501,7 +505,7 @@ function site_speakers_with_shipped_photos(
         }
         $photo = $one['photo'] ?? null;
         if (is_string($photo) && $photo !== '') {
-            if ($config === null || photos_present($config, $photo)) {
+            if ($config === null || photos_served($config, $photo)) {
                 continue;
             }
             /* The reference is to a picture this installation does not
@@ -662,20 +666,21 @@ function site_publish(array $config, string $key): array
         );
     }
     $overrides = site_overrides($config, $key);
-    $stale = [];
-    $merged = site_merged($base, $overrides, $key, $stale, $config);
-
-    $published = site_published_file($config, $key);
-    site_write_json($published, $merged);
-    clearstatcache(true, $published);
 
     /*
-     * The photographs, back into the web root.
+     * The photographs, back into the web root — before the merge, not after.
      *
      * A deploy copies the build over the live site with `rsync --delete`, so
      * every photograph uploaded from the admin is removed from the web root
      * whenever one lands. The deploy's last step is to publish, which is
-     * here, so they are put back before it finishes. See src/photos.php.
+     * here, so they are put back before it finishes.
+     *
+     * First, because the merge asks whether a speaker's portrait can be
+     * fetched at all and answers that by looking in the web root. Done after
+     * the merge, the answer would be "no" for every upload on every deploy.
+     * Done here, "no" means what it should: this installation cannot serve
+     * that picture, for whatever reason, and whatever the build ships for
+     * that person is better than a frame that 404s.
      */
     /*
      * Required here rather than at the top of the file, and on purpose.
@@ -688,6 +693,13 @@ function site_publish(array $config, string $key): array
      */
     require_once __DIR__ . '/photos.php';
     $photos = photos_sync($config);
+
+    $stale = [];
+    $merged = site_merged($base, $overrides, $key, $stale, $config);
+
+    $published = site_published_file($config, $key);
+    site_write_json($published, $merged);
+    clearstatcache(true, $published);
 
     $overrides['published_sha'] = (string) sha1_file($published);
     site_write_json(site_state_file($config, $key, 'overrides'), $overrides);
