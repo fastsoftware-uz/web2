@@ -498,6 +498,14 @@ the Avval resort hotel is 10.8M USD in the new list against 3.5M in October,
 on the same 150 rooms. The later row wins and the earlier figure stays on the
 record.
 
+Fifty-one of those rows are published under the region's own numbers all the
+same — `far-01`, `far-02`, `far-08` … `far-56` — because the organiser had
+meanwhile typed them into the admin by hand under exactly those numbers while
+waiting for the list. Publishing under the filed numbers would have put each
+of the fifty-one on the page twice, the typed card with no photograph beside
+the filed one with six. Under the shared numbers the publish drops the typed
+copy by itself. The mapping is declared, not inferred.
+
 ## Data sources
 
 Every figure on all three sites comes from `shared/data/content.json`, and each
