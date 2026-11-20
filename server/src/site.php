@@ -481,7 +481,7 @@ function site_with_speakers(
     $base['speakers'] = site_speakers_with_shipped_photos(
         site_speakers_without_withdrawn(
             site_speakers_with_new_arrivals(
-                array_values($overrides['speakers'] ?? []),
+                site_speakers_deduped(array_values($overrides['speakers'] ?? [])),
                 $shipped,
                 $overrides['speakers_removed'] ?? [],
                 $overrides['speakers_removed_names'] ?? [],
@@ -543,6 +543,55 @@ function site_speakers_without_withdrawn(array $list, array $withdrawn): array
  * purpose, and the operator's order, wording and portraits are untouched;
  * a new name simply arrives last, where they can move it.
  */
+/**
+ * One card per person, in the operator's own list.
+ *
+ * The arrival rule below stops a deploy adding somebody who is already on
+ * the list. It cannot undo the ones that got on before it existed: the
+ * admin writes the whole merged list back whenever anything is saved, so
+ * thirteen people the organiser had typed in and the build had also shipped
+ * ended up on their list twice, under two ids, and stood on the live page
+ * twice. Only the operator could have deleted them, thirteen times.
+ *
+ * So a name that appears more than once keeps its first card and loses the
+ * rest. The first, not the one with the portrait: the operator's order is
+ * theirs, and the portrait reaches the survivor by itself once the name is
+ * unique again — which is the same step that could not fill it while the
+ * name was ambiguous.
+ *
+ * Two different people with one name would be collapsed by this. The fold
+ * does not transliterate, so that means two people spelled identically; if
+ * it ever happens, the second needs a middle initial, and this is written
+ * down here so the next person knows where to look.
+ */
+function site_speakers_deduped(array $list): array
+{
+    $seen = [];
+    $out = [];
+    foreach ($list as $one) {
+        if (!is_array($one)) {
+            $out[] = $one;
+            continue;
+        }
+        $keys = site_speaker_keys($one);
+        $twice = false;
+        foreach ($keys as $key) {
+            if (isset($seen[$key])) {
+                $twice = true;
+                break;
+            }
+        }
+        if ($twice) {
+            continue;
+        }
+        foreach ($keys as $key) {
+            $seen[$key] = true;
+        }
+        $out[] = $one;
+    }
+    return $out;
+}
+
 function site_speakers_with_new_arrivals(
     array $list,
     array $shipped,
@@ -805,7 +854,7 @@ function site_speakers(array $config): array
            page the operator edits shows the page they publish. */
         return site_speakers_with_shipped_photos(
             site_speakers_with_new_arrivals(
-                array_values($overrides['speakers'] ?? []),
+                site_speakers_deduped(array_values($overrides['speakers'] ?? [])),
                 $shipped,
                 $overrides['speakers_removed'] ?? [],
                 $overrides['speakers_removed_names'] ?? [],
