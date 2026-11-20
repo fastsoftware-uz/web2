@@ -59,9 +59,14 @@ export function retry(): void {
 export type PortfolioSort = 'largest' | 'smallest' | 'region' | 'name';
 
 /**
- * Ticket-size bands, in the units the sheets state. A project whose figure is
- * open, or stated in soums, is in `open` — it cannot be put in a dollar band
- * without inventing a rate.
+ * Ticket-size bands, in dollars.
+ *
+ * A soum project used to be filed under `open` with the ones that state no
+ * figure at all, because putting it in a dollar band meant inventing a rate.
+ * It no longer does: the build converts at the Central Bank's published rate
+ * for the day and carries the date with it (`portfolio.fx`), so a soum
+ * project bands with the rest and `open` is left to mean what it says —
+ * no figure.
  */
 export type SizeBand = 'all' | 'lt1' | 'm1to10' | 'm10to50' | 'gte50' | 'open';
 
@@ -72,10 +77,25 @@ export const SIZE_BANDS: { id: Exclude<SizeBand, 'all'>; min: number; max: numbe
   { id: 'gte50', min: 5e7, max: Infinity },
 ];
 
-/** Which band a project falls in, or 'open' when it states no dollar figure. */
-export function bandOf(project: { investment: number | null; currency: string | null }): string {
-  if (project.currency !== 'USD' || !project.investment) return 'open';
-  return SIZE_BANDS.find((b) => project.investment! >= b.min && project.investment! < b.max)?.id ?? 'open';
+/** What a project is asking for in dollars, stated or converted. */
+export function usdOf(project: {
+  investment: number | null;
+  currency: string | null;
+  usdEquivalent?: number | null;
+}): number | null {
+  if (project.currency === 'USD' && project.investment) return project.investment;
+  return project.usdEquivalent || null;
+}
+
+/** Which band a project falls in, or 'open' when it states no figure. */
+export function bandOf(project: {
+  investment: number | null;
+  currency: string | null;
+  usdEquivalent?: number | null;
+}): string {
+  const usd = usdOf(project);
+  if (!usd) return 'open';
+  return SIZE_BANDS.find((b) => usd >= b.min && usd < b.max)?.id ?? 'open';
 }
 
 export const filters = ref({

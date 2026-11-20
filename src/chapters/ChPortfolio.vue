@@ -27,6 +27,7 @@ import RegionMap, { type MapRegion } from '../components/RegionMap.vue';
 import StatBars, { type BarRow } from '../components/StatBars.vue';
 import type { Project } from '../lib/forum-types';
 import { formatMoney, millionWord } from '../lib/money';
+import { formatDate, formatNumber } from '../lib/shared/content';
 import { sheetValue } from '../lib/sheet-values';
 import { openEnquiry, scrollToId, useChapterTimeline } from '../lib/motion';
 import { registersElsewhere, registerUrl } from '../lib/register-link';
@@ -41,6 +42,7 @@ import {
   replaceProject,
   SIZE_BANDS,
   tr,
+  usdOf,
   useStore,
   type PortfolioSort,
   type SizeBand,
@@ -105,6 +107,32 @@ const moneyOf = (p: Project) => {
 };
 
 /**
+ * The dollar figure beside a soum one, marked as an approximation.
+ *
+ * Only where the sheet states soums: a project already in dollars prints its
+ * own figure and nothing else. The rate and its date are in the title the
+ * figure carries, so the conversion never reads as the project's own number.
+ */
+const approxOf = (p: Project) =>
+  p.usdEquivalent ? t('portfolio.approx', { usd: formatMoney(p.usdEquivalent, 'USD', lang.value) }) : null;
+
+/** The rate line, for the title on a converted figure. */
+const rateNote = computed(() => {
+  const fx = forum.value?.portfolio?.fx;
+  if (!fx) return '';
+  return t('portfolio.atCbuRate', {
+    date: formatDate(fx.date, lang.value),
+    rate: formatNumber(fx.uzsPerUsd, lang.value, { maximumFractionDigits: 2 }),
+  });
+});
+
+/** The title a figure carries: the sheet's own words, and the rate if converted. */
+const moneyTitle = (p: Project) =>
+  [t('portfolio.asStated', { raw: p.investmentDisplay ?? '' }), p.usdEquivalent ? rateNote.value : '']
+    .filter(Boolean)
+    .join(' — ');
+
+/**
  * The sheet's own one-word description of the project, when it gives one —
  * in the reader's language where it is one of the stage words the organiser
  * reuses across every sheet, and in the sheet's own words otherwise.
@@ -140,8 +168,14 @@ function matches(p: Project): boolean {
   return haystack.includes(q);
 }
 
-/** USD asked for, or -1 where the sheet states no dollar figure. */
-const amount = (p: Project) => (p.currency === 'USD' ? (p.investment ?? -1) : -1);
+/**
+ * USD asked for, or -1 where the sheet states no figure.
+ *
+ * A soum figure counts, at the Central Bank's rate the build converted it
+ * with: sorting by size used to drop sixty-one projects to the bottom of the
+ * list with the ones that name no figure at all.
+ */
+const amount = (p: Project) => usdOf(p) ?? -1;
 
 const shown = computed(() => {
   const list = projects.value.filter(matches);
@@ -594,11 +628,9 @@ useChapterTimeline(
                 <template v-if="project.region && activityOf(project)"> · {{ activityOf(project) }}</template>
               </span>
             </span>
-            <span
-              class="row__money figure"
-              :title="t('portfolio.asStated', { raw: project.investmentDisplay ?? '' })"
-            >
+            <span class="row__money figure" :title="moneyTitle(project)">
               {{ moneyOf(project) }}
+              <small v-if="approxOf(project)" class="row__approx">{{ approxOf(project) }}</small>
             </span>
             <!-- A row that opens something should look like it does. The word
                  is only drawn where there is room for it; the mark always. -->
@@ -942,6 +974,14 @@ h2 {
   font-size: 1rem;
   color: var(--accent);
   white-space: nowrap;
+}
+/* The dollar equivalent under a soum figure: quieter, and on its own line so
+   the stated figure keeps the weight it had. */
+.row__approx {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--ink-dim);
 }
 
 /* The chevron, and the word beside it once there is room to set it. */

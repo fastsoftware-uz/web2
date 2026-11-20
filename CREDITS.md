@@ -513,6 +513,22 @@ of the fifty-one on the page twice, the typed card with no photograph beside
 the filed one with six. Under the shared numbers the publish drops the typed
 copy by itself. The mapping is declared, not inferred.
 
+### Soums shown in dollars
+
+The regions state some figures in dollars and some in soums, because that is
+how their own documents read, and a reader scrolling the list could not put
+two projects side by side or filter by ticket size across the pair. From
+20 November 2026 a soum figure is also shown in dollars.
+
+The rate is **not chosen**: it is the Central Bank of Uzbekistan's published
+rate, fetched by `scripts/refresh-fx-fallback.mjs` from
+<https://cbu.uz/uz/arkhiv-kursov-valyut/json/> and stored in
+`shared/data/content.json` with the date it was published. The build carries
+the rate and that date into the data file (`portfolio.fx`), and the page puts
+the date on every converted figure, so a conversion never reads as a fact of
+the project. The stated figure keeps the weight it had; the dollar figure sits
+under it, marked with ≈, and is never written back over the sheet's number.
+
 ## Data sources
 
 Every figure on all three sites comes from `shared/data/content.json`, and each

@@ -1486,12 +1486,12 @@
       "fallback": {
         "note": "Rates as published by the Central Bank of Uzbekistan on the date below, in UZS per 1 unit. Used only when the live CBU request fails; the UI always shows this date alongside the figures.",
         "source": "cbu.uz",
-        "date": "2026-09-19",
+        "date": "2026-11-20",
         "rates": {
-          "USD": 11839.59,
-          "EUR": 13569.35,
-          "RUB": 140.42,
-          "CNY": 1767.71
+          "USD": 11971.64,
+          "EUR": 13160.42,
+          "RUB": 146.33,
+          "CNY": 1795.74
         }
       }
     }

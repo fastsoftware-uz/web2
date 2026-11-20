@@ -27,7 +27,7 @@ import { useI18n } from 'vue-i18n';
 import type { Project } from '../lib/forum-types';
 import { lockPageScroll, unlockPageScroll } from '../lib/motion';
 import { formatMoney } from '../lib/money';
-import { formatNumber } from '../lib/shared/content';
+import { formatDate, formatNumber } from '../lib/shared/content';
 import { sheetIcon } from '../lib/sheet-icons';
 import { sheetLabel } from '../lib/sheet-labels';
 import { sheetValue } from '../lib/sheet-values';
@@ -171,6 +171,29 @@ const noMoney = computed(() => {
   return /agreement|kelishuv|договор/i.test(raw)
     ? t('portfolio.byAgreement')
     : t('portfolio.noFigure');
+});
+
+/**
+ * The dollar figure beside a soum one.
+ *
+ * The project states soums and keeps stating them; this is the same sum at
+ * the Central Bank's rate for the day of the build, so a reader can put it
+ * beside the dollar projects on either side of it in the list. The rate and
+ * its date are on the title, never implied.
+ */
+const approx = computed(() =>
+  props.project?.usdEquivalent
+    ? t('portfolio.approx', { usd: formatMoney(props.project.usdEquivalent, 'USD', lang.value) })
+    : null,
+);
+
+const rateNote = computed(() => {
+  const fx = forum.value?.portfolio?.fx;
+  if (!fx) return '';
+  return t('portfolio.atCbuRate', {
+    date: formatDate(fx.date, lang.value),
+    rate: formatNumber(fx.uzsPerUsd, lang.value, { maximumFractionDigits: 2 }),
+  });
 });
 
 /**
@@ -672,6 +695,7 @@ onBeforeUnmount(() => {
             >
               {{ money }}
             </strong>
+            <span v-if="money && approx" class="panel__approx" :title="rateNote">{{ approx }}</span>
             <strong
               v-else
               class="figure panel__money--none"
@@ -1105,6 +1129,11 @@ onBeforeUnmount(() => {
 .panel__money strong {
   font-size: clamp(1.75rem, 5vw, 2.75rem);
   font-weight: 400;
+}
+/* The converted figure under the stated one: plainly second. */
+.panel__approx {
+  font-size: 0.85rem;
+  color: var(--ink-dim);
 }
 .panel__money--none {
   font-size: clamp(1.1rem, 3vw, 1.5rem) !important;

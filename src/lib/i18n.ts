@@ -177,6 +177,8 @@ const en = {
       place: 'Location and access',
     },
     asStated: 'As written in the project sheet: {raw}',
+    atCbuRate: 'Stated in soums. Shown in dollars at the Central Bank rate of {date}: 1 USD = {rate} UZS.',
+    approx: '≈ {usd}',
   },
   programme: {
     pickLabel: 'The three days of the fair',
@@ -439,6 +441,8 @@ const uz: Messages = {
       place: 'Joylashuv va yoʻllar',
     },
     asStated: 'Loyiha varaqasida shunday yozilgan: {raw}',
+    atCbuRate: 'Summa soʻmda koʻrsatilgan. Dollardagi qiymati Markaziy bankning {date} kunidagi kursi boʻyicha: 1 USD = {rate} soʻm.',
+    approx: '≈ {usd}',
   },
   programme: {
     pickLabel: 'Yarmarkaning uch kuni',
@@ -679,6 +683,8 @@ const ru: Messages = {
       place: 'Расположение и доступность',
     },
     asStated: 'В проектном листе записано так: {raw}',
+    atCbuRate: 'Сумма указана в сумах. В долларах — по курсу Центрального банка на {date}: 1 USD = {rate} сум.',
+    approx: '≈ {usd}',
   },
   programme: {
     pickLabel: 'Три дня ярмарки',

@@ -294,6 +294,17 @@ export interface Project {
   /** Normalised to whole units of `currency`; null when the sheet left it open. */
   investment: number | null;
   currency: 'USD' | 'UZS' | null;
+  /**
+   * The same figure in dollars, for a project stated in soums.
+   *
+   * Converted at the Central Bank's rate for the day of the build — see
+   * `portfolio.fx`, which carries the rate and its date. It exists so a reader
+   * can compare a soum project with a dollar one and filter by ticket size
+   * across both; the stated figure is still `investment` and is what the page
+   * prints first. Null for everything already in dollars, and for a project
+   * with no figure at all.
+   */
+  usdEquivalent: number | null;
   /** The figure exactly as the sheet writes it — including "By agreement". */
   investmentDisplay: string | null;
   /** The headline chips: INVESTMENT, LAND AREA, CAPACITY, BEDS, OPERATOR… */
@@ -382,6 +393,15 @@ export interface ForumData {
     statedUsdCount: number;
     statedUzsCount: number;
     openCount: number;
+    /**
+     * The rate the soum figures are also shown in dollars at.
+     *
+     * The Central Bank's own published figure with the day it was published,
+     * so the page can say so rather than present a conversion as a fact of
+     * the project. Null if no rate was stored, in which case no equivalent is
+     * computed either and the soum figures stand alone, as they used to.
+     */
+    fx: { uzsPerUsd: number; date: string; source: string } | null;
     contributedBy: I18nText[];
   };
   sources: ForumSourceRef[];
