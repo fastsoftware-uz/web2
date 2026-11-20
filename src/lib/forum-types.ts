@@ -39,7 +39,15 @@ export interface ForumTheme {
 export interface ForumSpeaker {
   id: string;
   name: I18nText;
-  role: I18nText;
+  /**
+   * Null when the organiser sent a name and an organisation and no title.
+   *
+   * Several of the speakers who arrived on 20 November 2026 came as a folder
+   * of portraits, each file named for the person and the body they come from
+   * and nothing else. Rather than invent a title, the card prints the name
+   * and the organisation and leaves the middle line out.
+   */
+  role: I18nText | null;
   org: I18nText;
   photo: string | null;
   /**

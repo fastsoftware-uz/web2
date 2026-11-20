@@ -223,7 +223,7 @@ export const useStore = () => ({
 });
 
 /** Read a {uz, ru, en} triple with the active language. */
-export function tr(text: { uz: string; ru: string; en: string } | undefined): string {
+export function tr(text: { uz: string; ru: string; en: string } | null | undefined): string {
   if (!text) return '';
   return text[lang.value] || text.en || text.uz;
 }

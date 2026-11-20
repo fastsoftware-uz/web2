@@ -594,6 +594,13 @@ koʻrinadi.
 > Agar biror spikerda **«Rasmni olib tashlash»** tugmasini bossangiz, uning
 > rasmi boshqa qaytmaydi — bu sizning qaroringiz deb hisoblanadi.
 
+> **Chiqishdan voz kechgan spiker.** Agar tashkilotchi biror spiker
+> kelmasligini bildirsa, uning ismi sayt yangilanishi bilan roʻyxatdan
+> **olib tashlanadi** — bu saytdagi yagona holat, qolgan hamma narsa
+> sizniki boʻlib qolaveradi. Boshqa hech kim oʻchmaydi: faqat aniq
+> nomi aytilgan odam. (20.11.2026 dan; birinchi marta Maya Watono
+> oʻrniga Zita Anjani kelganda ishlatildi.)
+
 Roʻyxat boʻsh boʻlsa, saytda «Spikerlar roʻyxati hali eʼlon qilinmagan»
 degan yozuv turadi — yaʼni bob boʻsh koʻrinmaydi.
 

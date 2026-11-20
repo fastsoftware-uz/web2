@@ -428,15 +428,52 @@ function site_with_speakers(
     }
     $shipped = is_array($base['speakers'] ?? null) ? $base['speakers'] : [];
     $base['speakers'] = site_speakers_with_shipped_photos(
-        site_speakers_with_new_arrivals(
-            array_values($overrides['speakers'] ?? []),
-            $shipped,
-            $overrides['speakers_removed'] ?? [],
+        site_speakers_without_withdrawn(
+            site_speakers_with_new_arrivals(
+                array_values($overrides['speakers'] ?? []),
+                $shipped,
+                $overrides['speakers_removed'] ?? [],
+            ),
+            is_array($base['speakersWithdrawn'] ?? null) ? $base['speakersWithdrawn'] : [],
         ),
         $shipped,
         $config,
     );
+    unset($base['speakersWithdrawn']);
     return $base;
+}
+
+/**
+ * Speakers the organiser has taken off the bill.
+ *
+ * The one thing a deploy may remove from the operator's list, and only
+ * because leaving it is worse: on 20 November 2026 Indonesia replaced Maya
+ * Watono on the opening panel, and her card — name, title and face — would
+ * otherwise have gone on standing on the live page until somebody thought
+ * to open the admin and delete it. The build names who is no longer coming;
+ * nothing else about the list is touched, and a name added here stays out
+ * however the operator reorders around it.
+ *
+ * Deliberately not the inverse of site_speakers_with_new_arrivals(): a
+ * speaker the build simply stops shipping is *not* removed, because the
+ * build stops shipping people for all sorts of reasons and none of them is
+ * "they withdrew". It has to be said in so many words.
+ */
+function site_speakers_without_withdrawn(array $list, array $withdrawn): array
+{
+    if (!$withdrawn) {
+        return $list;
+    }
+    $out = [];
+    $gone = array_flip(array_map('strval', $withdrawn));
+    foreach ($list as $one) {
+        $id = is_array($one) ? (string) ($one['id'] ?? '') : '';
+        if ($id !== '' && isset($gone[$id])) {
+            continue;
+        }
+        $out[] = $one;
+    }
+    return $out;
 }
 
 /**
