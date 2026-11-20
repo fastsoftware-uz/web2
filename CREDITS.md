@@ -513,6 +513,26 @@ of the fifty-one on the page twice, the typed card with no photograph beside
 the filed one with six. Under the shared numbers the publish drops the typed
 copy by itself. The mapping is declared, not inferred.
 
+### The descriptions, in three languages
+
+A region writes its project description once, in its own language — Uzbek
+for most, English for the batches that came out of the one-pager decks — and
+the build showed that one text to every reader. From 20 November 2026 all
+303 of them read in Uzbek, Russian and English.
+
+The translations are this project's work, not the regions', and they live in
+`scripts/data/project-overviews.mjs` where they can be read against the
+original. Nothing is added and nothing is dropped: the sentences that read
+like a brochure stay, and so do the ones that admit a problem with a permit
+or with groundwater. The source text is reproduced word for word in its own
+language, so one of the three tabs always carries the region's own words —
+with a single exception, that a region which wrote in Uzbek Cyrillic is set
+in Latin here, because that is the script this site publishes Uzbek in.
+
+Figures are **checked, not trusted**: `npm run forum` compares every number
+in the three texts and stops the build on a difference. It has caught four
+so far, two of them its own fault.
+
 ### Soums shown in dollars
 
 The regions state some figures in dollars and some in soums, because that is
