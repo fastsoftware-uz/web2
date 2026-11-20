@@ -157,6 +157,19 @@ function site_overrides(array $config, string $key): array
         array_map('strval', is_array($data['speakers_removed'] ?? null) ? $data['speakers_removed'] : []),
         static fn($id) => $id !== '',
     ));
+    /*
+     * And the names, because an id is not enough on its own.
+     *
+     * The build and the operator can hold one person under two ids — the
+     * organiser typed them in before the deploy brought them — and the
+     * arrival rule keeps the typed one. Remove it and the build's copy,
+     * never having been on the list, reads as somebody new and comes
+     * straight back. Writing the name down is what stops that.
+     */
+    $out['speakers_removed_names'] = array_values(array_filter(
+        array_map('strval', is_array($data['speakers_removed_names'] ?? null) ? $data['speakers_removed_names'] : []),
+        static fn($name) => $name !== '',
+    ));
     return $out;
 }
 
@@ -471,6 +484,7 @@ function site_with_speakers(
                 array_values($overrides['speakers'] ?? []),
                 $shipped,
                 $overrides['speakers_removed'] ?? [],
+                $overrides['speakers_removed_names'] ?? [],
             ),
             is_array($base['speakersWithdrawn'] ?? null) ? $base['speakersWithdrawn'] : [],
         ),
@@ -529,20 +543,31 @@ function site_speakers_without_withdrawn(array $list, array $withdrawn): array
  * purpose, and the operator's order, wording and portraits are untouched;
  * a new name simply arrives last, where they can move it.
  */
-function site_speakers_with_new_arrivals(array $list, array $shipped, array $removed): array
-{
+function site_speakers_with_new_arrivals(
+    array $list,
+    array $shipped,
+    array $removed,
+    array $removedNames = [],
+): array {
     if (!$shipped) {
         return $list;
     }
     $have = [];
+    $names = [];
     foreach ($list as $one) {
         $id = is_array($one) ? (string) ($one['id'] ?? '') : '';
         if ($id !== '') {
             $have[$id] = true;
         }
+        foreach (site_speaker_keys(is_array($one) ? $one : []) as $key) {
+            $names[$key] = true;
+        }
     }
     foreach ($removed as $id) {
         $have[(string) $id] = true;
+    }
+    foreach ($removedNames as $name) {
+        $names[(string) $name] = true;
     }
     foreach ($shipped as $one) {
         if (!is_array($one)) {
@@ -552,10 +577,56 @@ function site_speakers_with_new_arrivals(array $list, array $shipped, array $rem
         if ($id === '' || isset($have[$id])) {
             continue;
         }
+        /*
+         * The operator typed them in before the deploy brought them.
+         *
+         * Thirteen speakers stood on the page twice on 20 November 2026 —
+         * Signe Jungersted, Swagatam Das, Ahmed AlOraij and ten more — once
+         * as the organiser had typed them and once as the build shipped
+         * them. The typed card had no portrait, because the portrait
+         * filling below needs a name unique on both sides and neither name
+         * was. A name already on the list is therefore not appended again.
+         *
+         * Matched on a looser fold than the portraits use: the two sides
+         * write ULUGʻBEK, Ulug'bek and Ulugbek for one man. Getting this
+         * wrong costs a name the operator can still add by hand; getting it
+         * wrong the other way puts somebody on the page twice.
+         */
+        foreach (site_speaker_keys($one) as $key) {
+            if (isset($names[$key])) {
+                continue 2;
+            }
+        }
         $list[] = $one;
         $have[$id] = true;
+        foreach (site_speaker_keys($one) as $key) {
+            $names[$key] = true;
+        }
     }
     return $list;
+}
+
+/**
+ * The names a speaker is recognised by when the question is "is this person
+ * already on the list?", folded harder than site_speaker_names() folds.
+ *
+ * Case, spacing and the whole apostrophe family — ʻ ʼ ’ ‘ ` and the plain
+ * quote — because Uzbek Latin is typed all five ways and Oʻ, O' and O are
+ * one letter however it reaches the keyboard. Nothing is transliterated:
+ * Shoxrux and Shohruh stay two names, because deciding they are one man is
+ * a judgement this code should not be making on its own.
+ */
+function site_speaker_keys(array $speaker): array
+{
+    $keys = [];
+    foreach (site_speaker_names($speaker) as $name) {
+        $folded = str_replace(['ʻ', 'ʼ', '‘', '’', '`', "'"], '', $name);
+        $folded = trim(preg_replace('/\s+/u', ' ', $folded) ?? '');
+        if ($folded !== '') {
+            $keys[] = $folded;
+        }
+    }
+    return array_values(array_unique($keys));
 }
 
 /**
@@ -737,6 +808,7 @@ function site_speakers(array $config): array
                 array_values($overrides['speakers'] ?? []),
                 $shipped,
                 $overrides['speakers_removed'] ?? [],
+                $overrides['speakers_removed_names'] ?? [],
             ),
             $shipped,
         );

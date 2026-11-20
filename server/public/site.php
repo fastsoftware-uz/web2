@@ -659,6 +659,13 @@ function site_speaker_action(array $config, string $do, string $key): string
         if (!in_array($id, $overrides['speakers_removed'], true)) {
             $overrides['speakers_removed'][] = $id;
         }
+        /* And their name, because the build may hold the same person under
+           a different id — see site_speakers_with_new_arrivals(). */
+        foreach (site_speaker_keys(is_array($gone) ? $gone : []) as $name) {
+            if (!in_array($name, $overrides['speakers_removed_names'], true)) {
+                $overrides['speakers_removed_names'][] = $name;
+            }
+        }
         site_save_overrides($config, 'forum', $overrides);
         audit_log($config, 'speaker.remove', ['ism' => speaker_name($gone)], $id);
         $message = 'Spiker oʻchirildi.';

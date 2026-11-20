@@ -601,6 +601,14 @@ koʻrinadi.
 > loyihaga tegilmaydi. (20.11.2026 dan; Xorazmning 25 ta loyihasida
 > ishlatildi.)
 
+> **Oʻzingiz kiritgan spiker keyin sayt bilan ham kelsa.** Agar siz biror
+> spikerni adminkada qoʻlda kiritgan boʻlsangiz va keyinroq tashkilotchi
+> oʻsha odamni sayt bilan yuborsa, u **ikkinchi marta qoʻshilmaydi** —
+> ismi bir xil boʻlsa yetarli (katta-kichik harf va apostrof turi ahamiyatsiz).
+> Sizning kartochkangiz qoladi, surati esa oʻzi ulanadi. Siz **×** bilan
+> oʻchirgan odam esa ismi boʻyicha ham qaytmaydi. (20.11.2026 dan; shu
+> kungacha 13 ta spiker saytda ikki marta turgan edi.)
+
 > **Chiqishdan voz kechgan spiker.** Agar tashkilotchi biror spiker
 > kelmasligini bildirsa, uning ismi sayt yangilanishi bilan roʻyxatdan
 > **olib tashlanadi** — bu saytdagi yagona holat, qolgan hamma narsa
