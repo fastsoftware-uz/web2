@@ -594,6 +594,13 @@ koʻrinadi.
 > Agar biror spikerda **«Rasmni olib tashlash»** tugmasini bossangiz, uning
 > rasmi boshqa qaytmaydi — bu sizning qaroringiz deb hisoblanadi.
 
+> **Oʻzingiz qoʻshgan loyihaga kelgan rasm.** Saytda hali yoʻq loyihani
+> adminkadan qoʻshgan boʻlsangiz va keyinroq tashkilotchi oʻsha loyihaning
+> rasmini yuborsa, rasm sayt yangilanishi bilan **oʻzi** loyihaga ulanadi —
+> faqat kodi (masalan `xor-12`) bir xil boʻlsa. Oʻzingiz rasm yuklagan
+> loyihaga tegilmaydi. (20.11.2026 dan; Xorazmning 25 ta loyihasida
+> ishlatildi.)
+
 > **Chiqishdan voz kechgan spiker.** Agar tashkilotchi biror spiker
 > kelmasligini bildirsa, uning ismi sayt yangilanishi bilan roʻyxatdan
 > **olib tashlanadi** — bu saytdagi yagona holat, qolgan hamma narsa

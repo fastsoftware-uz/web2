@@ -382,15 +382,53 @@ function site_with_added(array $base, array $overrides, string $key): array
             $have[(string) ($p['id'] ?? '')] = true;
         }
     }
+    $shipped = is_array($base['portfolio']['photosForAdded'] ?? null)
+        ? $base['portfolio']['photosForAdded']
+        : [];
     foreach ($added as $p) {
         $id = is_array($p) ? (string) ($p['id'] ?? '') : '';
         if ($id === '' || isset($have[$id])) {
             continue;
         }
         $have[$id] = true;
-        $base['portfolio']['projects'][] = $p;
+        $base['portfolio']['projects'][] = site_added_with_shipped_photos($p, $shipped);
     }
+    unset($base['portfolio']['photosForAdded']);
     return $base;
+}
+
+/**
+ * A picture for a project only the admin has.
+ *
+ * The organiser types a project in here when the build has not got it yet,
+ * and the picture of it arrives later, with a deploy: twenty-five Xorazm
+ * projects on 20 November 2026, typed under exactly the ids the organiser's
+ * own picture folders use. Those records live in the overlay, where no build
+ * can reach them, so the build ships the pictures as a map from id to stem
+ * and this puts them on.
+ *
+ * Only on a project that has none. A picture uploaded here is the operator's
+ * choice and nothing arriving with a deploy may replace it — the same rule
+ * a speaker's portrait follows, for the same reason.
+ */
+function site_added_with_shipped_photos(array $project, array $shipped): array
+{
+    if (!$shipped) {
+        return $project;
+    }
+    $id = (string) ($project['id'] ?? '');
+    if ($id === '' || !isset($shipped[$id]) || !is_array($shipped[$id])) {
+        return $project;
+    }
+    $has = $project['photos'] ?? null;
+    if (is_array($has) && $has !== []) {
+        return $project;
+    }
+    $project['photos'] = array_values(array_filter(
+        array_map('strval', $shipped[$id]),
+        static fn(string $stem): bool => $stem !== '',
+    ));
+    return $project;
 }
 
 /**

@@ -242,11 +242,18 @@ range; and `Akchakol sanatoriyasi` is one sanatorium the site holds as three
 projects, so its pictures go to all three. The same size test the deck
 reader uses keeps icons and rules out.
 
-Thirty folders in that archive are **not** published. Twenty-five are Xorazm
-projects `xor-06` … `xor-30`, which exist nowhere else — no list, no figures,
-no district — so there is no project for the pictures to go on; three are the
-new projects named below; and two held nothing above the size floor. The
-organiser has been asked for the rows.
+Twenty-five of its folders are Xorazm projects `xor-06` … `xor-30`, which the
+organiser had typed into the admin by hand under exactly those ids while the
+region's list was awaited. Those records live in the overlay, where no build
+can reach them, so their pictures ship as a map from id to stem and the
+publish puts them on — `site_added_with_shipped_photos()`, and only ever onto
+a project that has none of its own. The figures behind those twenty-five are
+still the organiser's, typed rather than submitted; no list for them has
+arrived.
+
+Three folders are **not** published: the Nukus street, the Doʻstlik culture
+centre and Narzi Qushbegi, which have pictures and a title and nothing else
+to make a project out of.
 
 The Narzi Qushbegi folder (Boysun) is a separate case and nothing in it is
 published. Most of its seventeen files are manufacturer catalogue renders of
