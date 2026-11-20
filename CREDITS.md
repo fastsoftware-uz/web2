@@ -251,9 +251,18 @@ a project that has none of its own. The figures behind those twenty-five are
 still the organiser's, typed rather than submitted; no list for them has
 arrived.
 
-Three folders are **not** published: the Nukus street, the Doʻstlik culture
-centre and Narzi Qushbegi, which have pictures and a title and nothing else
-to make a project out of.
+The Nukus brand street and the Doʻstlik culture centre were in that position
+too until the organiser typed them into the admin as `qqr-27` and `qqr-28`;
+their pictures now reach them the same way, less a satellite grab with the
+street outlined on it and a gallery interior that is a stock render rather
+than that building. Narzi Qushbegi is still not published: it has pictures
+and a title and nothing else to make a project out of.
+
+One picture in the Xorazm folders is refused by hand and named in
+`scripts/import-sent-photos.mjs`: a screenshot of a mapping service with the
+craftsmen's quarter drawn on it in red and its callout labels still showing.
+A map grab is not the client's to republish, and the size test cannot tell
+one from a photograph.
 
 The Narzi Qushbegi folder (Boysun) is a separate case and nothing in it is
 published. Most of its seventeen files are manufacturer catalogue renders of
