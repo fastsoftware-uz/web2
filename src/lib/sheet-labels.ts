@@ -53,6 +53,13 @@ const DICTIONARY: Record<string, { uz: string; ru: string }> = {
   'ADDITIONAL CAPEX': { uz: 'Qoʻshimcha kapital xarajatlar', ru: 'Дополнительные капзатраты' },
   'ASKING PRICE': { uz: 'Soʻralayotgan narx', ru: 'Запрашиваемая цена' },
   'PRICE PER M²': { uz: '1 m² narxi', ru: 'Цена за м²' },
+  /* --- Bukhara's auction lots --------------------------------------- */
+  'STARTING PRICE': { uz: 'Boshlangʻich narx', ru: 'Стартовая цена' },
+  'PRICE PER 100 M²': { uz: '100 m² uchun narx', ru: 'Цена за 100 м²' },
+  SITE: { uz: 'Maydoncha', ru: 'Площадка' },
+  LOT: { uz: 'Lot', ru: 'Лот' },
+  FORMAT: { uz: 'Format', ru: 'Формат' },
+  'DUE DILIGENCE': { uz: 'Tekshirish', ru: 'Комплексная проверка' },
   PAYBACK: { uz: 'Qoplanish muddati', ru: 'Срок окупаемости' },
   'PAYBACK PERIOD': { uz: 'Qoplanish muddati', ru: 'Срок окупаемости' },
   'BALANCE SHEET HOLDER': { uz: 'Balans ushlab turuvchi', ru: 'Балансодержатель' },

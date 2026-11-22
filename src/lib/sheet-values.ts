@@ -49,6 +49,34 @@ const DICTIONARY: Record<string, { uz: string; ru: string }> = {
   'INN (CARAVANSERAI)': { uz: 'Karvonsaroy', ru: 'Караван-сарай' },
   HOTEL: { uz: 'Mehmonxona', ru: 'Гостиница' },
 
+  /* --- whether the networks reach the plot ----------------------------- */
+  AVAILABLE: { uz: 'Bor', ru: 'Есть' },
+  'NOT AVAILABLE': { uz: 'Yoʻq', ru: 'Нет' },
+  PARTIAL: { uz: 'Qisman', ru: 'Частично' },
+
+  /* --- Bukhara's sixteen auction lots ----------------------------------
+     The deck is bilingual Russian and English on every line, so these are
+     its own Russian, not a translation of its English. */
+  'AUCTION LOT': { uz: 'Auksion loti', ru: 'Аукционный лот' },
+  'MINI-HOTEL': { uz: 'Mini-mehmonxona', ru: 'Мини-отель' },
+  '3-STAR HOTEL': { uz: '3 yulduzli mehmonxona', ru: 'Отель 3★' },
+  '4-STAR HOTEL': { uz: '4 yulduzli mehmonxona', ru: 'Отель 4★' },
+  'CRAFT & RETAIL CENTRE': {
+    uz: 'Savdo-hunarmandchilik markazi',
+    ru: 'Торгово-ремесленный центр',
+  },
+  'GOLF COURSE': { uz: 'Golf maydoni', ru: 'Поле для гольфа' },
+  'BUKHARA TOURISM CENTRE': { uz: 'Buxoro turizm markazi', ru: 'Туристический центр' },
+  '“BOQIY BUXORO” CULTURAL PARK': {
+    uz: '“Boqiy Buxoro” madaniy parki',
+    ru: 'Культурный парк «Боқий Бухоро»',
+  },
+  'BUKHARA TOURISM CLUSTER': { uz: 'Buxoro turizm klasteri', ru: 'Туристический кластер' },
+  'CHECK UTILITIES INFRASTRUCTURE AND SITE ACCESS': {
+    uz: 'Muhandislik tarmoqlari va uchastkaga kirish yoʻlini tekshirish',
+    ru: 'Проверить инженерные сети и подъезд',
+  },
+
   /* --- the City of Tashkent's proposal deck ----------------------------
      These stretch the rule above, and the reason they may is that English is
      not the original here. That deck is written in Uzbek Cyrillic and was
@@ -168,10 +196,22 @@ const PATTERNS: { test: RegExp; uz: (n: string) => string; ru: (n: string) => st
     uz: (n) => `${n} kishi`,
     ru: (n) => `${n} человек`,
   },
+  /* A hectare figure is the one of these with a decimal in it, and Uzbek and
+     Russian write that decimal with a comma. Left in English the card said
+     "10,7 ga" in its description and "10.7 ga" in the chip above it. */
   {
     test: /^([\d\s.,–—-]+?)\s*ha$/i,
-    uz: (n) => `${n} ga`,
-    ru: (n) => `${n} га`,
+    uz: (n) => `${n.replace('.', ',')} ga`,
+    ru: (n) => `${n.replace('.', ',')} га`,
+  },
+  /* --- how far the plot is from the two ways into the region.
+         Every regional one-pager states it in this one shape, so the two
+         distances are captured whole and only the two nouns are said in the
+         reader's language. */
+  {
+    test: /^airport\s*\/\s*railway:\s*(.+)$/i,
+    uz: (n) => `Aeroport / temir yoʻl: ${n}`,
+    ru: (n) => `Аэропорт / вокзал: ${n}`,
   },
 ];
 

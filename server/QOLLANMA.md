@@ -268,7 +268,8 @@ yoki **Nashr** boʻlimidan **Asl holiga** tugmasini bosish.
 
 ## 4. Loyihalar
 
-**Saytni tahrirlash → Loyihalar** — 260 ta investitsiya loyihasi.
+**Saytni tahrirlash → Loyihalar** — forum portfelidagi barcha investitsiya
+loyihalari.
 
 ### Qidirish va koʻrish
 
@@ -293,6 +294,20 @@ Nomiga bossangiz tahrirlash sahifasi ochiladi. U yerda:
 > **Diqqat.** “Investitsiya (raqam)” va “Investitsiya (yozuv)” bir xil narsani
 > aytishi kerak. Birini oʻzgartirib, ikkinchisini unutsangiz, roʻyxatda bir
 > raqam, kartochkada boshqa raqam chiqadi.
+
+### Auksion lotlari
+
+22-noyabr 2026 kuni Buxoro viloyatining taqdimotidan 16 ta auksion uchastkasi
+qoʻshildi. Ular oddiy loyihalardan bitta narsa bilan farq qiladi: ularda
+koʻrsatilgan summa — **investitsiya emas, auksionning boshlangʻich narxi**.
+Shuning uchun kartochkada raqam ustida «Auksion boshlangʻich narxi» deb yoziladi
+va roʻyxatda raqam tagida shu eslatma turadi.
+
+Bu farqni adminka oʻzgartira olmaydi: u loyiha yozuvidagi `priceKind` belgisi
+bilan keladi. Agar siz bu loyihalardan birining summasini tahrirlasangiz, yozuv
+oʻzgarmaydi — raqam baribir boshlangʻich narx deb koʻrsatiladi. Oddiy
+investitsiya loyihasi qilib koʻrsatish kerak boʻlsa, ayting: bu build tomonida
+oʻzgaradi.
 
 ### Loyihani yashirish
 

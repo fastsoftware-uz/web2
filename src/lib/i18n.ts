@@ -171,7 +171,11 @@ const en = {
     photoAltNoRegion: 'A concept view of the {title} project',
     photoAltMore: 'A concept view of the {title} project, {region} — image {n} of {total}',
     gallery: 'Project visuals',
-    labels: { investment: 'Investment', overview: 'Overview' },
+    labels: {
+      investment: 'Investment',
+      startingPrice: 'Auction starting price',
+      overview: 'Overview',
+    },
     blocks: {
       concept: 'What it is',
       opportunity: 'Investment opportunity',
@@ -179,6 +183,7 @@ const en = {
       place: 'Location and access',
     },
     asStated: 'As written in the project sheet: {raw}',
+    startingPriceNote: 'auction starting price',
     atCbuRate: 'Stated in soums. Shown in dollars at the Central Bank rate of {date}: 1 USD = {rate} UZS.',
     approx: '≈ {usd}',
   },
@@ -437,7 +442,11 @@ const uz: Messages = {
     photoAltNoRegion: '{title} loyihasining konseptual koʻrinishi',
     photoAltMore: '{title} loyihasining konseptual koʻrinishi, {region} — {total} tadan {n}-rasm',
     gallery: 'Loyiha vizualizatsiyalari',
-    labels: { investment: 'Investitsiya', overview: 'Loyiha haqida' },
+    labels: {
+      investment: 'Investitsiya',
+      startingPrice: 'Auksion boshlangʻich narxi',
+      overview: 'Loyiha haqida',
+    },
     blocks: {
       concept: 'Nimadan iborat',
       opportunity: 'Investitsiya sharoitlari',
@@ -445,6 +454,7 @@ const uz: Messages = {
       place: 'Joylashuv va yoʻllar',
     },
     asStated: 'Loyiha varaqasida shunday yozilgan: {raw}',
+    startingPriceNote: 'auksion boshlangʻich narxi',
     atCbuRate: 'Summa soʻmda koʻrsatilgan. Dollardagi qiymati Markaziy bankning {date} kunidagi kursi boʻyicha: 1 USD = {rate} soʻm.',
     approx: '≈ {usd}',
   },
@@ -681,7 +691,11 @@ const ru: Messages = {
     photoAltNoRegion: 'Концептуальный вид проекта «{title}»',
     photoAltMore: 'Концептуальный вид проекта «{title}», {region} — изображение {n} из {total}',
     gallery: 'Визуализации проекта',
-    labels: { investment: 'Инвестиции', overview: 'О проекте' },
+    labels: {
+      investment: 'Инвестиции',
+      startingPrice: 'Стартовая цена аукциона',
+      overview: 'О проекте',
+    },
     blocks: {
       concept: 'Из чего состоит',
       opportunity: 'Условия инвестирования',
@@ -689,6 +703,7 @@ const ru: Messages = {
       place: 'Расположение и доступность',
     },
     asStated: 'В проектном листе записано так: {raw}',
+    startingPriceNote: 'стартовая цена аукциона',
     atCbuRate: 'Сумма указана в сумах. В долларах — по курсу Центрального банка на {date}: 1 USD = {rate} сум.',
     approx: '≈ {usd}',
   },

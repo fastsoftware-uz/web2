@@ -307,6 +307,16 @@ export interface Project {
   usdEquivalent: number | null;
   /** The figure exactly as the sheet writes it — including "By agreement". */
   investmentDisplay: string | null;
+  /**
+   * What kind of sum the figure is, when it is not a budget.
+   *
+   * Bukhara's sixteen auction plots state a starting price — what it costs to
+   * begin bidding, not what building on the plot would take. The number is the
+   * region's own; this changes the word printed above it, because an investor
+   * reading "Investment: USD 509,000" against a hotel plot is reading the
+   * wrong fact. Absent on every project that states a budget.
+   */
+  priceKind?: 'starting' | null;
   /** The headline chips: INVESTMENT, LAND AREA, CAPACITY, BEDS, OPERATOR… */
   metrics: Stat[];
   /** What the project consists of. */

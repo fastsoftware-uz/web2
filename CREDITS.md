@@ -509,6 +509,62 @@ discarded. The five Tashkent PDF one-pagers of 20 November 2026 print the same
 block on every page; the four city projects read out of them
 (`tsh-07` … `tsh-10`) carry the committee's own switchboard instead.
 
+### Buxoro's deck of 22 November 2026
+
+«Бухара — Инвестиционный потенциал туристической отрасли, 2026» is thirty-two
+pages in two halves: twelve tourism investment projects, and sixteen plots
+going to auction on three sites — the Bukhara tourism centre, the «Боқий
+Бухоро» cultural park and the Bukhara tourism cluster. Every page is bilingual,
+Russian above and English below.
+
+It could not be parsed. The file was printed from a browser, and every Cyrillic
+word in it is a Type 3 glyph with no character map: a text extractor returns
+the English and the figures and empty boxes for the rest. So it was read by
+hand into `scripts/data/bukhara-deck.mjs`, the way the city's proposal deck
+was.
+
+**What checks it is arithmetic, and on the auction half the check is a strong
+one.** Each lot prints a plot size, a starting price and a price per 100 m²,
+and the three are one statement: 1.018 ha is 101.8 lots of 100 m², and at
+USD 5,000 each that is the USD 509,000 on the slide. All sixteen come out
+exact, and `checkLotArithmetic()` stops the build on any that does not. The
+twelve projects carry no such relation, so each figure is written beside the
+run it was read from, for a person checking the deck by hand.
+
+Six of the twelve were already in the portfolio from the region's earlier
+one-pager deck, and the deck restates them — later deck, later statement, the
+same rule a submitted row follows over the sheet it supersedes. Three figures
+moved: Varakhsha from USD 200M to USD 10M, Chor Bakr from USD 1.2M to USD 2M,
+and the Olot salt mine from USD 300K to USD 1M, with its plot from 12 ha to
+2 ha. The old descriptions for those six were deleted from
+`scripts/data/project-overviews.mjs` rather than left beside the new figures.
+
+The sixteen lots state **a starting price, not a budget**, and the card says so:
+`priceKind: 'starting'` changes the word above the number to "Auction starting
+price" and adds the same note under the figure in the list. A reader seeing
+"Investment: USD 509,000" against a hotel plot would be reading the wrong fact.
+
+**Pictures.** Fifty-eight images were taken out of the deck and filed through
+the folder-per-project route above. They are the region's own material and
+**supplied by the client**, but they are not all photographs of the sites:
+most are concept renders, several are plainly generative, and three are master
+plans — Sherbudin, Yorjon and the Bukhara tourism cluster — which are drawings
+the region commissioned. The site photographs among them are the archaeological
+ones: Poykent, Varakhsha, Vardonze, and the existing buildings behind the
+Suzani centre and the Muminov Street hotel.
+
+Four were refused by hand: the satellite grabs on pages 8, 9, 10 and 12, each
+a mapping-service screenshot with the plot outlined on it. Same rule as the
+Xorazm one above — a map grab is not the client's to republish, and the size
+test cannot tell one from a photograph. Several lots share a render, because
+the deck itself uses one picture for several plots of the same format.
+
+**One question is left open for the region, not answered here.** The two
+renders on the Muminov Street page carry "ZARBOFT TOWER" and "ZAROOT HOTEL"
+signage, and the portfolio already holds `bukhara-zarboft-tower` from a
+separate one-pager with different figures. Whether they are one development is
+recorded as an issue on the record rather than decided by us.
+
 ### Fargʻona's list of 18 November 2026
 
 Fargʻona sent fifty-six rows numbered FAR-01 … FAR-56, renumbering the region

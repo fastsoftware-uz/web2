@@ -686,16 +686,27 @@ onBeforeUnmount(() => {
 
           <div class="panel__figures">
           <p class="panel__money">
-            <span class="eyebrow">{{ t('portfolio.labels.investment') }}</span>
-            <!-- The sheet's own wording, so a reader can check our arithmetic. -->
-            <strong
-              v-if="money"
-              class="figure"
-              :title="t('portfolio.asStated', { raw: project.investmentDisplay ?? '' })"
-            >
-              {{ money }}
-            </strong>
-            <span v-if="money && approx" class="panel__approx" :title="rateNote">{{ approx }}</span>
+            <span class="eyebrow">{{
+              project.priceKind === 'starting'
+                ? t('portfolio.labels.startingPrice')
+                : t('portfolio.labels.investment')
+            }}</span>
+            <!-- The sheet's own wording, so a reader can check our arithmetic.
+
+                 The figure and the dollar approximation are one branch, not
+                 two: written as sibling v-ifs the v-else below paired with the
+                 approximation rather than with the figure, so every project
+                 priced in dollars — which has no approximation, being already
+                 in dollars — printed "Not stated" underneath its own price. -->
+            <template v-if="money">
+              <strong
+                class="figure"
+                :title="t('portfolio.asStated', { raw: project.investmentDisplay ?? '' })"
+              >
+                {{ money }}
+              </strong>
+              <span v-if="approx" class="panel__approx" :title="rateNote">{{ approx }}</span>
+            </template>
             <strong
               v-else
               class="figure panel__money--none"

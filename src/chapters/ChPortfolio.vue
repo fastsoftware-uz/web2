@@ -116,6 +116,17 @@ const moneyOf = (p: Project) => {
 const approxOf = (p: Project) =>
   p.usdEquivalent ? t('portfolio.approx', { usd: formatMoney(p.usdEquivalent, 'USD', lang.value) }) : null;
 
+/**
+ * The small line under a figure that is not a budget.
+ *
+ * Bukhara's auction plots state what it costs to start bidding. The row has
+ * no room for the eyebrow the panel prints, so the note goes where the
+ * dollar approximation goes — the two never appear on one project, because a
+ * lot's starting price is already in dollars.
+ */
+const noteOf = (p: Project) =>
+  p.priceKind === 'starting' ? t('portfolio.startingPriceNote') : approxOf(p);
+
 /** The rate line, for the title on a converted figure. */
 const rateNote = computed(() => {
   const fx = forum.value?.portfolio?.fx;
@@ -630,7 +641,7 @@ useChapterTimeline(
             </span>
             <span class="row__money figure" :title="moneyTitle(project)">
               {{ moneyOf(project) }}
-              <small v-if="approxOf(project)" class="row__approx">{{ approxOf(project) }}</small>
+              <small v-if="noteOf(project)" class="row__approx">{{ noteOf(project) }}</small>
             </span>
             <!-- A row that opens something should look like it does. The word
                  is only drawn where there is room for it; the mark always. -->
