@@ -219,6 +219,15 @@ onBeforeUnmount(() => {
  * link. See lib/register-link.ts.
  */
 const registerHref = computed(() => registerAddress(forum.value, lang.value));
+
+/**
+ * The organiser's information pack, as shipped in public/.
+ *
+ * A file rather than a page, and the same file in every language: it is the
+ * committee's own English document and there is no translated edition of it
+ * to point at.
+ */
+const INFO_PDF = './Information_TITF_ITIF_2026.pdf';
 /** A link that leaves the site opens in a tab and says so; ours does not. */
 const away = computed(() => registersElsewhere(forum.value));
 
@@ -280,6 +289,22 @@ function choose(code: Lang) {
     </nav>
 
     <div class="bar__right">
+      <!-- The organiser's own information pack: the invitation, the
+           programme, the venue and how to get there, ten pages of it. It
+           sits first in the bar because it is the thing a guest who has
+           just been invited opens, and it is a link to a file rather than a
+           page on this site, so it opens in a tab of its own and says so in
+           its accessible name. Relative, like every other address here: the
+           site is served from / on the organiser's server and from /web2/
+           on Pages. -->
+      <a
+        class="info-link"
+        :href="INFO_PDF"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="t('nav.infoAria')"
+      >{{ t('nav.info') }}</a>
+
       <div class="langs">
         <button
           type="button"
@@ -401,6 +426,17 @@ function choose(code: Lang) {
             :rel="away ? 'noopener noreferrer' : undefined"
           >
             {{ t('nav.register') }}
+          </a>
+          <!-- The bar hides the information pack below 48rem; this is where
+               it goes instead, beside registration. -->
+          <a
+            class="btn"
+            :href="INFO_PDF"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="t('nav.infoAria')"
+          >
+            {{ t('nav.info') }}
           </a>
         </p>
         <ol>
@@ -587,7 +623,47 @@ function choose(code: Lang) {
   }
 }
 
+/* The information pack. The same shape as the registration link beside it,
+   in ink rather than gold: two gold buttons in one corner and neither reads
+   as the main one. */
+.info-link {
+  display: none;
+  align-items: center;
+  min-block-size: var(--tap);
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 0.25rem;
+  /* The token, not `inherit`: the bar sets no colour of its own, so over the
+     title card `inherit` is the parchment page's dark ink on cobalt. */
+  color: var(--ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color 0.18s, color 0.18s;
+}
+@media (hover: hover) {
+  .info-link:hover {
+    border-color: var(--gold-leaf);
+    color: var(--gold-leaf);
+  }
+}
+/* 75rem, not the 48rem the registration link uses.
+ *
+ * The chapter links come back at about 1080px and this is the fourth thing
+ * in the other corner: measured, the two meet at 1100px and overlap by
+ * 43 pixels. At 1200 there are 35 between them, which is the gap the bar
+ * keeps everywhere else. Below that the pack is in the menu instead. */
+@media (min-width: 75rem) {
+  .info-link {
+    display: inline-flex;
+  }
+}
+
 .overlay__register {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin: 0 0 clamp(1.5rem, 4vh, 2.5rem);
 }
 

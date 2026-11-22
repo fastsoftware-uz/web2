@@ -462,6 +462,15 @@ switch for it.
 Names of organisations that took part in TIIF 2026 appear as **text only**, from
 `content.json`. No third-party logos, wordmarks or brand colours are used.
 
+### The organiser's information pack
+
+`site-2-silkroad/public/Information_TITF_ITIF_2026.pdf` is the committee's
+own ten-page pack — the invitation, the programme of the week, the venue and
+how to reach it — supplied on 22 November 2026 and published whole, from the
+"General Information" link in the bar. It is theirs; nothing in it was
+rewritten here, and there is no translated edition of it to point the Uzbek
+and Russian readers at, so all three get the same file.
+
 ## Client source material
 
 The Tourism Investment Forum content on site 2 comes from documents supplied by
