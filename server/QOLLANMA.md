@@ -121,10 +121,34 @@ Raqamning oʻziga bosilsa roʻyxat shu boʻyicha filtrlanadi.
 > yoziladi. Yon tomonga surish shart emas — holatni oʻzgartirish ham, biletni
 > berish ham oʻsha kartochka ichida.
 
+### Safar ustuni — uchish sanalari va mehmonxona
+
+Formada har bir ishtirokchi uchun uchta **ixtiyoriy** savol bor: uchib kelish
+sanasi, uchib ketish sanasi va qaysi mehmonxonada turishi. Majburiy emas —
+mehmon bilmasa boʻsh qoldiradi va arizasi shundoq ham qabul qilinadi.
+
+Roʻyxatda bu **Safar** ustunida koʻrinadi:
+
+```
+24.11 → 28.11
+Hyatt Regency Tashkent
+```
+
+Chiziqcha (`—`) sanalardan bittasi aytilmaganini bildiradi. Hech narsa
+aytilmagan boʻlsa, ustun shunchaki boʻsh turadi.
+
+> Sanalarni adminkadan oʻzgartirib boʻlmaydi — ularni mehmonning oʻzi yozadi.
+> Agar kimdir keyin telefon qilib sanasini oʻzgartirsa, uni izoh sifatida
+> yozib qoʻyish uchun joy yoʻq: bunday hollarda CSV dagi qatorni qoʻlda
+> tuzatasiz yoki mehmondan qaytadan roʻyxatdan oʻtishni soʻraysiz.
+
+CSV faylda bu uchta javob `arrival`, `departure`, `hotel` ustunlarida —
+sanalar `2026-11-24` koʻrinishida, yil-oy-kun tartibida.
+
 ### Qidirish
 
-Qidiruv maydoni ism, tashkilot, lavozim, mamlakat, email, telefon va izoh
-boʻyicha ishlaydi. Yonidagi ikkita roʻyxat turi va holati boʻyicha filtrlaydi.
+Qidiruv maydoni ism, tashkilot, lavozim, mamlakat, email, telefon,
+**mehmonxona** va izoh boʻyicha ishlaydi. Yonidagi ikkita roʻyxat turi va holati boʻyicha filtrlaydi.
 **Tozalash** hammasini qaytaradi.
 
 ### Holatni oʻzgartirish
@@ -141,8 +165,9 @@ koʻzdan kechirganda kim bilan ishlanganini ajratib turadi.
 filtr qoʻyilgan boʻlsa, faqat shu qism. Fayl Excel uchun tayyor: oʻzbekcha va
 kirill harflari toʻgʻri ochiladi, ustunlar nuqta-vergul bilan ajratilgan.
 
-> **Shaxsiy maʼlumot.** Bu fayl ichida mehmonlarning telefon raqami va elektron
-> pochtasi bor. Uni umumiy papkaga, Telegramga yoki pochtaga qoʻshmang.
+> **Shaxsiy maʼlumot.** Bu fayl ichida mehmonlarning telefon raqami, elektron
+> pochtasi, uchish sanalari va mehmonxonasi bor — ya'ni kimning qachon va
+> qayerda boʻlishi. Uni umumiy papkaga, Telegramga yoki pochtaga qoʻshmang.
 
 ---
 

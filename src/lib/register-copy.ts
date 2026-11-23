@@ -58,9 +58,20 @@ export type Copy = {
     country: string;
     email: string;
     phone: string;
+    /**
+     * The journey: when the guest lands, when they leave, where they are
+     * staying. All three optional, asked at the client's request on 23
+     * November 2026 so that the committee can plan transfers and rooms
+     * without writing to every guest.
+     */
+    arrival: string;
+    departure: string;
+    hotel: string;
     direction: string;
     note: string;
   };
+  /** One line under the three travel fields saying why they are asked. */
+  travelNote: string;
   directionNone: string;
   directions: Record<string, string>;
   /** How the note names the project a reader arrived from. */
@@ -124,6 +135,9 @@ export const MESSAGES: Record<Lang, Copy> = {
       country: 'Mamlakat',
       email: 'Elektron pochta',
       phone: 'Telefon',
+      arrival: 'Uchib kelish sanasi',
+      departure: 'Uchib ketish sanasi',
+      hotel: 'Mehmonxona',
       direction: 'Qiziqish yoʻnalishi',
       note: 'Qoʻshimcha',
     },
@@ -136,6 +150,8 @@ export const MESSAGES: Record<Lang, Copy> = {
       leisure: 'Koʻngilochar, oilaviy va tematik infratuzilma',
       transport: 'Transport va unga bogʻliq infratuzilma',
     },
+    travelNote:
+      'Uchish sanalari va mehmonxona — ixtiyoriy. Toshkentda kutib olish va joylashtirishni rejalashtirish uchun soʻraladi.',
     aboutProject: 'Loyiha',
     optional: 'ixtiyoriy',
     required: 'majburiy',
@@ -192,6 +208,9 @@ export const MESSAGES: Record<Lang, Copy> = {
       country: 'Страна',
       email: 'Электронная почта',
       phone: 'Телефон',
+      arrival: 'Дата прилёта',
+      departure: 'Дата отлёта',
+      hotel: 'Гостиница',
       direction: 'Интересующее направление',
       note: 'Дополнительно',
     },
@@ -204,6 +223,8 @@ export const MESSAGES: Record<Lang, Copy> = {
       leisure: 'Развлекательная, семейная и тематическая инфраструктура',
       transport: 'Транспорт и связанная инфраструктура',
     },
+    travelNote:
+      'Даты перелёта и гостиница — по желанию. Их спрашивают, чтобы спланировать встречу в Ташкенте и размещение.',
     aboutProject: 'Проект',
     optional: 'необязательно',
     required: 'обязательно',
@@ -259,6 +280,9 @@ export const MESSAGES: Record<Lang, Copy> = {
       country: 'Country',
       email: 'Email',
       phone: 'Telephone',
+      arrival: 'Arrival date',
+      departure: 'Departure date',
+      hotel: 'Hotel',
       direction: 'Direction of interest',
       note: 'Anything else',
     },
@@ -271,6 +295,8 @@ export const MESSAGES: Record<Lang, Copy> = {
       leisure: 'Entertainment, family and themed attractions',
       transport: 'Transport and related infrastructure',
     },
+    travelNote:
+      'The flight dates and the hotel are optional. They are asked so that the committee can plan your arrival in Tashkent and where you stay.',
     aboutProject: 'Project',
     optional: 'optional',
     required: 'required',

@@ -471,6 +471,26 @@ how to reach it — supplied on 22 November 2026 and published whole, from the
 rewritten here, and there is no translated edition of it to point the Uzbek
 and Russian readers at, so all three get the same file.
 
+### The organiser's programme with its speakers
+
+`site-2-silkroad/public/Programme_TITF_ITIF_2026.pdf` is the committee's own
+nineteen-page programme of 25–27 November — every hall, every hour and the
+people speaking in it — supplied on 23 November 2026 and published whole,
+from the "Agenda" link in the bar beside the pack above. Theirs as well:
+nothing in it was rewritten here, and it is one English edition for all
+three languages.
+
+Chapter I is built from the same document rather than from a copy of it:
+`scripts/data/forum-programme.mjs` carries the hours, the halls and the
+names, and `npm run data` puts them in `forum-2026.json`. The document
+supersedes every earlier version of the timetable — the printed «ДАСТУР»
+leaflet of 31 October, the 18 November plan, the speaker tables of the 19th
+and «Программа со спикерами» of the 20th — and the file's own header says
+what following it changed. The names published are the ones it names as
+speakers and moderators; its "to be confirmed" lines and blank moderator
+slots are not published, and neither are the «Масъул» officials, which is
+the rule this repository has followed since the leaflet.
+
 ## Client source material
 
 The Tourism Investment Forum content on site 2 comes from documents supplied by

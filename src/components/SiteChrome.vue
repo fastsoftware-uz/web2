@@ -228,6 +228,17 @@ const registerHref = computed(() => registerAddress(forum.value, lang.value));
  * to point at.
  */
 const INFO_PDF = './Information_TITF_ITIF_2026.pdf';
+/**
+ * The organiser's programme with its speakers, as shipped in public/.
+ *
+ * The same file in every language and for the same reason as the pack above:
+ * «Programme 25–27.11.2026 EN speakers» is the committee's own English
+ * document. It is the printable twin of chapter I — the chapter is the three
+ * days to read on a screen, this is the nineteen pages to carry to the hall —
+ * and both are generated from the same document, so the bar offers it beside
+ * the pack rather than inside the chapter.
+ */
+const AGENDA_PDF = './Programme_TITF_ITIF_2026.pdf';
 /** A link that leaves the site opens in a tab and says so; ours does not. */
 const away = computed(() => registersElsewhere(forum.value));
 
@@ -304,6 +315,18 @@ function choose(code: Lang) {
         rel="noopener noreferrer"
         :aria-label="t('nav.infoAria')"
       >{{ t('nav.info') }}</a>
+
+      <!-- The programme, next to it. One word in all three languages, which
+           is what lets the pair fit in a corner that already carries the
+           pack: «Umumiy maʼlumot» is 159px and «Kun tartibi» would be 110
+           more, so the short label is the document's own name. -->
+      <a
+        class="info-link info-link--agenda"
+        :href="AGENDA_PDF"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="t('nav.agendaAria')"
+      >{{ t('nav.agenda') }}</a>
 
       <div class="langs">
         <button
@@ -437,6 +460,15 @@ function choose(code: Lang) {
             :aria-label="t('nav.infoAria')"
           >
             {{ t('nav.info') }}
+          </a>
+          <a
+            class="btn"
+            :href="AGENDA_PDF"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="t('nav.agendaAria')"
+          >
+            {{ t('nav.agenda') }}
           </a>
         </p>
         <ol>
@@ -648,13 +680,17 @@ function choose(code: Lang) {
     color: var(--gold-leaf);
   }
 }
-/* 75rem, not the 48rem the registration link uses.
+/* 90rem, not the 75rem one pill needed, and not the 48rem the registration
+ * link uses.
  *
- * The chapter links come back at about 1080px and this is the fourth thing
- * in the other corner: measured, the two meet at 1100px and overlap by
- * 43 pixels. At 1200 there are 35 between them, which is the gap the bar
- * keeps everywhere else. Below that the pack is in the menu instead. */
-@media (min-width: 75rem) {
+ * The chapter links come back at about 1080px and these are now the fourth
+ * and fifth things in the other corner. Measured, with both of them: the
+ * chapter links want 405px in Uzbek, 450 in English and 504 in Russian, and
+ * at 1280 the bar has 386 left for them in Russian — the links ran into the
+ * pills and overlapped them. Everything fits at 1440 in all three
+ * languages, so that is where the pair appears; below it both are in the
+ * menu, next to each other, which is where the pack already went. */
+@media (min-width: 90rem) {
   .info-link {
     display: inline-flex;
   }

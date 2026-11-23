@@ -578,13 +578,22 @@ will not show there — the editor rewrites the copy nginx serves.
 
 ```json
 { "role": "vip|investor|visitor|speaker", "full_name": "", "organisation": "",
-  "position": "", "country": "", "email": "", "phone": "", "direction": "",
-  "note": "", "lang": "uz" }
+  "position": "", "country": "", "email": "", "phone": "",
+  "arrival": "2026-11-24", "departure": "2026-11-28", "hotel": "",
+  "direction": "", "note": "", "lang": "uz" }
 ```
 
 `role`, `full_name`, `organisation`, `position`, `country`, `email` and
 `phone` are required. `direction` must be one of the six the site shows or it
-is dropped. A form POST is accepted as well as JSON.
+is dropped. `arrival` and `departure` are ISO days and `hotel` is free text;
+all three are optional and anything unreadable in them is stored empty rather
+than refused, because a guest who does not know their flights yet must still
+be able to register. A form POST is accepted as well as JSON.
+
+The three travel columns are added to an existing SQLite database when it is
+next opened — see `storage_migrate()` in `src/storage.php`. Nothing is
+dropped or rewritten: stored rows keep every value they had and read back
+with the three new ones empty.
 
 | Status | Body | Means |
 |---|---|---|

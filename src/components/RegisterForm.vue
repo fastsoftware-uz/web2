@@ -65,6 +65,15 @@ const form = reactive({
   country: '',
   email: '',
   phone: '',
+  /**
+   * The journey. Optional, all three of them, and never validated into an
+   * error: a guest who does not know yet when they fly leaves them empty and
+   * the registration goes through exactly as before. The API stores whatever
+   * arrives and drops a date it cannot read.
+   */
+  arrival: '',
+  departure: '',
+  hotel: '',
   direction: '',
   note: '',
   /** The honeypot. No human sees this; a bot that fills every input does. */
@@ -180,6 +189,9 @@ async function submit(): Promise<void> {
 
 function again(): void {
   for (const key of REQUIRED) form[key] = '';
+  form.arrival = '';
+  form.departure = '';
+  form.hotel = '';
   form.direction = '';
   form.note = '';
   reference.value = 0;
@@ -206,6 +218,9 @@ const mailHref = computed(() => {
     `${t.value.fields.email}: ${form.email}`,
     `${t.value.fields.phone}: ${form.phone}`,
   ];
+  for (const key of ['arrival', 'departure', 'hotel'] as const) {
+    if (form[key].trim()) lines.push(`${t.value.fields[key]}: ${form[key].trim()}`);
+  }
   if (form.direction) {
     lines.push(`${t.value.fields.direction}: ${t.value.directions[form.direction]}`);
   }
@@ -353,6 +368,33 @@ const mailHref = computed(() => {
         <small v-if="errors.phone" id="e-phone" class="field__err">
           {{ t.errors.phone }}
         </small>
+      </p>
+
+      <!-- The journey. Three optional answers, asked where the form stops
+           being about who somebody is and starts being about their trip:
+           after the telephone, before the address the badge is sent to.
+           `type="date"` so a phone offers its own picker and the value
+           arrives as an ISO day whatever the reader's locale writes. -->
+      <p class="field">
+        <label for="arrival">
+          {{ t.fields.arrival }} <span class="field__opt">({{ t.optional }})</span>
+        </label>
+        <input id="arrival" v-model="form.arrival" type="date" autocomplete="off" />
+      </p>
+
+      <p class="field">
+        <label for="departure">
+          {{ t.fields.departure }} <span class="field__opt">({{ t.optional }})</span>
+        </label>
+        <input id="departure" v-model="form.departure" type="date" autocomplete="off" />
+      </p>
+
+      <p class="field field--wide">
+        <label for="hotel">
+          {{ t.fields.hotel }} <span class="field__opt">({{ t.optional }})</span>
+        </label>
+        <input id="hotel" v-model="form.hotel" type="text" maxlength="120" autocomplete="off" />
+        <small class="field__hint">{{ t.travelNote }}</small>
       </p>
 
       <p class="field field--wide">
@@ -573,6 +615,18 @@ const mailHref = computed(() => {
 .field__err {
   font-size: 0.8rem;
   color: var(--danger);
+}
+/* Why the three travel answers are asked, under the last of them. */
+.field__hint {
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+}
+/* A date input is left alone by the rule above on iOS, where it keeps the
+   platform's own light background: the picker's own control is painted by
+   Safari and ignores `background`. `color-scheme` is what tells it which
+   palette to paint in, and the whole form is on the lit stage. */
+.field input[type='date'] {
+  color-scheme: dark;
 }
 
 .reg__trap {

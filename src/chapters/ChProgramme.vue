@@ -73,6 +73,8 @@ function tracksOf(d: ProgrammeDay | null, side: boolean) {
 
 const halls = computed(() => tracksOf(day.value, false));
 const sideHalls = computed(() => tracksOf(day.value, true));
+/** The day's dinners. Optional in the data, so never assumed to be there. */
+const dinners = computed(() => day.value?.dinners ?? []);
 
 /**
  * How many cards a hall shows before the rest fold away.
@@ -104,10 +106,29 @@ function toggleTrack(hall: string): void {
 const folded = (track: { hall: string; items: DayItem[] }) =>
   isOpen(track.hall) ? 0 : Math.max(0, track.items.length - FOLD);
 
-const hallMeta = (hall: ProgrammeHall) =>
-  hall.seats === null
+/**
+ * The line under a room's name: its floor area and how many it seats.
+ *
+ * Empty for a zone, which the programme names without measuring — the open
+ * space and the second floor. An empty string rather than a dash, because
+ * the paragraph is then not drawn at all.
+ */
+const hallMeta = (hall: ProgrammeHall) => {
+  if (hall.area === null) return '';
+  return hall.seats === null
     ? t('programme.hallArea', { area: hall.area })
     : t('programme.hallMeta', { area: hall.area, seats: hall.seats });
+};
+
+/** "Conference hall", or "Zone" for the two places that are neither. */
+const hallKind = (hall: ProgrammeHall) =>
+  hall.kind === 'zone' ? t('programme.zone') : t('programme.hall');
+
+/** The strip's one-line version of the same: the name, and the size if known. */
+const roomLine = (hall: ProgrammeHall) => {
+  const meta = hallMeta(hall);
+  return meta ? `${tr(hall.name)} · ${meta}` : tr(hall.name);
+};
 
 const kindLabel = (item: DayItem) =>
   item.kind === 'session' && item.n
@@ -169,9 +190,9 @@ useChapterTimeline(
         <div class="halls" :key="day.n">
           <section v-for="track in halls" :key="track.hall" class="halls__col">
             <header class="halls__head">
-              <p class="halls__kind">{{ t('programme.hall') }}</p>
+              <p class="halls__kind">{{ hallKind(track.room!) }}</p>
               <h3 class="halls__name">{{ tr(track.room!.name) }}</h3>
-              <p class="halls__meta">{{ hallMeta(track.room!) }}</p>
+              <p v-if="hallMeta(track.room!)" class="halls__meta">{{ hallMeta(track.room!) }}</p>
             </header>
 
             <ol class="slot">
@@ -249,11 +270,11 @@ useChapterTimeline(
         </div>
 
         <!-- The hall that runs one thing all day, and the signing zone. --- -->
-        <div v-if="sideHalls.length || day.signings.length" class="aside">
+        <div v-if="sideHalls.length || day.signings.length || dinners.length" class="aside">
           <section v-for="track in sideHalls" :key="track.hall" class="aside__hall">
             <p class="aside__room">
-              <span class="aside__kind">{{ t('programme.hall') }}</span>
-              {{ tr(track.room!.name) }} · {{ hallMeta(track.room!) }}
+              <span class="aside__kind">{{ hallKind(track.room!) }}</span>
+              {{ roomLine(track.room!) }}
             </p>
             <ul class="aside__items">
               <li v-for="(item, i) in track.items" :key="i">
@@ -272,6 +293,26 @@ useChapterTimeline(
               <li v-for="(slot, i) in day.signings" :key="i">
                 <span class="aside__time">{{ hours(slot) }}</span>
                 <span class="aside__title">{{ tr(slot.body) }}</span>
+              </li>
+            </ul>
+          </section>
+
+          <!-- The evening. Not a hall, not a zone and not the fair: each of
+               the three days ends with a dinner somewhere else in the city,
+               for a named set of guests, and whether it is yours is the last
+               thing a reader of the day wants to know. -->
+          <section v-if="dinners.length" class="aside__hall aside__hall--dine">
+            <p class="aside__room">
+              <span class="aside__kind">{{ t('programme.evening') }}</span>
+              {{ t('programme.dinner') }}
+            </p>
+            <ul class="aside__items">
+              <li v-for="(slot, i) in dinners" :key="i">
+                <span class="aside__time">{{ hours(slot) }}</span>
+                <span class="aside__title">
+                  {{ tr(slot.title) }}
+                  <small v-if="slot.venue" class="aside__venue">{{ tr(slot.venue) }}</small>
+                </span>
               </li>
             </ul>
           </section>
@@ -635,6 +676,22 @@ h2 {
 }
 .aside__hall--sign {
   border-inline-start-style: dashed;
+}
+/* The evening is not part of the fair's floor, so its edge is not the
+   accent the halls carry — it is the gold the page keeps for the forum's
+   own moments. */
+.aside__hall--dine {
+  border-inline-start-color: var(--gold);
+  border-inline-start-style: dotted;
+}
+/* The venue, under the line rather than beside it: "Hilton Tashkent City"
+   does not fit after "Gala dinner for UN Tourism and VIP guests" at any
+   width this card is drawn at. */
+.aside__venue {
+  display: block;
+  margin-block-start: 0.15rem;
+  font-size: 0.8rem;
+  color: var(--ink-dim);
 }
 .aside__room {
   display: flex;

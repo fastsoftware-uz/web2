@@ -4,7 +4,11 @@
  *
  *   POST /api.php      Content-Type: application/json
  *   {role, full_name, organisation, position, country, email, phone,
- *    direction?, note?, lang?}
+ *    arrival?, departure?, hotel?, direction?, note?, lang?}
+ *
+ * `arrival` and `departure` are ISO days (YYYY-MM-DD) and all three travel
+ * answers are optional: anything unreadable in them is stored as empty
+ * rather than refused, because none of them may fail a registration.
  *
  * Answers 200 {ok:true,id} or 422 {ok:false,fields:[…]}. It never explains
  * in prose: the page that collected the answers knows the reader's language
@@ -172,7 +176,9 @@ if ($notify !== '' && filter_var($notify, FILTER_VALIDATE_EMAIL)) {
         $lines[] = $ticket !== null
             ? 'e-ticket: ' . $ticket['url']
             : 'e-ticket: not issued automatically for this role — release it in the admin';
-        foreach (['full_name', 'organisation', 'position', 'country', 'email', 'phone', 'direction', 'note'] as $f) {
+        $told = ['full_name', 'organisation', 'position', 'country', 'email', 'phone',
+            'arrival', 'departure', 'hotel', 'direction', 'note'];
+        foreach ($told as $f) {
             if ($row[$f] !== '') {
                 $lines[] = "{$f}: {$row[$f]}";
             }

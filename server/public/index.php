@@ -273,7 +273,8 @@ function admin_filter(array $rows, array $q): array
         }
         $hay = app_lower(implode(' ', [
             $row['full_name'] ?? '', $row['organisation'] ?? '', $row['position'] ?? '',
-            $row['country'] ?? '', $row['email'] ?? '', $row['phone'] ?? '', $row['note'] ?? '',
+            $row['country'] ?? '', $row['email'] ?? '', $row['phone'] ?? '',
+            $row['hotel'] ?? '', $row['note'] ?? '',
         ]));
         return str_contains($hay, $needle);
     }));
@@ -309,6 +310,20 @@ $query = http_build_query(array_filter([
     'role' => $_GET['role'] ?? '',
     'status' => $_GET['status'] ?? '',
 ]));
+
+/**
+ * `2026-11-25` as `25.11`, for the travel column.
+ *
+ * The year is the forum's and printing it twice in one cell costs the room
+ * the hotel name needs. The CSV exports the stored ISO day untouched.
+ */
+function admin_day(?string $iso): string
+{
+    $iso = (string) $iso;
+    return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $iso, $m) === 1
+        ? "{$m[3]}.{$m[2]}"
+        : '';
+}
 
 $ROLE_LABEL = ['vip' => 'VIP', 'investor' => 'Investor', 'visitor' => 'Mehmon', 'speaker' => 'Spiker'];
 /**
@@ -568,7 +583,7 @@ admin_head($config, $user, 'Arizalar', 'regs');
     <thead>
       <tr>
         <th>#</th><th>Sana</th><th>Tur</th><th>Ism</th><th>Tashkilot</th>
-        <th>Aloqa</th><th>Yoʻnalish</th><th>Holat</th><th>Bilet</th>
+        <th>Aloqa</th><th>Safar</th><th>Yoʻnalish</th><th>Holat</th><th>Bilet</th>
       </tr>
     </thead>
     <tbody>
@@ -589,6 +604,33 @@ admin_head($config, $user, 'Arizalar', 'regs');
           <a href="mailto:<?= app_h($row['email'] ?? '') ?>"><?= app_h($row['email'] ?? '') ?></a><br>
           <a href="tel:<?= app_h(preg_replace('/[^\d+]/', '', (string) ($row['phone'] ?? '')) ?? '') ?>"><?= app_h($row['phone'] ?? '') ?></a>
         </td>
+        <?php
+        /**
+         * The journey: when they land, when they leave, where they stay.
+         *
+         * All three are optional on the form, so most cells here are empty
+         * and the ones that are not are what the committee plans transfers
+         * and rooms from. An em dash stands in for the half of a pair that
+         * was not given, so that one date is still readable as which of the
+         * two it is.
+         */
+        $arrival = admin_day($row['arrival'] ?? '');
+        $departure = admin_day($row['departure'] ?? '');
+        $hotel = (string) ($row['hotel'] ?? '');
+        /* Built as a string, and the cell is printed with nothing in it when
+           there is nothing: on a telephone the stylesheet turns every row
+           into a card and hides the cells that are `:empty`, which a cell
+           holding only the markup's own newlines is not. */
+        $trip = [];
+        if ($arrival !== '' || $departure !== '') {
+            $trip[] = '<span class="nowrap">' . app_h($arrival === '' ? '—' : $arrival)
+                . ' → ' . app_h($departure === '' ? '—' : $departure) . '</span>';
+        }
+        if ($hotel !== '') {
+            $trip[] = '<span class="muted">' . app_h($hotel) . '</span>';
+        }
+        ?>
+        <td class="cell--trip" data-th="Safar"><?= implode('<br>', $trip) ?></td>
         <td data-th="Yoʻnalish"><?= app_h($DIRECTION_LABEL[$row['direction'] ?? ''] ?? '') ?></td>
         <td data-th="Holat">
           <?php if ($mayEdit): ?>
@@ -635,7 +677,7 @@ admin_head($config, $user, 'Arizalar', 'regs');
         </td>
       </tr>
       <?php if (($row['note'] ?? '') !== ''): ?>
-      <tr class="note row--<?= app_h($row['status'] ?? 'new') ?>"><td></td><td colspan="8"><span><?= app_h($row['note']) ?></span></td></tr>
+      <tr class="note row--<?= app_h($row['status'] ?? 'new') ?>"><td></td><td colspan="9"><span><?= app_h($row['note']) ?></span></td></tr>
       <?php endif; ?>
       <?php endforeach; ?>
     </tbody>

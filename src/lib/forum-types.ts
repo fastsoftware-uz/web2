@@ -137,10 +137,18 @@ export interface ProgrammeItem {
 export interface ProgrammeHall {
   id: string;
   name: I18nText;
-  /** Square metres. */
-  area: number;
+  /** Square metres, or null for a place the documents only name. */
+  area: number | null;
   /** Absent for the hall that runs one all-day activity rather than seating. */
   seats: number | null;
+  /**
+   * What to call it.
+   *
+   * A zone is the open-space B2B floor and the second floor: the programme
+   * says things happen there and gives neither an area nor a seat count, so
+   * the page names it a zone and prints no measurements.
+   */
+  kind?: 'hall' | 'zone';
 }
 
 /**
@@ -211,6 +219,20 @@ export interface SigningSlot {
   body: I18nText;
 }
 
+/**
+ * The evening, which is not a hall either.
+ *
+ * Every one of the three days ends with a dinner in the organiser's
+ * programme, each for a different set of guests and in a different building,
+ * so the venue is part of the line rather than a detail left out.
+ */
+export interface DinnerSlot {
+  start: string;
+  end?: string;
+  title: I18nText;
+  venue?: I18nText;
+}
+
 export interface ProgrammeDay {
   /** 1, 2, 3 — what the leaflet calls «1-кун». */
   n: number;
@@ -223,6 +245,8 @@ export interface ProgrammeDay {
   headline: I18nText;
   tracks: ProgrammeTrack[];
   signings: SigningSlot[];
+  /** Absent in the data files that predate the dinners being published. */
+  dinners?: DinnerSlot[];
 }
 
 export interface ForumProgramme {

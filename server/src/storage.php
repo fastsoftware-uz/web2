@@ -83,6 +83,9 @@ function storage_pdo(array $config): PDO
             country       TEXT NOT NULL,
             email         TEXT NOT NULL,
             phone         TEXT NOT NULL,
+            arrival       TEXT NOT NULL DEFAULT "",
+            departure     TEXT NOT NULL DEFAULT "",
+            hotel         TEXT NOT NULL DEFAULT "",
             direction     TEXT NOT NULL DEFAULT "",
             note          TEXT NOT NULL DEFAULT "",
             lang          TEXT NOT NULL DEFAULT "uz",
@@ -91,7 +94,37 @@ function storage_pdo(array $config): PDO
         )'
     );
     $pdo->exec('CREATE INDEX IF NOT EXISTS reg_created ON registrations (created_at DESC)');
+    storage_migrate($pdo);
     return $pdo;
+}
+
+/**
+ * Columns added after the table already existed somewhere.
+ *
+ * CREATE TABLE IF NOT EXISTS does nothing to a table that is already there,
+ * so an installation that has been taking registrations since October has
+ * the thirteen columns it was created with and none of the three the travel
+ * questions need. Adding them here, on the connection that is about to be
+ * used, is what makes the same code right on a fresh server and on the one
+ * the forum is actually running on — and ALTER TABLE ADD COLUMN on SQLite
+ * rewrites nothing, so it costs one statement at open and no data.
+ *
+ * The guest list is the one thing on this server that cannot be rebuilt, so
+ * nothing here drops, renames or rewrites a column: it only adds what is
+ * missing, with a default, which leaves every stored row exactly as it was.
+ */
+function storage_migrate(PDO $pdo): void
+{
+    $have = [];
+    foreach ($pdo->query('PRAGMA table_info(registrations)')->fetchAll() as $column) {
+        $have[(string) ($column['name'] ?? '')] = true;
+    }
+    foreach (['arrival', 'departure', 'hotel'] as $column) {
+        if (!isset($have[$column])) {
+            // The name is from this literal list, never from a request.
+            $pdo->exec("ALTER TABLE registrations ADD COLUMN {$column} TEXT NOT NULL DEFAULT ''");
+        }
+    }
 }
 
 function storage_jsonl_path(array $config): string
@@ -111,9 +144,11 @@ function storage_add(array $config, array $row): int
         $pdo = storage_pdo($config);
         $sql = 'INSERT INTO registrations
                 (created_at, role, full_name, organisation, position, country,
-                 email, phone, direction, note, lang, status, ip)
+                 email, phone, arrival, departure, hotel, direction, note,
+                 lang, status, ip)
                 VALUES (:created_at, :role, :full_name, :organisation, :position, :country,
-                        :email, :phone, :direction, :note, :lang, :status, :ip)';
+                        :email, :phone, :arrival, :departure, :hotel, :direction, :note,
+                        :lang, :status, :ip)';
         $pdo->prepare($sql)->execute($row);
         return (int) $pdo->lastInsertId();
     }

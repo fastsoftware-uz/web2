@@ -73,7 +73,8 @@ const DIRECTIONS = ['infrastructure', 'heritage', 'eco', 'wellness', 'leisure', 
 /** Every field the admin shows, in the order the CSV exports them. */
 const FIELDS = [
     'id', 'created_at', 'role', 'full_name', 'organisation', 'position',
-    'country', 'email', 'phone', 'direction', 'note', 'lang', 'status',
+    'country', 'email', 'phone', 'arrival', 'departure', 'hotel',
+    'direction', 'note', 'lang', 'status',
 ];
 
 /**
@@ -120,6 +121,30 @@ function app_lower(string $value): string
     return strtolower($value);
 }
 
+/**
+ * An optional day, as the form's date inputs send it: `YYYY-MM-DD`.
+ *
+ * Anything else becomes an empty string rather than a rejected
+ * registration. The three travel answers are optional — the whole point of
+ * them is that a guest who does not know yet leaves them blank — so a
+ * browser that sends a half-typed date, or a script that sends the word
+ * "soon", must not be able to fail a registration that is otherwise
+ * complete. checkdate() is asked as well as the pattern, because
+ * 2026-02-31 matches the pattern and is not a day.
+ */
+function app_day(array $src, string $key): string
+{
+    $value = $src[$key] ?? '';
+    if (!is_string($value)) {
+        return '';
+    }
+    $value = trim($value);
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) !== 1) {
+        return '';
+    }
+    return checkdate((int) $m[2], (int) $m[3], (int) $m[1]) ? $value : '';
+}
+
 function app_str(array $src, string $key, int $max): string
 {
     $value = $src[$key] ?? '';
@@ -154,6 +179,10 @@ function app_validate(array $input, string $ip): array
         'country'      => app_str($input, 'country', 80),
         'email'        => app_str($input, 'email', 160),
         'phone'        => app_str($input, 'phone', 40),
+        /* The journey, all three optional — see app_day() above. */
+        'arrival'      => app_day($input, 'arrival'),
+        'departure'    => app_day($input, 'departure'),
+        'hotel'        => app_str($input, 'hotel', 120),
         'direction'    => app_str($input, 'direction', 32),
         'note'         => app_str($input, 'note', 1200),
         'lang'         => app_str($input, 'lang', 2),
