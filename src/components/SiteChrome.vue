@@ -229,16 +229,24 @@ const registerHref = computed(() => registerAddress(forum.value, lang.value));
  */
 const INFO_PDF = './Information_TITF_ITIF_2026.pdf';
 /**
- * The organiser's programme with its speakers, as shipped in public/.
+ * The two documents the committee issues in editions: the programme with its
+ * speakers, and the fair's flyer.
  *
- * The same file in every language and for the same reason as the pack above:
- * «Programme 25–27.11.2026 EN speakers» is the committee's own English
- * document. It is the printable twin of chapter I — the chapter is the three
- * days to read on a screen, this is the nineteen pages to carry to the hall —
- * and both are generated from the same document, so the bar offers it beside
- * the pack rather than inside the chapter.
+ * Each exists in Uzbek and in English and in no third language, so Uzbek
+ * readers get the Uzbek edition and everybody else the English one. Russian
+ * follows English rather than showing nothing — the client's own instruction,
+ * and the same call the information pack above already makes by having only
+ * one edition to offer.
+ *
+ * The programme is the printable twin of chapter I: the chapter is the three
+ * days to read on a screen, the file is the pages to carry to the hall, and
+ * both come from the same document.
  */
-const AGENDA_PDF = './Programme_TITF_ITIF_2026.pdf';
+const edition = (stem: string) =>
+  computed(() => `./${stem}_${lang.value === 'uz' ? 'UZ' : 'EN'}.pdf`);
+
+const AGENDA_PDF = edition('Programme_TITF_ITIF_2026');
+const FLYER_PDF = edition('Flyer_TITF_ITIF_2026');
 /** A link that leaves the site opens in a tab and says so; ours does not. */
 const away = computed(() => registersElsewhere(forum.value));
 
@@ -317,9 +325,15 @@ function choose(code: Lang) {
       >{{ t('nav.info') }}</a>
 
       <!-- The programme, next to it. One word in all three languages, which
-           is what lets the pair fit in a corner that already carries the
+           is what lets the trio fit in a corner that already carries the
            pack: «Umumiy maʼlumot» is 159px and «Kun tartibi» would be 110
-           more, so the short label is the document's own name. -->
+           more, so the short label is the document's own name.
+
+           It is also the one link in the bar that moves. The client asked for
+           it to catch the eye, and three days before the forum that is the
+           right thing for it to do: a guest who opens the site now wants the
+           hours. The ring is drawn outside the pill so the label does not
+           shift, and it stops for anybody who has asked for less motion. -->
       <a
         class="info-link info-link--agenda"
         :href="AGENDA_PDF"
@@ -327,6 +341,17 @@ function choose(code: Lang) {
         rel="noopener noreferrer"
         :aria-label="t('nav.agendaAria')"
       >{{ t('nav.agenda') }}</a>
+
+      <!-- The fair's flyer: the trifold the convention bureau prints, three
+           days on one sheet. Quiet beside the agenda on purpose — two things
+           asking for attention in one corner is neither of them asking. -->
+      <a
+        class="info-link info-link--flyer"
+        :href="FLYER_PDF"
+        target="_blank"
+        rel="noopener noreferrer"
+        :aria-label="t('nav.flyerAria')"
+      >{{ t('nav.flyer') }}</a>
 
       <div class="langs">
         <button
@@ -462,13 +487,22 @@ function choose(code: Lang) {
             {{ t('nav.info') }}
           </a>
           <a
-            class="btn"
+            class="btn btn--agenda"
             :href="AGENDA_PDF"
             target="_blank"
             rel="noopener noreferrer"
             :aria-label="t('nav.agendaAria')"
           >
             {{ t('nav.agenda') }}
+          </a>
+          <a
+            class="btn"
+            :href="FLYER_PDF"
+            target="_blank"
+            rel="noopener noreferrer"
+            :aria-label="t('nav.flyerAria')"
+          >
+            {{ t('nav.flyer') }}
           </a>
         </p>
         <ol>
@@ -680,6 +714,53 @@ function choose(code: Lang) {
     color: var(--gold-leaf);
   }
 }
+
+/**
+ * The one thing on this site that pulses.
+ *
+ * The house rule a few hundred lines up in index.css is "no bounce, no
+ * pulse", and it is a good rule for a government investment page. This is a
+ * deliberate exception the client asked for by name: the forum opens on the
+ * 25th, the hours are what a guest comes to the site for in the last days
+ * before it, and a still pill beside four other still pills is not found.
+ *
+ * It is a ring rather than a flash: the pill itself does not move, nothing
+ * reflows, and the gold fades out of a box-shadow that no other element
+ * reads. Three and a half seconds is slow enough to register as an invitation
+ * rather than an alarm. Hover and keyboard focus stop it — once somebody has
+ * found the link, the animation has done its work and the ordinary hover
+ * colour is more useful than a ring that keeps going under the cursor.
+ *
+ * `prefers-reduced-motion` is handled globally in index.css, which pins every
+ * animation on the page to a single instantaneous run.
+ */
+@keyframes agenda-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold-leaf) 45%, transparent);
+  }
+  60% {
+    box-shadow: 0 0 0 10px color-mix(in srgb, var(--gold-leaf) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--gold-leaf) 0%, transparent);
+  }
+}
+.info-link--agenda,
+.btn--agenda {
+  border-color: color-mix(in srgb, var(--gold-leaf) 55%, var(--hairline-strong));
+  color: var(--gold-leaf);
+  animation: agenda-ring 3.4s ease-out infinite;
+}
+.info-link--agenda:focus-visible,
+.btn--agenda:focus-visible {
+  animation: none;
+}
+@media (hover: hover) {
+  .info-link--agenda:hover,
+  .btn--agenda:hover {
+    animation: none;
+  }
+}
 /* 90rem, not the 75rem one pill needed, and not the 48rem the registration
  * link uses.
  *
@@ -692,6 +773,19 @@ function choose(code: Lang) {
  * menu, next to each other, which is where the pack already went. */
 @media (min-width: 90rem) {
   .info-link {
+    display: inline-flex;
+  }
+}
+/* And the flyer waits for 96rem, because it is the third pill in that corner
+ * and the third pill is one too many at 1440: measured, Russian wants 503px
+ * of chapter links and three pills leave it 454. The pack and the agenda were
+ * already fitting there and keep their width; the new one appears where it
+ * does not cost anything. Below that it is in the menu with the other two. */
+.info-link--flyer {
+  display: none;
+}
+@media (min-width: 96rem) {
+  .info-link--flyer {
     display: inline-flex;
   }
 }
